@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Request
+from fastapi_app.supabase_client import supabase
 
 router = APIRouter()
 
@@ -39,3 +41,31 @@ def get_profile_data():
             "skills": ["React", "Product Management", "Pitching"]
         }
     }
+
+@router.get("/profile/{user_id}")
+def get_user_profile(user_id: str):
+    response = supabase.table("Users").select("*").eq("id", user_id).limit(1).execute()
+    if response.data and len(response.data) > 0:
+        return {"message": "User profile retrieved", "data": response.data[0]}
+    else:
+        raise HTTPException(status_code=404, detail="User not found")
+
+
+@router.post("/signup")
+async def signup(request: Request):
+    body = await request.json()
+    email = body.get("email")
+    password = body.get("password")
+
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password required.")
+
+    try:
+        response = supabase.auth.sign_up({
+            "email": email,
+            "password": password
+        })
+        return {"message": "User registered!", "data": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
