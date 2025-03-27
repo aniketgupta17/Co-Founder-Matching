@@ -1,0 +1,819 @@
+{
+    "users": [
+        {
+            "id": 1,
+            "name": "Nick Smith",
+            "email": "nick.smith@example.org",
+            "bio": "Oversaw cross-functional teams at NextGen Labs, improving React and Node.js processes and delivering product-market fit within the first two quarters.\n\nSpecializing in gene therapy research, with hands-on experience in DataScience pipelines. Seeking to improve user experience and collaborate with likeminded EdTech professionals.",
+            "skills": [
+                "MechanicalEngineering"
+            ],
+            "interests": [
+                "Robotics",
+                "SaaS"
+            ],
+            "goals": "Join accelerator",
+            "location": "London",
+            "availability": "Evenings",
+            "startup_stage": "Seed Funded",
+            "collab_style": "Creative",
+            "education": {
+                "institution": "Cambridge University",
+                "degree": "MBBS Medicine",
+                "graduation_year": 2008
+            },
+            "work_experience": [
+                {
+                    "company": "SpaceX",
+                    "position": "Full-stack Developer",
+                    "years": 7
+                },
+                {
+                    "company": "BioNext",
+                    "position": "Design Lead",
+                    "years": 2
+                },
+                {
+                    "company": "CityWorks Construction",
+                    "position": "Data Analyst",
+                    "years": 7
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Michael Moore",
+            "email": "michael.moore@example.org",
+            "bio": "Passionate about gene therapy research and driving innovation in SaaS. Recently contributed to a product that a successful Series A funding.\n\nSpecializing in UI/UX optimization, with hands-on experience in Python and AI frameworks. Seeking to grow developer communities and collaborate with likeminded SaaS professionals.",
+            "skills": [
+                "Flutter",
+                "React",
+                "Finance"
+            ],
+            "interests": [
+                "RenewableEnergy"
+            ],
+            "goals": "Build MVP",
+            "location": "Brisbane",
+            "availability": "Full-Time",
+            "startup_stage": "Series A+",
+            "collab_style": "Executor",
+            "education": {
+                "institution": "University of Queensland",
+                "degree": "MBBS Medicine",
+                "graduation_year": 2011
+            },
+            "work_experience": [
+                {
+                    "company": "SpaceX",
+                    "position": "Medical Researcher",
+                    "years": 5
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "name": "Iris Brown",
+            "email": "iris.brown@example.org",
+            "bio": "Specializing in CAD simulations, with hands-on experience in Python and AI frameworks. Seeking to grow developer communities and collaborate with likeminded BioTech professionals.\n\nWorked at CivilDesign Pro as a Data Scientist, where I spearheaded initiatives to advance medical research. This experience involved managing stakeholder requirements.\n\nSpecializing in UI/UX optimization, with hands-on experience in React and Node.js. Seeking to grow developer communities and collaborate with likeminded FinTech professionals.",
+            "skills": [
+                "Automation"
+            ],
+            "interests": [
+                "RenewableEnergy"
+            ],
+            "goals": "Join accelerator",
+            "location": "Berlin",
+            "availability": "Evenings",
+            "startup_stage": "Seed Funded",
+            "collab_style": "Visionary",
+            "education": {
+                "institution": "Stanford University",
+                "degree": "BEng Civil Engineering",
+                "graduation_year": 2019
+            },
+            "work_experience": [
+                {
+                    "company": "BioNext",
+                    "position": "Software Engineer",
+                    "years": 2
+                },
+                {
+                    "company": "Airbnb",
+                    "position": "Marketing Manager",
+                    "years": 6
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "name": "Eva Hernandez",
+            "email": "eva.hernandez@example.org",
+            "bio": "Specializing in CAD simulations, with hands-on experience in Rust microservices. Seeking to create sustainable solutions and collaborate with likeminded GreenTech professionals.\n\nSpecializing in blockchain solutions, with hands-on experience in React and Node.js. Seeking to optimize large-scale deployments and collaborate with likeminded EdTech professionals.\n\nWorked at GreenBuild Innovations as a Product Owner, where I spearheaded initiatives to increase brand awareness. This experience involved creating marketing campaigns.",
+            "skills": [
+                "DataScience",
+                "Node.js"
+            ],
+            "interests": [
+                "RenewableEnergy"
+            ],
+            "goals": "Recruit team",
+            "location": "Melbourne",
+            "availability": "Part-Time",
+            "startup_stage": "Seed Funded",
+            "collab_style": "Visionary",
+            "education": {
+                "institution": "Imperial College London",
+                "degree": "MSc Data Science",
+                "graduation_year": 2016
+            },
+            "work_experience": [
+                {
+                    "company": "Google",
+                    "position": "Design Lead",
+                    "years": 3
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "name": "Iris Lewis",
+            "email": "iris.lewis@example.org",
+            "bio": "Worked at TechCorp as a Design Lead, where I spearheaded initiatives to improve user experience. This experience involved leading field inspections.\n\nSpecializing in machine learning, with hands-on experience in Rust microservices. Seeking to grow developer communities and collaborate with likeminded MedTech professionals.\n\nSpecializing in gene therapy research, with hands-on experience in React and Node.js. Seeking to increase brand awareness and collaborate with likeminded Mechanical Systems professionals.",
+            "skills": [
+                "Pitching",
+                "AI"
+            ],
+            "interests": [
+                "Robotics",
+                "UrbanPlanning"
+            ],
+            "goals": "Find CTO",
+            "location": "Dubai",
+            "availability": "Full-Time",
+            "startup_stage": "Series A+",
+            "collab_style": "Visionary",
+            "education": {
+                "institution": "Cambridge University",
+                "degree": "BPharm Pharmacy",
+                "graduation_year": 2008
+            },
+            "work_experience": [
+                {
+                    "company": "Amazon",
+                    "position": "Full-stack Developer",
+                    "years": 3
+                },
+                {
+                    "company": "Facebook",
+                    "position": "Medical Researcher",
+                    "years": 6
+                },
+                {
+                    "company": "Airbnb",
+                    "position": "Product Owner",
+                    "years": 5
+                }
+            ]
+        },
+        {
+            "id": 6,
+            "name": "Eva Lee",
+            "email": "eva.lee@example.org",
+            "bio": "Worked at MediCore as a Full-stack Developer, where I spearheaded initiatives to advance medical research. This experience involved writing production-level code.\n\nOversaw cross-functional teams at GreenBuild Innovations, improving DataScience pipelines processes and delivering product-market fit within the first two quarters.\n\nSpecializing in UI/UX optimization, with hands-on experience in DataScience pipelines. Seeking to improve user experience and collaborate with likeminded Civil Engineering professionals.\n\nLed a scalable platform focusing on UI/UX optimization. Achieved a 40% efficiency increase by implementing Python and AI frameworks.",
+            "skills": [
+                "CAD"
+            ],
+            "interests": [
+                "Robotics",
+                "HealthTech",
+                "Aerospace"
+            ],
+            "goals": "Launch product",
+            "location": "Boston",
+            "availability": "Part-Time",
+            "startup_stage": "Research/Academic",
+            "collab_style": "Visionary",
+            "education": {
+                "institution": "Stanford University",
+                "degree": "PhD AI Research",
+                "graduation_year": 2009
+            },
+            "work_experience": [
+                {
+                    "company": "Tesla",
+                    "position": "Mechanical Engineer",
+                    "years": 5
+                },
+                {
+                    "company": "Tesla",
+                    "position": "Mechanical Engineer",
+                    "years": 3
+                }
+            ]
+        },
+        {
+            "id": 7,
+            "name": "Carol Moore",
+            "email": "carol.moore@example.org",
+            "bio": "Specializing in gene therapy research, with hands-on experience in CAD-based design tools. Seeking to grow developer communities and collaborate with likeminded Mechanical Systems professionals.\n\nLed a clinical-grade MVP focusing on digital marketing. Achieved a successful Series A funding by implementing Python and AI frameworks.\n\nOversaw cross-functional teams at CivilDesign Pro, improving React and Node.js processes and delivering a successful Series A funding within six months.\n\nOversaw cross-functional teams at TechCorp, improving DataScience pipelines processes and delivering a successful Series A funding within the product launch phase.",
+            "skills": [
+                "Sales",
+                "Node.js"
+            ],
+            "interests": [
+                "FinTech"
+            ],
+            "goals": "Get funded",
+            "location": "San Francisco",
+            "availability": "Full-Time",
+            "startup_stage": "Early Clinical Trials",
+            "collab_style": "Analytical",
+            "education": {
+                "institution": "University of Queensland",
+                "degree": "BPharm Pharmacy",
+                "graduation_year": 2018
+            },
+            "work_experience": [
+                {
+                    "company": "Global Pharma Inc",
+                    "position": "Design Lead",
+                    "years": 5
+                }
+            ]
+        },
+        {
+            "id": 8,
+            "name": "Nick Lewis",
+            "email": "nick.lewis@example.org",
+            "bio": "Worked at BioNext as a Product Owner, where I spearheaded initiatives to advance medical research. This experience involved conducting user research.\n\nOversaw cross-functional teams at NextGen Labs, improving Python and AI frameworks processes and delivering product-market fit within the first two quarters.",
+            "skills": [
+                "Biology",
+                "React"
+            ],
+            "interests": [
+                "Marketplace",
+                "GreenTech"
+            ],
+            "goals": "Scale internationally",
+            "location": "Brisbane",
+            "availability": "Weekends",
+            "startup_stage": "Seed Funded",
+            "collab_style": "Connector",
+            "education": {
+                "institution": "Harvard University",
+                "degree": "MBBS Medicine",
+                "graduation_year": 2014
+            },
+            "work_experience": [
+                {
+                    "company": "Facebook",
+                    "position": "Software Engineer",
+                    "years": 5
+                }
+            ]
+        },
+        {
+            "id": 9,
+            "name": "Tom Campbell",
+            "email": "tom.campbell@example.org",
+            "bio": "Oversaw cross-functional teams at MediCore, improving DataScience pipelines processes and delivering ISO certification within six months.\n\nLed a scalable clinical trial focusing on machine learning. Achieved FDA approval by implementing DataScience pipelines.\n\nWorked at InnovateX as a Design Lead, where I spearheaded initiatives to optimize large-scale deployments. This experience involved analyzing data to drive decisions.",
+            "skills": [
+                "LabResearch",
+                "AI"
+            ],
+            "interests": [
+                "MedTech",
+                "GreenTech"
+            ],
+            "goals": "Scale internationally",
+            "location": "Singapore",
+            "availability": "Student - flexible",
+            "startup_stage": "Early Clinical Trials",
+            "collab_style": "Connector",
+            "education": {
+                "institution": "Technical University of Munich",
+                "degree": "MBBS Medicine",
+                "graduation_year": 2020
+            },
+            "work_experience": [
+                {
+                    "company": "Global Pharma Inc",
+                    "position": "Mechanical Engineer",
+                    "years": 5
+                },
+                {
+                    "company": "GreenBuild Innovations",
+                    "position": "Design Lead",
+                    "years": 7
+                }
+            ]
+        },
+        {
+            "id": 10,
+            "name": "Kevin Jones",
+            "email": "kevin.jones@example.org",
+            "bio": "Specializing in cloud infrastructure, with hands-on experience in CAD-based design tools. Seeking to improve user experience and collaborate with likeminded Civil Engineering professionals.\n\nOversaw cross-functional teams at GreenBuild Innovations, improving Rust microservices processes and delivering product-market fit within the product launch phase.\n\nOversaw cross-functional teams at InnovateX, improving React and Node.js processes and delivering FDA approval within the product launch phase.",
+            "skills": [
+                "Medicine",
+                "Design",
+                "Chemistry"
+            ],
+            "interests": [
+                "HealthTech",
+                "MedTech",
+                "BioTech"
+            ],
+            "goals": "Build MVP",
+            "location": "London",
+            "availability": "Student - flexible",
+            "startup_stage": "Idea/Concept",
+            "collab_style": "Visionary",
+            "education": {
+                "institution": "University of Queensland",
+                "degree": "BEng Civil Engineering",
+                "graduation_year": 2007
+            },
+            "work_experience": [
+                {
+                    "company": "Google",
+                    "position": "Marketing Manager",
+                    "years": 2
+                },
+                {
+                    "company": "Global Pharma Inc",
+                    "position": "Medical Researcher",
+                    "years": 5
+                },
+                {
+                    "company": "GreenBuild Innovations",
+                    "position": "Full-stack Developer",
+                    "years": 5
+                }
+            ]
+        },
+        {
+            "id": 11,
+            "name": "Wendy Garcia",
+            "email": "wendy.garcia@example.org",
+            "bio": "Led a groundbreaking solution focusing on cloud infrastructure. Achieved FDA approval by implementing DataScience pipelines.\n\nSpecializing in machine learning, with hands-on experience in CAD-based design tools. Seeking to increase brand awareness and collaborate with likeminded SaaS professionals.\n\nSpecializing in machine learning, with hands-on experience in DataScience pipelines. Seeking to optimize large-scale deployments and collaborate with likeminded MedTech professionals.",
+            "skills": [
+                "Automation"
+            ],
+            "interests": [
+                "AR/VR",
+                "IoT",
+                "UrbanPlanning"
+            ],
+            "goals": "Join accelerator",
+            "location": "Berlin",
+            "availability": "Student - flexible",
+            "startup_stage": "Series A+",
+            "collab_style": "Analytical",
+            "education": {
+                "institution": "Cambridge University",
+                "degree": "BSc Computer Science",
+                "graduation_year": 2012
+            },
+            "work_experience": [
+                {
+                    "company": "IBM",
+                    "position": "Product Owner",
+                    "years": 4
+                },
+                {
+                    "company": "Google",
+                    "position": "Full-stack Developer",
+                    "years": 7
+                },
+                {
+                    "company": "Tesla",
+                    "position": "Marketing Manager",
+                    "years": 2
+                }
+            ]
+        },
+        {
+            "id": 12,
+            "name": "Victor Adams",
+            "email": "victor.adams@example.org",
+            "bio": "Passionate about robotic automation processes and driving innovation in HealthTech. Recently contributed to a MVP that ISO certification.\n\nLed a high-impact solution focusing on machine learning. Achieved a 40% efficiency increase by implementing React and Node.js.\n\nLed a clinical-grade MVP focusing on CAD simulations. Achieved substantial cost savings by implementing React and Node.js.\n\nWorked at CivilDesign Pro as a Mechanical Engineer, where I spearheaded initiatives to grow developer communities. This experience involved creating marketing campaigns.",
+            "skills": [
+                "Rust",
+                "CAD"
+            ],
+            "interests": [
+                "UrbanPlanning",
+                "EdTech"
+            ],
+            "goals": "Recruit team",
+            "location": "New York",
+            "availability": "Student - flexible",
+            "startup_stage": "Early Clinical Trials",
+            "collab_style": "Analytical",
+            "education": {
+                "institution": "Stanford University",
+                "degree": "BSc Computer Science",
+                "graduation_year": 2017
+            },
+            "work_experience": [
+                {
+                    "company": "BioNext",
+                    "position": "Data Analyst",
+                    "years": 6
+                }
+            ]
+        },
+        {
+            "id": 13,
+            "name": "Jack Williams",
+            "email": "jack.williams@example.org",
+            "bio": "Worked at CivilDesign Pro as a Mechanical Engineer, where I spearheaded initiatives to increase brand awareness. This experience involved creating marketing campaigns.\n\nLed a scalable product focusing on machine learning. Achieved substantial cost savings by implementing React and Node.js.\n\nPassionate about digital marketing and driving innovation in BioTech. Recently contributed to a solution that product-market fit.",
+            "skills": [
+                "Finance",
+                "LabResearch",
+                "Flutter"
+            ],
+            "interests": [
+                "BioTech",
+                "Robotics"
+            ],
+            "goals": "Join accelerator",
+            "location": "Berlin",
+            "availability": "Part-Time",
+            "startup_stage": "Seed Funded",
+            "collab_style": "Visionary",
+            "education": {
+                "institution": "Stanford University",
+                "degree": "BSc Computer Science",
+                "graduation_year": 2010
+            },
+            "work_experience": [
+                {
+                    "company": "Tesla",
+                    "position": "Product Owner",
+                    "years": 5
+                },
+                {
+                    "company": "Google",
+                    "position": "Mechanical Engineer",
+                    "years": 5
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "name": "Mona Moore",
+            "email": "mona.moore@example.org",
+            "bio": "Passionate about UI/UX optimization and driving innovation in MedTech. Recently contributed to a solution that product-market fit.\n\nSpecializing in cloud infrastructure, with hands-on experience in CAD-based design tools. Seeking to grow developer communities and collaborate with likeminded GreenTech professionals.\n\nSpecializing in cloud infrastructure, with hands-on experience in React and Node.js. Seeking to increase brand awareness and collaborate with likeminded Civil Engineering professionals.",
+            "skills": [
+                "Python"
+            ],
+            "interests": [
+                "Construction",
+                "AR/VR",
+                "Pharma"
+            ],
+            "goals": "Find CTO",
+            "location": "New York",
+            "availability": "Student - flexible",
+            "startup_stage": "Idea/Concept",
+            "collab_style": "Analytical",
+            "education": {
+                "institution": "University of Queensland",
+                "degree": "BEng Mechanical Engineering",
+                "graduation_year": 2009
+            },
+            "work_experience": [
+                {
+                    "company": "IBM",
+                    "position": "Medical Researcher",
+                    "years": 5
+                },
+                {
+                    "company": "Facebook",
+                    "position": "Design Lead",
+                    "years": 6
+                },
+                {
+                    "company": "SpaceX",
+                    "position": "Design Lead",
+                    "years": 2
+                }
+            ]
+        },
+        {
+            "id": 15,
+            "name": "Uma Lewis",
+            "email": "uma.lewis@example.org",
+            "bio": "Passionate about machine learning and driving innovation in SaaS. Recently contributed to a service that ISO certification.\n\nLed a clinical-grade platform focusing on robotic automation processes. Achieved a successful Series A funding by implementing CAD-based design tools.\n\nSpecializing in cloud infrastructure, with hands-on experience in Rust microservices. Seeking to create sustainable solutions and collaborate with likeminded MedTech professionals.\n\nSpecializing in blockchain solutions, with hands-on experience in CAD-based design tools. Seeking to optimize large-scale deployments and collaborate with likeminded Civil Engineering professionals.",
+            "skills": [
+                "Chemistry"
+            ],
+            "interests": [
+                "IoT",
+                "Aerospace"
+            ],
+            "goals": "Join accelerator",
+            "location": "New York",
+            "availability": "Student - flexible",
+            "startup_stage": "Idea/Concept",
+            "collab_style": "Visionary",
+            "education": {
+                "institution": "MIT",
+                "degree": "BPharm Pharmacy",
+                "graduation_year": 2023
+            },
+            "work_experience": [
+                {
+                    "company": "BioNext",
+                    "position": "Marketing Manager",
+                    "years": 7
+                }
+            ]
+        },
+        {
+            "id": 16,
+            "name": "Seth Taylor",
+            "email": "seth.taylor@example.org",
+            "bio": "Specializing in cloud infrastructure, with hands-on experience in Rust microservices. Seeking to improve user experience and collaborate with likeminded HealthTech professionals.\n\nSpecializing in digital marketing, with hands-on experience in Flutter mobile apps. Seeking to advance medical research and collaborate with likeminded GreenTech professionals.",
+            "skills": [
+                "Medicine",
+                "LabResearch",
+                "Sales"
+            ],
+            "interests": [
+                "UrbanPlanning"
+            ],
+            "goals": "Launch product",
+            "location": "Berlin",
+            "availability": "Student - flexible",
+            "startup_stage": "Early Clinical Trials",
+            "collab_style": "Visionary",
+            "education": {
+                "institution": "MIT",
+                "degree": "BSc Computer Science",
+                "graduation_year": 2018
+            },
+            "work_experience": [
+                {
+                    "company": "Facebook",
+                    "position": "Data Analyst",
+                    "years": 4
+                },
+                {
+                    "company": "Amazon",
+                    "position": "Full-stack Developer",
+                    "years": 1
+                },
+                {
+                    "company": "IBM",
+                    "position": "Data Analyst",
+                    "years": 3
+                }
+            ]
+        },
+        {
+            "id": 17,
+            "name": "Bob Baker",
+            "email": "bob.baker@example.org",
+            "bio": "Oversaw cross-functional teams at TechCorp, improving Rust microservices processes and delivering product-market fit within the first two quarters.\n\nPassionate about robotic automation processes and driving innovation in Mechanical Systems. Recently contributed to a solution that a 40% efficiency increase.",
+            "skills": [
+                "CivilEngineering",
+                "Python",
+                "DataScience"
+            ],
+            "interests": [
+                "UrbanPlanning"
+            ],
+            "goals": "Get funded",
+            "location": "San Francisco",
+            "availability": "Weekends",
+            "startup_stage": "Prototype",
+            "collab_style": "Connector",
+            "education": {
+                "institution": "Oxford University",
+                "degree": "MBBS Medicine",
+                "graduation_year": 2013
+            },
+            "work_experience": [
+                {
+                    "company": "BioNext",
+                    "position": "Product Owner",
+                    "years": 5
+                }
+            ]
+        },
+        {
+            "id": 18,
+            "name": "Xavier Hall",
+            "email": "xavier.hall@example.org",
+            "bio": "Oversaw cross-functional teams at NextGen Labs, improving DataScience pipelines processes and delivering a 40% efficiency increase within the product launch phase.\n\nWorked at CivilDesign Pro as a Design Lead, where I spearheaded initiatives to increase brand awareness. This experience involved conducting user research.\n\nOversaw cross-functional teams at CivilDesign Pro, improving Flutter mobile apps processes and delivering product-market fit within six months.\n\nWorked at TechCorp as a Design Lead, where I spearheaded initiatives to increase brand awareness. This experience involved writing production-level code.",
+            "skills": [
+                "Node.js",
+                "Automation"
+            ],
+            "interests": [
+                "Blockchain",
+                "EdTech",
+                "RenewableEnergy"
+            ],
+            "goals": "Launch product",
+            "location": "Seoul",
+            "availability": "Evenings",
+            "startup_stage": "Series A+",
+            "collab_style": "Planner",
+            "education": {
+                "institution": "Cambridge University",
+                "degree": "BSc Computer Science",
+                "graduation_year": 2005
+            },
+            "work_experience": [
+                {
+                    "company": "CityWorks Construction",
+                    "position": "Software Engineer",
+                    "years": 2
+                }
+            ]
+        },
+        {
+            "id": 19,
+            "name": "Grace Lee",
+            "email": "grace.lee@example.org",
+            "bio": "Oversaw cross-functional teams at GreenBuild Innovations, improving Python and AI frameworks processes and delivering a 40% efficiency increase within the product launch phase.\n\nWorked at MediCore as a Full-stack Developer, where I spearheaded initiatives to create sustainable solutions. This experience involved creating marketing campaigns.\n\nLed a innovative service focusing on cloud infrastructure. Achieved FDA approval by implementing DataScience pipelines.",
+            "skills": [
+                "Sales",
+                "DataScience"
+            ],
+            "interests": [
+                "Marketplace",
+                "Robotics",
+                "SaaS"
+            ],
+            "goals": "Build MVP",
+            "location": "San Francisco",
+            "availability": "Weekends",
+            "startup_stage": "Prototype",
+            "collab_style": "Executor",
+            "education": {
+                "institution": "Cambridge University",
+                "degree": "BEng Civil Engineering",
+                "graduation_year": 2022
+            },
+            "work_experience": [
+                {
+                    "company": "Global Pharma Inc",
+                    "position": "Data Analyst",
+                    "years": 2
+                },
+                {
+                    "company": "CityWorks Construction",
+                    "position": "Design Lead",
+                    "years": 2
+                },
+                {
+                    "company": "Amazon",
+                    "position": "Marketing Manager",
+                    "years": 5
+                }
+            ]
+        },
+        {
+            "id": 20,
+            "name": "Jack Young",
+            "email": "jack.young@example.org",
+            "bio": "Specializing in CAD simulations, with hands-on experience in CAD-based design tools. Seeking to improve user experience and collaborate with likeminded Mechanical Systems professionals.\n\nOversaw cross-functional teams at TechCorp, improving DataScience pipelines processes and delivering ISO certification within the product launch phase.\n\nSpecializing in cloud infrastructure, with hands-on experience in DataScience pipelines. Seeking to improve user experience and collaborate with likeminded GreenTech professionals.",
+            "skills": [
+                "MechanicalEngineering"
+            ],
+            "interests": [
+                "Marketplace",
+                "RenewableEnergy"
+            ],
+            "goals": "Find CTO",
+            "location": "San Francisco",
+            "availability": "Full-Time",
+            "startup_stage": "Prototype",
+            "collab_style": "Connector",
+            "education": {
+                "institution": "Imperial College London",
+                "degree": "BEng Mechanical Engineering",
+                "graduation_year": 2017
+            },
+            "work_experience": [
+                {
+                    "company": "IBM",
+                    "position": "Mechanical Engineer",
+                    "years": 5
+                },
+                {
+                    "company": "Airbnb",
+                    "position": "Design Lead",
+                    "years": 7
+                }
+            ]
+        }
+    ],
+    "match_recommendations": {
+        "1": [
+            14,
+            10,
+            15
+        ],
+        "2": [
+            12,
+            1,
+            4
+        ],
+        "3": [
+            1,
+            2,
+            9
+        ],
+        "4": [
+            1,
+            15,
+            6
+        ],
+        "5": [
+            9,
+            15,
+            2
+        ],
+        "6": [
+            17,
+            19,
+            20
+        ],
+        "7": [
+            8,
+            17,
+            1
+        ],
+        "8": [
+            20,
+            16,
+            3
+        ],
+        "9": [
+            1,
+            14,
+            13
+        ],
+        "10": [
+            17,
+            13,
+            11
+        ],
+        "11": [
+            14,
+            2,
+            10
+        ],
+        "12": [
+            4,
+            20,
+            1
+        ],
+        "13": [
+            12,
+            3,
+            14
+        ],
+        "14": [
+            13,
+            3,
+            11
+        ],
+        "15": [
+            3,
+            7,
+            5
+        ],
+        "16": [
+            9,
+            13,
+            6
+        ],
+        "17": [
+            10,
+            3,
+            16
+        ],
+        "18": [
+            3,
+            19,
+            4
+        ],
+        "19": [
+            17,
+            2,
+            20
+        ],
+        "20": [
+            10,
+            13,
+            4
+        ]
+    }
+}
