@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_app.api.routes import router as mock_router
 
 app = FastAPI(title="Mock API for Co-Founder Matching")
 
@@ -13,15 +12,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Root endpoint
-@app.get("/")
-def root():
-    return {"message": "Mock API Root"}
-
-# Add mock router
-app.include_router(mock_router, prefix="/api", tags=["Mock"])
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("fastapi_app.main:app", host="127.0.0.1", port=8000, reload=True)
