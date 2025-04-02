@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import router as mock_router
 
 app = FastAPI(title="Mock API for Co-Founder Matching")
 
