@@ -14,23 +14,21 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../navigation/TabNavigator';
 import { useMockApi } from '../hooks/useMockApi';
 
-interface Match {
+interface Event {
   id: number;
-  name: string;
-  role: string;
-  image: string;
-  bio: string;
-  skills: string[];
-  interests: string[];
+  title: string;
+  date: string;
+  location: string;
+  description: string;
 }
 
-interface MatchData {
+interface EventsData {
   message: string;
-  matches: Match[];
+  events: Event[];
 }
 
-const MatchScreen: React.FC = () => {
-  const { data, loading, error } = useMockApi('matches') as { data: MatchData | null; loading: boolean; error: string | null };
+const EventsScreen: React.FC = () => {
+  const { data, loading, error } = useMockApi('events') as { data: EventsData | null; loading: boolean; error: string | null };
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
 
   if (loading) {
@@ -47,7 +45,7 @@ const MatchScreen: React.FC = () => {
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={() => navigation.navigate('Match')}
+          onPress={() => navigation.navigate('Events')}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -60,7 +58,7 @@ const MatchScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Matches</Text>
+          <Text style={styles.headerTitle}>Events</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
             <Image 
               source={{ uri: 'https://randomuser.me/api/portraits/men/75.jpg' }}
@@ -69,35 +67,24 @@ const MatchScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Matches List */}
-        <View style={styles.matchesList}>
-          {data?.matches?.map((match) => (
-            <TouchableOpacity 
-              key={match.id} 
-              style={styles.matchCard}
-              onPress={() => navigation.navigate('Messages')}
-            >
-              <Image source={{ uri: match.image }} style={styles.matchImage} />
-              <View style={styles.matchInfo}>
-                <Text style={styles.matchName}>{match.name}</Text>
-                <Text style={styles.matchRole}>{match.role}</Text>
-                <Text style={styles.matchBio}>{match.bio}</Text>
-                <View style={styles.skillsContainer}>
-                  {match.skills.map((skill, index) => (
-                    <View key={index} style={styles.skillTag}>
-                      <Text style={styles.skillText}>{skill}</Text>
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.interestsContainer}>
-                  {match.interests.map((interest, index) => (
-                    <View key={index} style={styles.interestTag}>
-                      <Text style={styles.interestText}>{interest}</Text>
-                    </View>
-                  ))}
-                </View>
+        {/* Events List */}
+        <View style={styles.eventsList}>
+          {data?.events?.map((event: Event) => (
+            <View key={event.id} style={styles.eventCard}>
+              <View style={styles.eventDateBox}>
+                <Text style={styles.eventMonth}>
+                  {new Date(event.date).toLocaleString('default', { month: 'short' }).toUpperCase()}
+                </Text>
+                <Text style={styles.eventDay}>
+                  {new Date(event.date).getDate()}
+                </Text>
               </View>
-            </TouchableOpacity>
+              <View style={styles.eventInfo}>
+                <Text style={styles.eventTitle}>{event.title}</Text>
+                <Text style={styles.eventLocation}>{event.location}</Text>
+                <Text style={styles.eventDescription}>{event.description}</Text>
+              </View>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -159,10 +146,10 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
   },
-  matchesList: {
+  eventsList: {
     marginTop: 16,
   },
-  matchCard: {
+  eventCard: {
     flexDirection: 'row',
     backgroundColor: 'white',
     borderRadius: 12,
@@ -174,66 +161,44 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-  matchImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  eventDateBox: {
+    backgroundColor: '#4B2E83',
+    borderRadius: 8,
+    padding: 8,
     marginRight: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 60,
   },
-  matchInfo: {
+  eventMonth: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  eventDay: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  eventInfo: {
     flex: 1,
   },
-  matchName: {
+  eventTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  matchRole: {
+  eventLocation: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  matchBio: {
+  eventDescription: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 12,
     lineHeight: 20,
-  },
-  skillsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 8,
-  },
-  skillTag: {
-    backgroundColor: '#4B2E83',
-    borderRadius: 16,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  skillText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  interestsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  interestTag: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: 16,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  interestText: {
-    color: '#666',
-    fontSize: 12,
   },
 });
 
-export default MatchScreen;
+export default EventsScreen;
