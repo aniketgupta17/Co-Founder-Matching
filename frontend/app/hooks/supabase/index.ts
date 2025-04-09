@@ -1,2 +1,2 @@
 export { AuthProvider, useAuth } from "./useAuth";
-export { useSupabase } from "./useSupabase";
+export { useSupabase, getSupabaseClient } from "./useSupabase";

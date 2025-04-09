@@ -6,7 +6,7 @@ const supabaseApiKey = process.env.SUPABASE_KEY || "";
 
 let supabaseInstance: SupabaseClient | null = null;
 
-const getSupabaseClient = (): SupabaseClient => {
+export const getSupabaseClient = (): SupabaseClient => {
   if (!supabaseInstance) {
     supabaseInstance = createClient(supabaseUrl, supabaseApiKey);
   }
