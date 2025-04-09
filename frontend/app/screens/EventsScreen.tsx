@@ -1,25 +1,30 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
   Image,
   ActivityIndicator,
-  SafeAreaView
+  SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { MainTabParamList } from '../navigation/TabNavigator';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MainTabParamList, EventsStackParamList } from '../navigation/TabNavigator';
 import { useMockApi } from '../hooks/useMockApi';
 
-interface Event {
+// Define the AppEvent data type
+export interface Event {
   id: number;
   title: string;
+  type?: string;
   date: string;
   location: string;
   description: string;
+  tags: string[];
 }
 
 interface EventsData {
@@ -27,9 +32,25 @@ interface EventsData {
   events: Event[];
 }
 
+// Define combined navigation types
+type EventsScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList>, // For tab navigation (e.g. navigating to Profile)
+  StackNavigationProp<EventsStackParamList> // For event stack navigation (e.g. navigating to EventDetail)
+>;
+
 const EventsScreen: React.FC = () => {
-  const { data, loading, error } = useMockApi('events') as { data: EventsData | null; loading: boolean; error: string | null };
-  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
+  const { data, loading, error } = useMockApi('events') as {
+    data: EventsData | null;
+    loading: boolean;
+    error: string | null;
+  };
+
+  const navigation = useNavigation<EventsScreenNavigationProp>(); // Use the combined navigation type
+
+  // Handle event card click to navigate to event details
+  const handleEventPress = (event: Event) => {
+    navigation.navigate('EventDetail', { event }); // Navigate to event detail page
+  };
 
   if (loading) {
     return (
@@ -43,9 +64,9 @@ const EventsScreen: React.FC = () => {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.retryButton}
-          onPress={() => navigation.navigate('Events')}
+          onPress={() => navigation.navigate('EventsList')} // Retry loading the event list
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -59,8 +80,9 @@ const EventsScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Events</Text>
+          {/* Navigate to Profile */}
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Image 
+            <Image
               source={{ uri: 'https://randomuser.me/api/portraits/men/75.jpg' }}
               style={styles.profileImage}
             />
@@ -70,10 +92,17 @@ const EventsScreen: React.FC = () => {
         {/* Events List */}
         <View style={styles.eventsList}>
           {data?.events?.map((event: Event) => (
-            <View key={event.id} style={styles.eventCard}>
+            <TouchableOpacity
+              key={event.id}
+              style={styles.eventCard}
+              onPress={() => handleEventPress(event)} // Click to navigate to event detail
+              activeOpacity={0.8}
+            >
               <View style={styles.eventDateBox}>
                 <Text style={styles.eventMonth}>
-                  {new Date(event.date).toLocaleString('default', { month: 'short' }).toUpperCase()}
+                  {new Date(event.date).toLocaleString('default', {
+                    month: 'short',
+                  }).toUpperCase()}
                 </Text>
                 <Text style={styles.eventDay}>
                   {new Date(event.date).getDate()}
@@ -82,9 +111,11 @@ const EventsScreen: React.FC = () => {
               <View style={styles.eventInfo}>
                 <Text style={styles.eventTitle}>{event.title}</Text>
                 <Text style={styles.eventLocation}>{event.location}</Text>
-                <Text style={styles.eventDescription}>{event.description}</Text>
+                <Text style={styles.eventDescription} numberOfLines={2}>
+                  {event.description}
+                </Text>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
@@ -93,13 +124,8 @@ const EventsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F8F8',
-  },
-  scrollContent: {
-    padding: 16,
-  },
+  container: { flex: 1, backgroundColor: '#F8F8F8' },
+  scrollContent: { padding: 16 },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -113,42 +139,23 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 20,
   },
-  errorText: {
-    color: 'red',
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
+  errorText: { color: 'red', fontSize: 16, marginBottom: 20, textAlign: 'center' },
   retryButton: {
     backgroundColor: '#4B2E83',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 30,
   },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  retryButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#4B2E83',
-  },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  eventsList: {
-    marginTop: 16,
-  },
+  headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#4B2E83' },
+  profileImage: { width: 40, height: 40, borderRadius: 20 },
+  eventsList: { marginTop: 16 },
   eventCard: {
     flexDirection: 'row',
     backgroundColor: 'white',
@@ -170,35 +177,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minWidth: 60,
   },
-  eventMonth: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  eventDay: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  eventInfo: {
-    flex: 1,
-  },
+  eventMonth: { color: 'white', fontSize: 14, fontWeight: 'bold' },
+  eventDay: { color: 'white', fontSize: 20, fontWeight: 'bold' },
+  eventInfo: { flex: 1 },
   eventTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  eventLocation: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  eventDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
+  eventLocation: { fontSize: 14, color: '#666', marginBottom: 4 },
+  eventDescription: { fontSize: 14, color: '#666', lineHeight: 20 },
 });
 
 export default EventsScreen;
