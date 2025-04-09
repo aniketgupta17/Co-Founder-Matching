@@ -7,11 +7,7 @@ import {
   useState,
 } from "react";
 import { useSupabase } from "./useSupabase";
-
-export interface Credentials {
-  email: string;
-  password: string;
-}
+import { Credentials } from "types/auth";
 
 type AuthContextType = {
   session: Session | null;
