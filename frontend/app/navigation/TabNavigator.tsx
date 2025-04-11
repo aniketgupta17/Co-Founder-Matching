@@ -13,6 +13,7 @@ import ChatScreen from '../screens/ChatScreen';
 import ChatDetailScreen from '../screens/ChatDetailScreen';
 import EventsScreen from '../screens/EventsScreen';
 import EventDetailScreen from '../screens/EventDetailScreen';
+import EventCalendarScreen from '../screens/EventCalenderScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
@@ -30,6 +31,7 @@ export type ProfileStackParamList = {
 export type EventsStackParamList = {
   EventsList: undefined;
   EventDetail: { event: Event };
+  EventCalendar: { event?: Event };  // 添加这行
 };
 
 export type MainTabParamList = {
@@ -68,6 +70,9 @@ const EventsStackNavigator = () => (
   <EventsStack.Navigator screenOptions={{ headerShown: false }}>
     <EventsStack.Screen name="EventsList" component={EventsScreen} />
     <EventsStack.Screen name="EventDetail" component={EventDetailScreen} />
+    <EventsStack.Screen name="EventCalendar" component={EventCalendarScreen}
+      options={{ title: 'Event Calendar' }}
+    />
   </EventsStack.Navigator>
 );
 
