@@ -4,29 +4,36 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { StackScreenProps } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import { Event } from '../screens/EventsScreen';
 
-// Import screens - update HomeScreen import to SwipeableHomeScreen
+// Screens
 import SwipeableHomeScreen from '../screens/SwipeableHomeScreen';
 import MatchScreen from '../screens/MatchScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ChatDetailScreen from '../screens/ChatDetailScreen';
 import EventsScreen from '../screens/EventsScreen';
+import EventDetailScreen from '../screens/EventDetailScreen';
+import EventCalendarScreen from '../screens/EventCalenderScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
-// Define the stack parameter list for chat screens
+// Stack param types
 export type ChatStackParamList = {
   MessagesList: undefined;
   Chat: { chatId: number };
 };
 
-// Define the stack parameter list for profile screens
 export type ProfileStackParamList = {
   Profile: undefined;
   Settings: undefined;
 };
 
-// Define the tab parameter list
+export type EventsStackParamList = {
+  EventsList: undefined;
+  EventDetail: { event: Event };
+  EventCalendar: { event?: Event };  // 添加这行
+};
+
 export type MainTabParamList = {
   Home: undefined;
   Match: undefined;
@@ -35,10 +42,10 @@ export type MainTabParamList = {
   Profile: undefined;
 };
 
-// Define combined navigation types
 export type TabScreenProps<T extends keyof MainTabParamList> = BottomTabScreenProps<MainTabParamList, T>;
 export type ChatStackScreenProps<T extends keyof ChatStackParamList> = StackScreenProps<ChatStackParamList, T>;
 export type ProfileStackScreenProps<T extends keyof ProfileStackParamList> = StackScreenProps<ProfileStackParamList, T>;
+export type EventsStackScreenProps<T extends keyof EventsStackParamList> = StackScreenProps<EventsStackParamList, T>;
 
 type TabBarIconProps = {
   focused: boolean;
@@ -48,26 +55,40 @@ type TabBarIconProps = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createStackNavigator<ChatStackParamList>();
+const EventsStack = createStackNavigator<EventsStackParamList>();
 const ProfileStack = createStackNavigator<ProfileStackParamList>();
 
-const ChatStack = () => {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MessagesList" component={ChatScreen} />
-      <Stack.Screen name="Chat" component={ChatDetailScreen} />
-    </Stack.Navigator>
-  );
-};
+// === Stack Navigators ===
+const ChatStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="MessagesList" component={ChatScreen} />
+    <Stack.Screen name="Chat" component={ChatDetailScreen} />
+  </Stack.Navigator>
+);
 
-const ProfileStackNavigator = () => {
-  return (
-    <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
-      <ProfileStack.Screen name="Profile" component={ProfileScreen} />
-      <ProfileStack.Screen name="Settings" component={SettingsScreen} />
-    </ProfileStack.Navigator>
-  );
-};
+const EventsStackNavigator = () => (
+  <EventsStack.Navigator screenOptions={{ headerShown: false }}>
+    <EventsStack.Screen name="EventsList" component={EventsScreen} />
+    <EventsStack.Screen name="EventDetail" component={EventDetailScreen} />
+    <EventsStack.Screen name="EventCalendar" component={EventCalendarScreen}
+      options={{ title: 'Event Calendar' }}
+    />
+  </EventsStack.Navigator>
+);
 
+const ProfileStackNavigator = () => (
+  <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+    <ProfileStack.Screen name="Profile" component={ProfileScreen} />
+    <ProfileStack.Screen name="Settings" component={SettingsScreen} />
+  </ProfileStack.Navigator>
+);
+
+// === Wrapped Components ===
+const ChatStackScreen = () => <ChatStack />;
+const EventsStackScreen = () => <EventsStackNavigator />;
+const ProfileStackScreen = () => <ProfileStackNavigator />;
+
+// === Main Tab Navigator ===
 const TabNavigator = () => {
   return (
     <Tab.Navigator
@@ -102,14 +123,14 @@ const TabNavigator = () => {
         headerShown: false,
       })}
     >
-      {/* Replace HomeScreen with SwipeableHomeScreen */}
       <Tab.Screen name="Home" component={SwipeableHomeScreen} />
       <Tab.Screen name="Match" component={MatchScreen} />
-      <Tab.Screen name="Messages" component={ChatStack} />
-      <Tab.Screen name="Events" component={EventsScreen} />
-      <Tab.Screen name="Profile" component={ProfileStackNavigator} />
+      <Tab.Screen name="Messages" component={ChatStackScreen} />
+      <Tab.Screen name="Events" component={EventsStackScreen} />
+      <Tab.Screen name="Profile" component={ProfileStackScreen} />
     </Tab.Navigator>
   );
 };
 
 export default TabNavigator;
+

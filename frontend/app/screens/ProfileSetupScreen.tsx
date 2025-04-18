@@ -1,109 +1,141 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
   ScrollView,
   SafeAreaView,
   KeyboardAvoidingView,
-  Platform
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/RootNavigator';
+  Platform,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/RootNavigator";
+import { useAuth } from "../hooks/supabase";
+import { Constants } from "../types/supabase";
+import { updateProfile } from "../services/profileService";
+import { Credentials } from "../types/auth";
 
-// You'll need to add these skill/expertise options
-const skillOptions = [
-  'Product', 'Design', 'Sales', 'Marketing', 'Engineering',
-  'Finance', 'Operations', 'Legal', 'HR', 'Content'
-];
+const skillOptions = Constants["public"]["Enums"]["skills"];
 
-type ProfileSetupStep = 'basicInfo' | 'skillsExpertise' | 'cofounderPreferences';
+type ProfileSetupStep =
+  | "signUp"
+  | "profile"
+  | "skills"
+  | "coFounderPreferences";
 
 export default function ProfileSetupScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [currentStep, setCurrentStep] = useState<ProfileSetupStep>('basicInfo');
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    bio: '',
-    skills: [] as string[],
-    lookingFor: [] as string[],
-    timeCommitment: '',
-    industry: '',
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [currentStep, setCurrentStep] = useState<ProfileSetupStep>("signUp");
+
+  const { signUp, session } = useAuth();
+
+  // Credential state
+  const [credentials, setCredentials] = useState<Credentials>({
+    email: "",
+    password: "",
   });
 
-  // Update form data
-  const updateFormData = (key: string, value: any) => {
-    setFormData({
-      ...formData,
+  const [profileFormData, setProfileFormData] = useState({
+    id: "",
+    name: "",
+    bio: "",
+    skills: [] as string[],
+    time_commitment: "",
+    seeking_skills: [] as string[],
+    industry: "",
+  });
+
+  // Update credentials
+  const updateCredentials = (key: string, value: string) => {
+    setCredentials({
+      ...credentials,
+      [key]: value,
+    });
+  };
+
+  // Update profile data
+  const updateProfileData = (key: string, value: any) => {
+    setProfileFormData({
+      ...profileFormData,
       [key]: value,
     });
   };
 
   // Toggle skill selection
   const toggleSkill = (skill: string) => {
-    if (formData.skills.includes(skill)) {
-      updateFormData('skills', formData.skills.filter(s => s !== skill));
+    if (profileFormData.skills.includes(skill)) {
+      updateProfileData(
+        "skills",
+        profileFormData.skills.filter((s) => s !== skill)
+      );
     } else {
-      updateFormData('skills', [...formData.skills, skill]);
+      updateProfileData("skills", [...profileFormData.skills, skill]);
     }
   };
 
-  // Toggle looking for selection
+  // Toggle seeking skill selection
   const toggleLookingFor = (skill: string) => {
-    if (formData.lookingFor.includes(skill)) {
-      updateFormData('lookingFor', formData.lookingFor.filter(s => s !== skill));
+    if (profileFormData.seeking_skills.includes(skill)) {
+      updateProfileData(
+        "seeking_skills",
+        profileFormData.seeking_skills.filter((s) => s !== skill)
+      );
     } else {
-      updateFormData('lookingFor', [...formData.lookingFor, skill]);
+      updateProfileData("seeking_skills", [
+        ...profileFormData.seeking_skills,
+        skill,
+      ]);
     }
+  };
+
+  // Handle sign up
+  const handleSignUp = async () => {
+    await signUp({
+      email: credentials.email,
+      password: credentials.password,
+    });
+    console.log("Sign up happened");
+
+    updateProfileData("id", session?.user.id);
   };
 
   // Handle next button click
-  const handleNext = () => {
-    if (currentStep === 'basicInfo') {
-      setCurrentStep('skillsExpertise');
-    } else if (currentStep === 'skillsExpertise') {
-      setCurrentStep('cofounderPreferences');
+  const handleNext = async () => {
+    if (currentStep === "signUp") {
+      await handleSignUp();
+      setCurrentStep("profile");
+    } else if (currentStep === "profile") {
+      setCurrentStep("skills");
+    } else if (currentStep === "skills") {
+      setCurrentStep("coFounderPreferences");
     } else {
-      // Profile setup complete, navigate to main tabs
+      await updateProfile(profileFormData.id, profileFormData);
+
       navigation.reset({
         index: 0,
-        routes: [{ name: 'MainTabs' }],
+        routes: [{ name: "MainTabs" }],
       });
     }
   };
 
   // Handle back button click
   const handleBack = () => {
-    if (currentStep === 'skillsExpertise') {
-      setCurrentStep('basicInfo');
-    } else if (currentStep === 'cofounderPreferences') {
-      setCurrentStep('skillsExpertise');
+    if (currentStep === "skills") {
+      setCurrentStep("profile");
+    } else if (currentStep === "coFounderPreferences") {
+      setCurrentStep("skills");
     }
   };
 
-  // Render Basic Information form
-  const renderBasicInfo = () => (
+  // Render sign up form
+  const renderSignUp = () => (
     <View style={styles.formContainer}>
-      <Text style={styles.sectionTitle}>Basic Information</Text>
-      <Text style={styles.sectionSubtitle}>Let's get to know you better</Text>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Full Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your full name"
-          placeholderTextColor="#A0A0A0"
-          value={formData.fullName}
-          onChangeText={(text) => updateFormData('fullName', text)}
-        />
-      </View>
+      <Text style={styles.sectionTitle}>Sign Up</Text>
+      <Text style={styles.sectionSubtitle}>Let's get you logged in</Text>
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Email</Text>
@@ -113,8 +145,8 @@ export default function ProfileSetupScreen() {
           placeholderTextColor="#A0A0A0"
           keyboardType="email-address"
           autoCapitalize="none"
-          value={formData.email}
-          onChangeText={(text) => updateFormData('email', text)}
+          value={credentials.email}
+          onChangeText={(text) => updateCredentials("email", text)}
         />
       </View>
 
@@ -125,8 +157,27 @@ export default function ProfileSetupScreen() {
           placeholder="Create a password"
           placeholderTextColor="#A0A0A0"
           secureTextEntry
-          value={formData.password}
-          onChangeText={(text) => updateFormData('password', text)}
+          value={credentials.password}
+          onChangeText={(text) => updateCredentials("password", text)}
+        />
+      </View>
+    </View>
+  );
+
+  // Render basic profile form
+  const renderProfile = () => (
+    <View style={styles.formContainer}>
+      <Text style={styles.sectionTitle}>Basic Information</Text>
+      <Text style={styles.sectionSubtitle}>Let's get to know you better</Text>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Full Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your full name"
+          placeholderTextColor="#A0A0A0"
+          value={profileFormData.name}
+          onChangeText={(text) => updateProfileData("name", text)}
         />
       </View>
 
@@ -138,15 +189,15 @@ export default function ProfileSetupScreen() {
           placeholderTextColor="#A0A0A0"
           multiline
           numberOfLines={4}
-          value={formData.bio}
-          onChangeText={(text) => updateFormData('bio', text)}
+          value={profileFormData.bio}
+          onChangeText={(text) => updateProfileData("bio", text)}
         />
       </View>
     </View>
   );
 
-  // Render Skills & Expertise form
-  const renderSkillsExpertise = () => (
+  // Render skills form
+  const renderSkills = () => (
     <View style={styles.formContainer}>
       <Text style={styles.sectionTitle}>Skills & Expertise</Text>
       <Text style={styles.sectionSubtitle}>What are you good at?</Text>
@@ -157,14 +208,16 @@ export default function ProfileSetupScreen() {
             key={skill}
             style={[
               styles.skillButton,
-              formData.skills.includes(skill) && styles.selectedSkillButton,
+              profileFormData.skills.includes(skill) &&
+                styles.selectedSkillButton,
             ]}
             onPress={() => toggleSkill(skill)}
           >
             <Text
               style={[
                 styles.skillButtonText,
-                formData.skills.includes(skill) && styles.selectedSkillButtonText,
+                profileFormData.skills.includes(skill) &&
+                  styles.selectedSkillButtonText,
               ]}
             >
               {skill}
@@ -176,7 +229,7 @@ export default function ProfileSetupScreen() {
   );
 
   // Render Co-founder Preferences form
-  const renderCofounderPreferences = () => (
+  const renderPreferences = () => (
     <View style={styles.formContainer}>
       <Text style={styles.sectionTitle}>Co-Founder Preferences</Text>
       <Text style={styles.sectionSubtitle}>What are you looking for?</Text>
@@ -188,14 +241,16 @@ export default function ProfileSetupScreen() {
             key={skill}
             style={[
               styles.skillButton,
-              formData.lookingFor.includes(skill) && styles.selectedSkillButton,
+              profileFormData.seeking_skills.includes(skill) &&
+                styles.selectedSkillButton,
             ]}
             onPress={() => toggleLookingFor(skill)}
           >
             <Text
               style={[
                 styles.skillButtonText,
-                formData.lookingFor.includes(skill) && styles.selectedSkillButtonText,
+                profileFormData.seeking_skills.includes(skill) &&
+                  styles.selectedSkillButtonText,
               ]}
             >
               {skill}
@@ -210,27 +265,29 @@ export default function ProfileSetupScreen() {
           style={styles.input}
           placeholder="Preferred industry"
           placeholderTextColor="#A0A0A0"
-          value={formData.industry}
-          onChangeText={(text) => updateFormData('industry', text)}
+          value={profileFormData.industry}
+          onChangeText={(text) => updateProfileData("industry", text)}
         />
       </View>
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Time Commitment</Text>
         <View style={styles.timeCommitmentContainer}>
-          {['Part-time', 'Full-time'].map((option) => (
+          {["Part-time", "Full-time"].map((option) => (
             <TouchableOpacity
               key={option}
               style={[
                 styles.timeCommitmentButton,
-                formData.timeCommitment === option && styles.selectedTimeCommitmentButton,
+                profileFormData.time_commitment === option &&
+                  styles.selectedTimeCommitmentButton,
               ]}
-              onPress={() => updateFormData('timeCommitment', option)}
+              onPress={() => updateProfileData("time_commitment", option)}
             >
               <Text
                 style={[
                   styles.timeCommitmentButtonText,
-                  formData.timeCommitment === option && styles.selectedTimeCommitmentButtonText,
+                  profileFormData.time_commitment === option &&
+                    styles.selectedTimeCommitmentButtonText,
                 ]}
               >
                 {option}
@@ -251,28 +308,65 @@ export default function ProfileSetupScreen() {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           {/* Progress indicator */}
           <View style={styles.progressContainer}>
-            <View style={[styles.progressStep, { backgroundColor: currentStep === 'basicInfo' ? '#4B2E83' : '#D8D3E8' }]} />
+            <View
+              style={[
+                styles.progressStep,
+                {
+                  backgroundColor:
+                    currentStep === "signUp" ? "#4B2E83" : "#D8D3E8",
+                },
+              ]}
+            />
             <View style={styles.progressLine} />
-            <View style={[styles.progressStep, { backgroundColor: currentStep === 'skillsExpertise' ? '#4B2E83' : '#D8D3E8' }]} />
+            <View
+              style={[
+                styles.progressStep,
+                {
+                  backgroundColor:
+                    currentStep === "profile" ? "#4B2E83" : "#D8D3E8",
+                },
+              ]}
+            />
             <View style={styles.progressLine} />
-            <View style={[styles.progressStep, { backgroundColor: currentStep === 'cofounderPreferences' ? '#4B2E83' : '#D8D3E8' }]} />
+            <View
+              style={[
+                styles.progressStep,
+                {
+                  backgroundColor:
+                    currentStep === "skills" ? "#4B2E83" : "#D8D3E8",
+                },
+              ]}
+            />
+            <View style={styles.progressLine} />
+            <View
+              style={[
+                styles.progressStep,
+                {
+                  backgroundColor:
+                    currentStep === "coFounderPreferences"
+                      ? "#4B2E83"
+                      : "#D8D3E8",
+                },
+              ]}
+            />
           </View>
 
           {/* Form content based on current step */}
-          {currentStep === 'basicInfo' && renderBasicInfo()}
-          {currentStep === 'skillsExpertise' && renderSkillsExpertise()}
-          {currentStep === 'cofounderPreferences' && renderCofounderPreferences()}
+          {currentStep === "signUp" && renderSignUp()}
+          {currentStep === "profile" && renderProfile()}
+          {currentStep === "skills" && renderSkills()}
+          {currentStep === "coFounderPreferences" && renderPreferences()}
 
           {/* Navigation buttons */}
           <View style={styles.buttonContainer}>
-            {currentStep !== 'basicInfo' && (
+            {currentStep !== "profile" && (
               <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                 <Text style={styles.backButtonText}>Back</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
               <Text style={styles.nextButtonText}>
-                {currentStep === 'cofounderPreferences' ? 'Complete' : 'Next'}
+                {currentStep === "coFounderPreferences" ? "Complete" : "Next"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -285,15 +379,15 @@ export default function ProfileSetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   scrollContainer: {
     padding: 20,
     paddingBottom: 40,
   },
   progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 20,
     paddingHorizontal: 10,
   },
@@ -301,31 +395,31 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
   },
   progressLine: {
     flex: 1,
     height: 2,
-    backgroundColor: '#D8D3E8',
+    backgroundColor: "#D8D3E8",
   },
   formContainer: {
     marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4B2E83',
+    fontWeight: "bold",
+    color: "#4B2E83",
     marginBottom: 8,
   },
   sectionSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginBottom: 24,
   },
   subsectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4B2E83',
+    fontWeight: "bold",
+    color: "#4B2E83",
     marginTop: 16,
     marginBottom: 12,
   },
@@ -334,29 +428,29 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   textArea: {
     minHeight: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   skillsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginTop: 8,
     marginBottom: 16,
   },
   skillButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -364,69 +458,69 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   selectedSkillButton: {
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
   },
   skillButtonText: {
-    color: '#333',
+    color: "#333",
     fontSize: 14,
   },
   selectedSkillButtonText: {
-    color: 'white',
+    color: "white",
   },
   timeCommitmentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "flex-start",
   },
   timeCommitmentButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
     borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 24,
     marginRight: 12,
   },
   selectedTimeCommitmentButton: {
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
   },
   timeCommitmentButtonText: {
-    color: '#333',
+    color: "#333",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   selectedTimeCommitmentButtonText: {
-    color: 'white',
+    color: "white",
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 30,
   },
   backButton: {
     borderWidth: 1,
-    borderColor: '#4B2E83',
+    borderColor: "#4B2E83",
     borderRadius: 30,
     paddingVertical: 12,
     paddingHorizontal: 24,
     flex: 1,
     marginRight: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   backButtonText: {
-    color: '#4B2E83',
+    color: "#4B2E83",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   nextButton: {
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
     borderRadius: 30,
     paddingVertical: 12,
     paddingHorizontal: 24,
     flex: 1,
     marginLeft: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   nextButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
