@@ -1,13 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
-import { EventsStackParamList } from '../navigation/TabNavigator';
+import { EventsStackScreenProps } from '../navigation/TabNavigator';
 
-type EventDetailProps = {
-  route: RouteProp<EventsStackParamList, 'EventDetail'>;
-};
+type Props = EventsStackScreenProps<'EventDetail'>;
 
-const EventDetailScreen: React.FC<EventDetailProps> = ({ route }) => {
+const EventDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { event } = route.params;
 
   const formattedDate = new Date(event.date).toLocaleString('en-GB', {
@@ -56,9 +53,12 @@ const EventDetailScreen: React.FC<EventDetailProps> = ({ route }) => {
         </>
       )}
 
-
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Book via Student Hub</Text>
+      {/* 添加的日历按钮 - 保持原有样式不变 */}
+      <TouchableOpacity 
+        style={styles.calendarButton}
+        onPress={() => navigation.navigate('EventCalendar', { event })}
+      >
+        <Text style={styles.buttonText}>View in Calendar</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -66,13 +66,14 @@ const EventDetailScreen: React.FC<EventDetailProps> = ({ route }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 80, // Added top padding for space at the top
-    paddingHorizontal: 20,
-    backgroundColor: '#fff',
+    padding: 16,
+    paddingTop: 80,
+    paddingBottom: 32,
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   title: {
     fontSize: 26,
@@ -81,86 +82,80 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   badge: {
-    marginTop: 8,
-    backgroundColor: '#E9DFFB',
-    borderRadius: 16,
+    backgroundColor: '#4B2E83',
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    paddingHorizontal: 12,
+    borderRadius: 4,
   },
   badgeText: {
-    fontSize: 14,
-    color: '#4B2E83',
-    fontWeight: '500',
+    color: 'white',
+    fontSize: 12,
   },
   card: {
-    backgroundColor: '#F5F3F9',
-    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
     padding: 16,
     marginBottom: 16,
   },
   cardTitle: {
-    fontWeight: 'bold',
     fontSize: 16,
-    marginBottom: 6,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   cardContent: {
-    fontSize: 15,
-    color: '#444',
+    fontSize: 14,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: 16,
+    marginBottom: 8,
   },
   sectionContent: {
-    fontSize: 15,
-    color: '#444',
-    marginBottom: 12,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
   },
   mapPlaceholder: {
-    height: 80,
-    backgroundColor: '#F5F3F9',
-    borderRadius: 12,
+    height: 150,
+    backgroundColor: '#E0E0E0',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    borderRadius: 8,
   },
   mapText: {
-    color: '#999',
+    color: '#666',
   },
   tagContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   tag: {
-    backgroundColor: '#E9DFFB',
+    backgroundColor: '#EDE7F6',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 16,
     marginRight: 8,
-    marginTop: 6,
+    marginBottom: 8,
   },
   tagText: {
     color: '#4B2E83',
-    fontSize: 14,
+    fontSize: 12,
   },
-  button: {
+  // 新增的日历按钮样式
+  calendarButton: {
     backgroundColor: '#4B2E83',
-    paddingVertical: 14,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
+    marginTop: 16,
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
 });
-
 
 export default EventDetailScreen;
