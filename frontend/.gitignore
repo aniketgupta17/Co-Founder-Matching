@@ -1,3 +1,49 @@
+# dependencies
 node_modules/
-.expo/web/cache
-package-lock.json
+npm-debug.*
+
+# expo
+.expo/
+dist/
+web-build/
+
+# environment variables
+.env
+.env.*
+!.env.example
+
+# native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# macOS
+.DS_Store
+*.pem
+
+# typescript
+*.tsbuildinfo
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# optional: if your project has these
+/coverage
+/.idea
+/.vscode
