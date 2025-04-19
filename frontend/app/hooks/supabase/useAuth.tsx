@@ -26,12 +26,38 @@ type AuthProviderProps = {
 };
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { supabase } = useSupabase();
+  const { supabase, USE_MOCK_AUTH } = useSupabase();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshSession = async () => {
+    // If using mock auth, create a fake session
+    if (USE_MOCK_AUTH) {
+      console.log("Using mock authentication");
+      const mockUser = {
+        id: "mock-user-id",
+        email: "mock@example.com",
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      } as User;
+      
+      const mockSession = {
+        access_token: "mock-token",
+        refresh_token: "mock-refresh-token",
+        expires_in: 3600,
+        expires_at: new Date().getTime() + 3600000,
+        token_type: "bearer",
+        user: mockUser,
+      } as Session;
+      
+      setSession(mockSession);
+      setUser(mockUser);
+      return;
+    }
+
     const {
       data: { session },
       error,
@@ -55,25 +81,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     getInitialSession();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user || null);
-      setLoading(false);
-    });
+    // Only set up auth state change listener if not using mock auth
+    if (!USE_MOCK_AUTH) {
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+        setUser(session?.user || null);
+        setLoading(false);
+      });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
   }, []);
 
   const signIn = async (credentials: Credentials) => {
-    setLoading(false);
+    setLoading(true);
+    
+    // Use mock auth if enabled
+    if (USE_MOCK_AUTH) {
+      console.log("Mock sign in with:", credentials.email);
+      await refreshSession();
+      setLoading(false);
+      return;
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
+    
     if (error) {
       console.log(`Sign in error: ${error}`);
       throw error;
@@ -83,10 +122,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signUp = async (credentials: Credentials) => {
     setLoading(true);
+    
+    // Use mock auth if enabled
+    if (USE_MOCK_AUTH) {
+      console.log("Mock sign up with:", credentials.email);
+      await refreshSession();
+      setLoading(false);
+      return;
+    }
+    
     const { error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password,
     });
+    
     if (error) {
       console.log(`Sign up error: ${error}`);
       throw error;
@@ -96,6 +145,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signOut = async () => {
     setLoading(true);
+    
+    // Use mock auth if enabled
+    if (USE_MOCK_AUTH) {
+      console.log("Mock sign out");
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setLoading(false);

@@ -16,9 +16,11 @@ interface ChatMessage {
 interface Event {
   id: number;
   title: string;
+  type?: string;
   date: string;
   location: string;
   description: string;
+  tags?: string[];
 }
 
 interface Match {
@@ -164,16 +166,29 @@ const mockData = {
       {
         id: 1,
         title: "Startup Mixer",
-        date: "2024-04-15",
-        location: "UQ St Lucia Campus",
-        description: "Network with fellow entrepreneurs and find your co-founder"
+        type: "Events and Hackathons",
+        date: "2025-03-13T16:30:00Z",
+        location: "UQ St Lucia, Advanced Engineering Building (49)",
+        description: "Network with some of Brisbane's best local startups. Our Startup Mixer event includes a reverse pitch where our startups pitch their business to you! Startups range from health tech, fintech, and sustainability.",
+        tags: ["HealthTech", "FinTech", "Sustainability"],
       },
       {
         id: 2,
-        title: "Tech Meetup",
-        date: "2024-04-20",
+        title: "Early-Stage Investor Course",
+        type: "Startup Education",
+        date: "2025-03-20T08:30:00Z",
         location: "Brisbane CBD",
-        description: "Latest trends in technology and startup ecosystem"
+        description: "This workshop presents case studies and expert presentations for potential investors to learn about early-stage investment. Learn from experienced angel investors and venture capitalists about due diligence, valuation, and portfolio management.",
+        tags: ["Investment", "Venture Capital", "Angel Investing", "Education"]
+      },
+      {
+        id: 3,
+        title: "Tech Meetup",
+        type: "Networking",
+        date: "2025-04-05T17:00:00Z",
+        location: "UQ Innovation Hub",
+        description: "Join the monthly tech meetup to connect with developers, designers and tech enthusiasts. This month's focus is on AI applications in startups.",
+        tags: ["AI", "Development", "Design", "Innovation"]
       }
     ]
   },

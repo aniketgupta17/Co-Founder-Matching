@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -9,10 +9,13 @@ import {
   TextInput,
   ActivityIndicator,
   SafeAreaView,
-  ScrollView
+  ScrollView,
+  Modal,
+  Alert
 } from 'react-native';
 import { useMockApi } from '../hooks/useMockApi';
 import { ChatStackScreenProps } from '../navigation/TabNavigator';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Chat {
   id: number;
@@ -22,8 +25,8 @@ interface Chat {
   lastMessage: string;
   timestamp: string;
   unread: boolean;
-  archived?: boolean;
-  new?: boolean;
+  isGroup?: boolean;
+  participants?: number;
 }
 
 interface ChatData {
@@ -31,41 +34,179 @@ interface ChatData {
   chats: Chat[];
 }
 
+// Mock QR code SVG - this would be generated dynamically in a real app
+const QR_CODE_SVG = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="5" width="190" height="190" fill="#ffffff" stroke="#000000" stroke-width="5"/>
+  <g fill="#000000">
+    <!-- QR Code pattern - simplified for example -->
+    <rect x="20" y="20" width="20" height="20"/>
+    <rect x="40" y="20" width="20" height="20"/>
+    <rect x="60" y="20" width="20" height="20"/>
+    <rect x="20" y="40" width="20" height="20"/>
+    <rect x="60" y="40" width="20" height="20"/>
+    <rect x="20" y="60" width="20" height="20"/>
+    <rect x="40" y="60" width="20" height="20"/>
+    <rect x="60" y="60" width="20" height="20"/>
+    
+    <rect x="120" y="20" width="20" height="20"/>
+    <rect x="140" y="20" width="20" height="20"/>
+    <rect x="160" y="20" width="20" height="20"/>
+    <rect x="120" y="40" width="20" height="20"/>
+    <rect x="160" y="40" width="20" height="20"/>
+    <rect x="120" y="60" width="20" height="20"/>
+    <rect x="140" y="60" width="20" height="20"/>
+    <rect x="160" y="60" width="20" height="20"/>
+    
+    <rect x="20" y="120" width="20" height="20"/>
+    <rect x="40" y="120" width="20" height="20"/>
+    <rect x="60" y="120" width="20" height="20"/>
+    <rect x="20" y="140" width="20" height="20"/>
+    <rect x="60" y="140" width="20" height="20"/>
+    <rect x="20" y="160" width="20" height="20"/>
+    <rect x="40" y="160" width="20" height="20"/>
+    <rect x="60" y="160" width="20" height="20"/>
+    
+    <rect x="100" y="100" width="20" height="20"/>
+    <rect x="120" y="100" width="20" height="20"/>
+    <rect x="100" y="120" width="20" height="20"/>
+    <rect x="80" y="80" width="20" height="20"/>
+  </g>
+</svg>`;
+
+// Tab types
+type TabType = 'Direct' | 'Groups' | 'AI';
+
 const ChatScreen: React.FC<ChatStackScreenProps<'MessagesList'>> = ({ navigation }) => {
   const { data, loading, error } = useMockApi('chat');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('All');
-  const [filter, setFilter] = useState<'all' | 'unread' | 'archived'>('all');
+  const [activeTab, setActiveTab] = useState<TabType>('Direct');
+  const [createGroupVisible, setCreateGroupVisible] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [groupDescription, setGroupDescription] = useState('');
+  const [selectedContacts, setSelectedContacts] = useState<number[]>([]);
+  const [showQRCodeModal, setShowQRCodeModal] = useState(false);
+  const [qrGroup, setQrGroup] = useState<{name: string, participants: number} | null>(null);
+  const [groups, setGroups] = useState<Chat[]>([]);
+  
+  // Mock contacts for group creation
+  const mockContacts = [
+    { id: 1, name: 'Alex Johnson', avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
+    { id: 2, name: 'Taylor Wong', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
+    { id: 3, name: 'Sarah Miller', avatar: 'https://randomuser.me/api/portraits/women/67.jpg' },
+    { id: 4, name: 'James Wilson', avatar: 'https://randomuser.me/api/portraits/men/91.jpg' },
+    { id: 5, name: 'Emma Brown', avatar: 'https://randomuser.me/api/portraits/women/28.jpg' },
+  ];
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
-  }
+  // Initialize mock groups
+  useEffect(() => {
+    const initialGroups: Chat[] = [
+      {
+        id: 101,
+        name: "Co-Founder Team",
+        avatar: "https://i.imgur.com/XsD0Ofl.png",
+        lastMessage: "Let's schedule our next team meeting!",
+        timestamp: new Date(Date.now() - 1800000).toISOString(),
+        unread: true,
+        isGroup: true,
+        participants: 4
+      }
+    ];
+    
+    setGroups(initialGroups);
+  }, []);
 
-  if (error) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
-  }
+  // Filter chats based on active tab and search query
+  const getFilteredChats = () => {
+    if (!data?.chats) return [];
+    
+    // Filter by tab type first
+    let filteredByType: Chat[] = [];
+    
+    if (activeTab === 'Direct') {
+      filteredByType = data.chats.filter((chat: Chat) => !chat.isGroup);
+    } else if (activeTab === 'Groups') {
+      // Combine mock groups with any groups from the API
+      const apiGroups = data.chats.filter((chat: Chat) => chat.isGroup);
+      filteredByType = [...groups, ...apiGroups];
+    } else if (activeTab === 'AI') {
+      // Return mock AI chat
+      return [{
+        id: 999,
+        name: 'Co-Founder AI',
+        avatar: 'https://i.imgur.com/7XL3VFr.png', // AI icon placeholder
+        lastMessage: 'How can I help with your startup today?',
+        timestamp: new Date().toISOString(),
+        unread: false,
+      }];
+    }
+    
+    // Then filter by search query
+    if (searchQuery.trim()) {
+      return filteredByType.filter(chat => 
+        chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    return filteredByType;
+  };
 
-  const chatData = data as ChatData;
-  const filteredChats = chatData.chats.filter(chat => {
-    if (filter === 'unread') return chat.unread;
-    if (filter === 'archived') return chat.archived;
-    return !chat.archived;
-  });
+  const handleChatPress = (chat: Chat) => {
+    // Navigate to the specific chat screen
+    navigation.navigate('Chat', { 
+      chatId: chat.id,
+      name: chat.name,
+      avatar: chat.avatar,
+      isGroup: chat.isGroup
+    });
+  };
+
+  const handleCreateGroup = () => {
+    if (!groupName.trim() || selectedContacts.length === 0) {
+      Alert.alert("Error", "Please enter a group name and select at least one contact");
+      return;
+    }
+    
+    // Create a new group chat
+    const newGroup: Chat = {
+      id: 100 + groups.length + 1,
+      name: groupName,
+      lastMessage: "Group created",
+      timestamp: new Date().toISOString(),
+      unread: false,
+      isGroup: true,
+      participants: selectedContacts.length + 1, // +1 for current user
+    };
+    
+    // Add the new group to our state
+    setGroups([...groups, newGroup]);
+    
+    // Close the create group modal and show the QR code
+    setCreateGroupVisible(false);
+    
+    // Set up the QR group info for sharing
+    setQrGroup({
+      name: groupName,
+      participants: selectedContacts.length + 1
+    });
+    
+    // Show the QR code modal
+    setShowQRCodeModal(true);
+  };
+
+  const toggleContactSelection = (contactId: number) => {
+    if (selectedContacts.includes(contactId)) {
+      setSelectedContacts(selectedContacts.filter(id => id !== contactId));
+    } else {
+      setSelectedContacts([...selectedContacts, contactId]);
+    }
+  };
 
   const getInitials = (name: string) => {
-    const nameParts = name.split(' ');
-    if (nameParts.length > 1) {
-      return `${nameParts[0][0]}${nameParts[1][0]}`;
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return `${parts[0][0]}${parts[1][0]}`;
     }
-    return nameParts[0][0];
+    return name.substring(0, 2).toUpperCase();
   };
 
   const formatTime = (timestamp: string) => {
@@ -81,14 +222,15 @@ const ChatScreen: React.FC<ChatStackScreenProps<'MessagesList'>> = ({ navigation
     } else if (diffInHours < 48) {
       return 'Yesterday';
     } else {
-      return `${date.getDate()}d`;
+      return `${date.getMonth() + 1}/${date.getDate()}`;
     }
   };
 
   const renderChatItem = ({ item }: { item: Chat }) => (
     <TouchableOpacity
       style={styles.chatItem}
-      onPress={() => navigation.navigate('Chat', { chatId: item.id })}
+      onPress={() => handleChatPress(item)}
+      activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>
         {item.avatar ? (
@@ -98,36 +240,59 @@ const ChatScreen: React.FC<ChatStackScreenProps<'MessagesList'>> = ({ navigation
             <Text style={styles.initials}>{getInitials(item.name)}</Text>
           </View>
         )}
+        {item.unread && <View style={styles.unreadDot} />}
       </View>
+      
       <View style={styles.chatInfo}>
         <View style={styles.chatHeader}>
           <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.timestamp}>
-            {new Date(item.timestamp).toLocaleDateString()}
-          </Text>
+          <Text style={styles.timestamp}>{formatTime(item.timestamp)}</Text>
         </View>
-        <Text style={styles.lastMessage} numberOfLines={1}>
+        
+        <Text 
+          style={[styles.lastMessage, item.unread && styles.unreadMessage]} 
+          numberOfLines={1}
+        >
+          {item.isGroup && item.participants && (
+            <Text style={styles.groupInfo}>{item.participants} participants • </Text>
+          )}
           {item.lastMessage}
         </Text>
-        {item.unread && <View style={styles.unreadBadge} />}
       </View>
     </TouchableOpacity>
+  );
+
+  // Simplified QR code component
+  const QRCode = ({ data }: { data: string }) => (
+    <View style={styles.qrCodeImage}>
+      <Image 
+        source={{ uri: `data:image/svg+xml;utf8,${encodeURIComponent(QR_CODE_SVG)}` }} 
+        style={styles.qrImage}
+        resizeMode="contain"
+      />
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerTitleContainer}>
-          <View style={styles.userInitials}>
-            <Text style={styles.userInitialsText}>MK</Text>
-          </View>
-          <Text style={styles.headerTitle}>Messages</Text>
-        </View>
+        <Text style={styles.headerTitle}>Messages</Text>
+        <TouchableOpacity 
+          style={styles.createGroupButton}
+          onPress={() => {
+            setGroupName('');
+            setGroupDescription('');
+            setSelectedContacts([]);
+            setCreateGroupVisible(true);
+          }}
+        >
+          <Ionicons name="people" size={24} color="#4B2E83" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Ionicons name="search" size={20} color="#999" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search messages..."
@@ -138,50 +303,193 @@ const ChatScreen: React.FC<ChatStackScreenProps<'MessagesList'>> = ({ navigation
         </View>
       </View>
 
-      <View style={styles.tabContainer}>
-        <ScrollableTabBar 
-          tabs={['All', 'Unread', 'Archived']}
-          activeTab={filter}
-          onTabPress={(tab) => setFilter(tab as 'all' | 'unread' | 'archived')}
-        />
-      </View>
-
-      <FlatList
-        data={filteredChats}
-        renderItem={renderChatItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.chatList}
-        showsVerticalScrollIndicator={false}
-      />
-
-      <TouchableOpacity style={styles.newChatButton}>
-        <Text style={styles.newChatButtonIcon}>+</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
-  );
-};
-
-interface ScrollableTabBarProps {
-  tabs: string[];
-  activeTab: string;
-  onTabPress: (tab: string) => void;
-}
-
-const ScrollableTabBar: React.FC<ScrollableTabBarProps> = ({ tabs, activeTab, onTabPress }) => {
-  return (
-    <View style={styles.scrollableTabContainer}>
-      {tabs.map((tab) => (
+      <View style={styles.tabsContainer}>
         <TouchableOpacity
-          key={tab}
-          style={[styles.tab, activeTab === tab && styles.activeTab]}
-          onPress={() => onTabPress(tab)}
+          style={[styles.tab, activeTab === 'Direct' && styles.activeTab]}
+          onPress={() => setActiveTab('Direct')}
         >
-          <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-            {tab}
+          <Text style={[styles.tabText, activeTab === 'Direct' && styles.activeTabText]}>
+            Direct
           </Text>
         </TouchableOpacity>
-      ))}
-    </View>
+        
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'Groups' && styles.activeTab]}
+          onPress={() => setActiveTab('Groups')}
+        >
+          <Text style={[styles.tabText, activeTab === 'Groups' && styles.activeTabText]}>
+            Groups
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'AI' && styles.activeTab]}
+          onPress={() => setActiveTab('AI')}
+        >
+          <Text style={[styles.tabText, activeTab === 'AI' && styles.activeTabText]}>
+            AI Chat
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {loading ? (
+        <View style={styles.centerContainer}>
+          <Text>Loading chats...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : getFilteredChats().length === 0 ? (
+        <View style={styles.centerContainer}>
+          <Text style={styles.noChatsText}>
+            {searchQuery ? 'No chats found matching your search' : `No ${activeTab.toLowerCase()} chats yet`}
+          </Text>
+          {activeTab === 'Groups' && (
+            <TouchableOpacity 
+              style={styles.createButton}
+              onPress={() => setCreateGroupVisible(true)}
+            >
+              <Text style={styles.createButtonText}>Create a Group</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : (
+        <FlatList
+          data={getFilteredChats()}
+          renderItem={renderChatItem}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.chatList}
+        />
+      )}
+
+      {/* Create Group Modal */}
+      <Modal
+        visible={createGroupVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setCreateGroupVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Create Group Chat</Text>
+              <TouchableOpacity onPress={() => setCreateGroupVisible(false)}>
+                <Ionicons name="close" size={24} color="#4B2E83" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.inputLabel}>Group Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter group name"
+              value={groupName}
+              onChangeText={setGroupName}
+            />
+
+            <Text style={styles.inputLabel}>Description (Optional)</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="What's this group about?"
+              multiline
+              numberOfLines={3}
+              value={groupDescription}
+              onChangeText={setGroupDescription}
+            />
+
+            <Text style={styles.inputLabel}>Add People</Text>
+            <ScrollView style={styles.contactsList}>
+              {mockContacts.map(contact => (
+                <TouchableOpacity
+                  key={contact.id}
+                  style={styles.contactItem}
+                  onPress={() => toggleContactSelection(contact.id)}
+                >
+                  <View style={styles.contactInfo}>
+                    <Image source={{ uri: contact.avatar }} style={styles.contactAvatar} />
+                    <Text style={styles.contactName}>{contact.name}</Text>
+                  </View>
+                  <View style={[
+                    styles.checkbox, 
+                    selectedContacts.includes(contact.id) && styles.checkboxSelected
+                  ]}>
+                    {selectedContacts.includes(contact.id) && (
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity 
+              style={[
+                styles.createGroupBtn,
+                (!groupName || selectedContacts.length === 0) && styles.disabledButton
+              ]}
+              onPress={handleCreateGroup}
+              disabled={!groupName || selectedContacts.length === 0}
+            >
+              <Text style={styles.createGroupBtnText}>Create Group</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* QR Code Modal */}
+      <Modal
+        visible={showQRCodeModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowQRCodeModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Group Invite</Text>
+              <TouchableOpacity onPress={() => setShowQRCodeModal(false)}>
+                <Ionicons name="close" size={24} color="#4B2E83" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.qrInstructions}>
+              Share this QR code to invite others to join your group
+            </Text>
+
+            <View style={styles.qrCodeContainer}>
+              <QRCode data={`group-invite:${qrGroup?.name}`} />
+            </View>
+
+            <Text style={styles.groupNameDisplay}>{qrGroup?.name}</Text>
+            {qrGroup && (
+              <Text style={styles.participantsText}>
+                {qrGroup.participants} participant{qrGroup.participants !== 1 ? 's' : ''}
+              </Text>
+            )}
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.shareButton}>
+                <Ionicons name="share-outline" size={20} color="white" />
+                <Text style={styles.shareButtonText}>Share Link</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.doneButton}
+                onPress={() => {
+                  setShowQRCodeModal(false);
+                  // Switch to Groups tab to show the new group
+                  setActiveTab('Groups');
+                }}
+              >
+                <Text style={styles.doneButtonText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 };
 
@@ -191,61 +499,46 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  headerTitleContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  userInitials: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  userInitialsText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4B2E83',
+    padding: 16,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4B2E83',
   },
+  createGroupButton: {
+    padding: 8,
+  },
   searchContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    borderRadius: 20,
-    paddingHorizontal: 16,
+    borderRadius: 8,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-  },
-  searchIcon: {
-    marginRight: 8,
-    fontSize: 16,
-    color: '#999',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   searchInput: {
     flex: 1,
+    marginLeft: 8,
     fontSize: 16,
     color: '#333',
   },
-  tabContainer: {
-    marginBottom: 16,
-  },
-  scrollableTabContainer: {
+  tabsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
+    marginBottom: 8,
   },
   tab: {
     paddingVertical: 8,
@@ -258,56 +551,108 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    color: '#666',
+    color: '#4B2E83',
   },
   activeTabText: {
     color: 'white',
     fontWeight: 'bold',
   },
-  chatList: {
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#4B2E83',
+    paddingVertical: 8,
     paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  noChatsText: {
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 16,
+  },
+  createButton: {
+    backgroundColor: '#4B2E83',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  createButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  chatList: {
+    padding: 16,
   },
   chatItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F0FF',
-    padding: 12,
+    backgroundColor: 'white',
     borderRadius: 12,
+    padding: 12,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   avatarContainer: {
+    position: 'relative',
     marginRight: 12,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   initialsContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: '#4B2E83',
     justifyContent: 'center',
     alignItems: 'center',
   },
   initials: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+  },
+  unreadDot: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4B2E83',
+    borderWidth: 2,
+    borderColor: 'white',
   },
   chatInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
   chatHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 4,
   },
   name: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#333',
   },
   timestamp: {
@@ -318,52 +663,173 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  unreadBadge: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4B2E83',
+  unreadMessage: {
+    fontWeight: 'bold',
+    color: '#333',
   },
-  loadingContainer: {
+  groupInfo: {
+    fontWeight: '500',
+    color: '#4B2E83',
+  },
+  modalContainer: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    padding: 16,
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  modalContent: {
     backgroundColor: 'white',
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
+    maxHeight: '80%',
   },
-  errorText: {
-    color: 'red',
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4B2E83',
+  },
+  inputLabel: {
     fontSize: 16,
-    textAlign: 'center',
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#333',
   },
-  newChatButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#4B2E83',
+  input: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  contactsList: {
+    maxHeight: 300,
+    marginBottom: 16,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  contactInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  contactAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  contactName: {
+    fontSize: 16,
+    color: '#333',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#4B2E83',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
-  newChatButtonIcon: {
-    fontSize: 28,
+  checkboxSelected: {
+    backgroundColor: '#4B2E83',
+  },
+  createGroupBtn: {
+    backgroundColor: '#4B2E83',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
+  },
+  createGroupBtnText: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  qrInstructions: {
+    textAlign: 'center',
+    marginBottom: 16,
+    color: '#666',
+  },
+  qrCodeContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  qrCodeImage: {
+    width: 200,
+    height: 200,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 10,
+    padding: 8,
+  },
+  qrImage: {
+    width: '100%',
+    height: '100%',
+  },
+  groupNameDisplay: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: 4,
+  },
+  participantsText: {
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: 16,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  shareButton: {
+    flex: 1,
+    backgroundColor: '#4B2E83',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  shareButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  doneButton: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  doneButtonText: {
+    color: '#4B2E83',
+    fontWeight: 'bold',
   },
 });
 

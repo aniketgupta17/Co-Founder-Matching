@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,45 +9,9 @@ const logoImage = require('../../assets/splash-icon.png');
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [currentStep, setCurrentStep] = useState(0);
 
-  const onboardingSteps = [
-    {
-      title: 'Welcome',
-      description: 'Find your ideal co-founder with our matching platform.',
-      buttonText: 'Get Started',
-    },
-    {
-      title: 'Step 1: Profile',
-      description: 'Create a detailed profile with your skills and expertise.',
-      buttonText: 'Continue',
-    },
-    {
-      title: 'Step 2: Preferences',
-      description: 'Tell us what you\'re looking for in a co-founder.',
-      buttonText: 'Continue',
-    },
-    {
-      title: 'Step 3: Matching',
-      description: 'Get matched with compatible co-founders.',
-      buttonText: 'Continue',
-    },
-    {
-      title: 'Step 4: Connect',
-      description: 'Start conversations with your matches.',
-      buttonText: 'Let\'s Begin',
-    },
-  ];
-
-  const currentStepData = onboardingSteps[currentStep];
-
-  const handleNext = () => {
-    if (currentStep < onboardingSteps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      // Navigate to profile setup when onboarding is complete
-      navigation.navigate('ProfileSetup');
-    }
+  const handleGetStarted = () => {
+    navigation.navigate('Login');
   };
 
   return (
@@ -59,33 +23,17 @@ export default function WelcomeScreen() {
       </View>
 
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>{currentStepData.title}</Text>
-        <Text style={styles.description}>{currentStepData.description}</Text>
-
-        {/* Step indicators */}
-        <View style={styles.stepIndicatorContainer}>
-          {onboardingSteps.map((_, index) => (
-            <View 
-              key={index} 
-              style={[
-                styles.stepDot, 
-                index === currentStep ? styles.activeDot : null
-              ]} 
-            />
-          ))}
-        </View>
+        <Text style={styles.title}>Find Your Perfect Co-Founder Match</Text>
+        <Text style={styles.description}>
+          Connect with compatible co-founders based on skills, interests, and goals. 
+          Build your dream team and turn your startup ideas into reality!
+        </Text>
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>{currentStepData.buttonText}</Text>
+        <TouchableOpacity style={styles.button} onPress={handleGetStarted}>
+          <Text style={styles.buttonText}>Get Started</Text>
         </TouchableOpacity>
-
-        {currentStep === 0 && (
-          <TouchableOpacity style={styles.loginLink}>
-            <Text style={styles.loginText}>Already have an account? Login</Text>
-          </TouchableOpacity>
-        )}
       </View>
     </SafeAreaView>
   );
@@ -133,23 +81,8 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     textAlign: 'center',
-    marginBottom: 30,
     paddingHorizontal: 20,
-  },
-  stepIndicatorContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  stepDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    marginHorizontal: 5,
-  },
-  activeDot: {
-    backgroundColor: 'white',
+    lineHeight: 24,
   },
   buttonContainer: {
     alignItems: 'center',
@@ -166,12 +99,5 @@ const styles = StyleSheet.create({
     color: '#4B2E83',
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  loginLink: {
-    marginTop: 10,
-  },
-  loginText: {
-    color: 'white',
-    fontSize: 16,
   },
 });
