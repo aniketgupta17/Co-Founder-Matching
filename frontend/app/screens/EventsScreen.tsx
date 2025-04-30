@@ -15,6 +15,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MainTabParamList, EventsStackParamList } from '../navigation/TabNavigator';
 import { useMockApi } from '../hooks/useMockApi';
+import { Ionicons } from '@expo/vector-icons';
 
 // Define the AppEvent data type
 export interface Event {
@@ -52,6 +53,11 @@ const EventsScreen: React.FC = () => {
     navigation.navigate('EventDetail', { event }); // Navigate to event detail page
   };
 
+  // Navigate to calendar view
+  const handleViewCalendar = () => {
+    navigation.navigate('EventCalendar', {});
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -79,14 +85,32 @@ const EventsScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Events</Text>
-          {/* Navigate to Profile */}
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Image
-              source={{ uri: 'https://randomuser.me/api/portraits/men/75.jpg' }}
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>Events</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.calendarButton}
+              onPress={handleViewCalendar}
+            >
+              <Ionicons name="calendar-outline" size={24} color="#4B2E83" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+              <Image
+                source={{ uri: 'https://randomuser.me/api/portraits/men/75.jpg' }}
+                style={styles.profileImage}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {/* Upcoming Events Title */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Upcoming Events</Text>
+          <Text style={styles.sectionSubtitle}>
+            Connect with founders, mentors & investors
+          </Text>
         </View>
 
         {/* Events List */}
@@ -114,6 +138,13 @@ const EventsScreen: React.FC = () => {
                 <Text style={styles.eventDescription} numberOfLines={2}>
                   {event.description}
                 </Text>
+                
+                {/* Event type tag */}
+                {event.type && (
+                  <View style={styles.eventTypeContainer}>
+                    <Text style={styles.eventType}>{event.type}</Text>
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           ))}
@@ -153,8 +184,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  headerLeft: {
+    flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#4B2E83' },
+  calendarButton: {
+    padding: 8,
+    marginRight: 16,
+  },
   profileImage: { width: 40, height: 40, borderRadius: 20 },
+  sectionHeader: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
   eventsList: { marginTop: 16 },
   eventCard: {
     flexDirection: 'row',
@@ -176,6 +231,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 60,
+    alignSelf: 'flex-start',
   },
   eventMonth: { color: 'white', fontSize: 14, fontWeight: 'bold' },
   eventDay: { color: 'white', fontSize: 20, fontWeight: 'bold' },
@@ -187,7 +243,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   eventLocation: { fontSize: 14, color: '#666', marginBottom: 4 },
-  eventDescription: { fontSize: 14, color: '#666', lineHeight: 20 },
+  eventDescription: { fontSize: 14, color: '#666', lineHeight: 20, marginBottom: 8 },
+  eventTypeContainer: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EDE6F7',
+    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  eventType: {
+    fontSize: 12,
+    color: '#4B2E83',
+  },
 });
 
 export default EventsScreen;

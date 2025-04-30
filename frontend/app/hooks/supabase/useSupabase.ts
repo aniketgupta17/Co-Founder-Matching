@@ -1,13 +1,21 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import Constants from "expo-constants";
 
-// TODO fix environment variable handling
-const supabaseUrl = process.env.SUPABASE_API_URL || "";
-const supabaseApiKey = process.env.SUPABASE_KEY || "";
+// Use environment variables from expo-constants or fallback to empty strings
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || "";
+const supabaseApiKey = Constants.expoConfig?.extra?.supabaseKey || "";
+
+// For development testing - use a flag to bypass real authentication
+const USE_MOCK_AUTH = false; // Set to false when you have proper Supabase credentials
 
 let supabaseInstance: SupabaseClient | null = null;
 
 export const getSupabaseClient = (): SupabaseClient => {
   if (!supabaseInstance) {
+    // Log configuration info for debugging
+    console.log("Supabase URL:", supabaseUrl ? "Configured" : "Missing");
+    console.log("Supabase Key:", supabaseApiKey ? "Configured" : "Missing");
+    
     supabaseInstance = createClient(supabaseUrl, supabaseApiKey);
   }
 
@@ -16,6 +24,5 @@ export const getSupabaseClient = (): SupabaseClient => {
 
 export function useSupabase() {
   const supabase = getSupabaseClient();
-
-  return { supabase };
+  return { supabase, USE_MOCK_AUTH };
 }

@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { useMockApi } from '../hooks/useMockApi';
 import { format, parseISO, isSameMonth, isSameDay } from 'date-fns';
 import { RouteProp } from '@react-navigation/native';
 import { EventsStackParamList } from '../navigation/TabNavigator';
 import { Event } from '../screens/EventsScreen';
+import { Ionicons } from '@expo/vector-icons';
 
 type EventCalendarRouteProp = RouteProp<EventsStackParamList, 'EventCalendar'>;
 
 type Props = {
   route: EventCalendarRouteProp;
+  navigation: any;
 };
 
-const EventCalendarScreen: React.FC<Props> = ({ route }) => {
+const EventCalendarScreen: React.FC<Props> = ({ route, navigation }) => {
   const { data, loading, error } = useMockApi('events');
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -78,8 +80,24 @@ const EventCalendarScreen: React.FC<Props> = ({ route }) => {
     );
   };
 
+  // Function to handle event press
+  const handleEventPress = (event: Event) => {
+    navigation.navigate('EventDetail', { event });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header with back button */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#4B2E83" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Events Calendar</Text>
+      </View>
+
       <Calendar
         current={format(new Date(), 'yyyy-MM-dd')}
         markedDates={markedDates}
@@ -88,6 +106,8 @@ const EventCalendarScreen: React.FC<Props> = ({ route }) => {
           selectedDayBackgroundColor: '#4B2E83',
           todayTextColor: '#4B2E83',
           arrowColor: '#4B2E83',
+          textMonthFontWeight: 'bold',
+          textDayHeaderFontWeight: '600',
         }}
         dayComponent={CustomDayComponent}
       />
@@ -97,14 +117,25 @@ const EventCalendarScreen: React.FC<Props> = ({ route }) => {
           {format(currentMonth, 'MMMM yyyy')} Events
         </Text>
 
-        {monthEvents.map(event => (
-          <View key={event.id} style={styles.eventItem}>
-            <Text style={styles.eventTitle}>{event.title}</Text>
-            <Text style={styles.eventTime}>
-              {format(parseISO(event.date), 'MMM do, h:mm a')}
-            </Text>
-          </View>
-        ))}
+        <ScrollView>
+          {monthEvents.length === 0 ? (
+            <Text style={styles.noEventsText}>No events this month</Text>
+          ) : (
+            monthEvents.map(event => (
+              <TouchableOpacity 
+                key={event.id} 
+                style={styles.eventItem}
+                onPress={() => handleEventPress(event)}
+              >
+                <Text style={styles.eventTitle}>{event.title}</Text>
+                <Text style={styles.eventTime}>
+                  {format(parseISO(event.date), 'MMM do, h:mm a')}
+                </Text>
+                <Text style={styles.eventLocation}>{event.location}</Text>
+              </TouchableOpacity>
+            ))
+          )}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -115,7 +146,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9f8fc', // overall background color
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+    backgroundColor: 'white',
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4B2E83',
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 30, // Offset for the back button to center the title
+  },
   eventsContainer: {
+    flex: 1,
     marginTop: 20,
     paddingHorizontal: 20, // event list padding
   },
@@ -128,7 +179,7 @@ const styles = StyleSheet.create({
   eventItem: {
     backgroundColor: 'white',
     borderRadius: 12, // rounded corner
-    padding: 12,
+    padding: 16,
     marginVertical: 8,
     shadowColor: '#ccc',
     shadowOpacity: 0.2,
@@ -138,10 +189,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
     color: '#4B2E83', // purple title text
+    marginBottom: 4,
   },
   eventTime: {
-    color: '#4B2E83',
+    color: '#666',
     fontSize: 14,
+    marginBottom: 4,
+  },
+  eventLocation: {
+    color: '#666',
+    fontSize: 14,
+  },
+  noEventsText: {
+    color: '#666',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+    fontStyle: 'italic',
   },
   dayCircle: {
     width: 40,

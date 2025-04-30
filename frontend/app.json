@@ -24,6 +24,20 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    },
+    "updates": {
+      "enabled": false
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "runtimeVersion": {
+      "policy": "nativeVersion"
     }
   }
 }

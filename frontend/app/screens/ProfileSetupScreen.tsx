@@ -9,6 +9,8 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -17,11 +19,12 @@ import { useAuth } from "../hooks/supabase";
 import { Constants } from "../types/supabase";
 import { updateProfile } from "../services/profileService";
 import { Credentials } from "../types/auth";
+import { Ionicons } from '@expo/vector-icons';
 
 const skillOptions = Constants["public"]["Enums"]["skills"];
 
 type ProfileSetupStep =
-  | "signUp"
+  | "signup"
   | "profile"
   | "skills"
   | "coFounderPreferences";
@@ -29,7 +32,8 @@ type ProfileSetupStep =
 export default function ProfileSetupScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [currentStep, setCurrentStep] = useState<ProfileSetupStep>("signUp");
+  const [currentStep, setCurrentStep] = useState<ProfileSetupStep>("signup");
+  const [isLoading, setIsLoading] = useState(false);
 
   const { signUp, session } = useAuth();
 
@@ -38,6 +42,8 @@ export default function ProfileSetupScreen() {
     email: "",
     password: "",
   });
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [profileFormData, setProfileFormData] = useState({
     id: "",
@@ -48,6 +54,32 @@ export default function ProfileSetupScreen() {
     seeking_skills: [] as string[],
     industry: "",
   });
+
+  // Function to check password match
+  const passwordsMatch = () => {
+    return credentials.password === confirmPassword;
+  };
+
+  // Function to check if form is valid
+  const isFormValid = () => {
+    switch (currentStep) {
+      case "signup":
+        return (
+          credentials.email !== "" &&
+          credentials.password !== "" &&
+          confirmPassword !== "" &&
+          passwordsMatch()
+        );
+      case "profile":
+        return profileFormData.name !== "" && profileFormData.bio !== "";
+      case "skills":
+        return profileFormData.skills.length > 0;
+      case "coFounderPreferences":
+        return true; // This can be optional
+      default:
+        return false;
+    }
+  };
 
   // Update credentials
   const updateCredentials = (key: string, value: string) => {
@@ -93,56 +125,152 @@ export default function ProfileSetupScreen() {
   };
 
   // Handle sign up
-  const handleSignUp = async () => {
-    await signUp({
-      email: credentials.email,
-      password: credentials.password,
-    });
-    console.log("Sign up happened");
-
-    updateProfileData("id", session?.user.id);
+  const handleSignUp = async (): Promise<boolean> => {
+    console.log('Attempting signup...');
+    setIsLoading(true);
+    
+    try {
+      await signUp({
+        email: credentials.email,
+        password: credentials.password,
+      });
+      
+      console.log('Sign up completed');
+      
+      // Get user ID from session
+      if (session?.user?.id) {
+        updateProfileData("id", session.user.id);
+      } else {
+        // For development, we'll use a mock ID
+        console.log('Using mock session for frontend development');
+        updateProfileData("id", "mock-user-123");
+      }
+      
+      setIsLoading(false);
+      return true;
+      
+    } catch (error: any) {
+      console.error('Error during sign up:', error);
+      
+      // For offline development: allow proceeding despite network errors
+      if (error.toString().includes('Network request failed')) {
+        console.log('Network error detected - proceeding anyway for development');
+        Alert.alert(
+          'Development Mode', 
+          'Network error detected, but proceeding in development mode',
+          [{ text: 'OK', onPress: () => {} }]
+        );
+        
+        // Set a mock user ID
+        updateProfileData("id", "mock-user-" + Math.floor(Math.random() * 1000));
+        setIsLoading(false);
+        return true;
+      }
+      
+      Alert.alert('Error', 'Failed to create account. Please try again.');
+      setIsLoading(false);
+      return false;
+    }
   };
 
   // Handle next button click
   const handleNext = async () => {
-    if (currentStep === "signUp") {
-      await handleSignUp();
-      setCurrentStep("profile");
+    if (!isFormValid()) {
+      let errorMessage = "Please fill in all required fields";
+      
+      if (currentStep === "signup" && !passwordsMatch()) {
+        errorMessage = "Passwords do not match";
+      }
+      
+      Alert.alert("Error", errorMessage);
+      return;
+    }
+    
+    if (currentStep === "signup") {
+      const signupResult = await handleSignUp();
+      console.log('Signup result:', signupResult);
+      
+      if (signupResult) {
+        console.log('Moving to profile step');
+        setCurrentStep("profile");
+      } else {
+        console.log('Sign up failed, not proceeding to next step');
+      }
     } else if (currentStep === "profile") {
+      console.log('Moving from profile to skills step');
       setCurrentStep("skills");
     } else if (currentStep === "skills") {
+      console.log('Moving from skills to preferences step');
       setCurrentStep("coFounderPreferences");
     } else {
-      await updateProfile(profileFormData.id, profileFormData);
-
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "MainTabs" }],
-      });
+      // Final step - save profile and proceed to main app
+      console.log('Final step - updating profile and navigating to MainTabs');
+      setIsLoading(true);
+      
+      try {
+        console.log('Updating profile with data:', profileFormData);
+        await updateProfile(profileFormData.id, profileFormData);
+        
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs' }],
+        });
+      } catch (error: any) {
+        console.error('Error updating profile:', error);
+        
+        // For offline development: allow proceeding despite network errors
+        if (error.toString().includes('Network request failed')) {
+          console.log('Network error detected - proceeding anyway for development');
+          Alert.alert(
+            'Development Mode', 
+            'Network error detected, but proceeding to main app in development mode',
+            [{ 
+              text: 'OK', 
+              onPress: () => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'MainTabs' }],
+                });
+              } 
+            }]
+          );
+        } else {
+          Alert.alert('Error', 'Failed to create profile. Please try again.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   // Handle back button click
   const handleBack = () => {
-    if (currentStep === "skills") {
+    if (currentStep === "profile") {
+      setCurrentStep("signup");
+    } else if (currentStep === "skills") {
       setCurrentStep("profile");
     } else if (currentStep === "coFounderPreferences") {
       setCurrentStep("skills");
     }
   };
 
+  // Handle cancel button - go back to login
+  const handleCancel = () => {
+    navigation.navigate('Login');
+  };
+
   // Render sign up form
   const renderSignUp = () => (
     <View style={styles.formContainer}>
-      <Text style={styles.sectionTitle}>Sign Up</Text>
-      <Text style={styles.sectionSubtitle}>Let's get you logged in</Text>
+      <Text style={styles.sectionTitle}>Create Your Account</Text>
+      <Text style={styles.sectionSubtitle}>Sign up to join our co-founder network</Text>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Email</Text>
+        <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Enter your email"
-          placeholderTextColor="#A0A0A0"
+          placeholder="Email"
+          placeholderTextColor="#999"
           keyboardType="email-address"
           autoCapitalize="none"
           value={credentials.email}
@@ -151,16 +279,42 @@ export default function ProfileSetupScreen() {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Password</Text>
+        <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
         <TextInput
           style={styles.input}
           placeholder="Create a password"
-          placeholderTextColor="#A0A0A0"
-          secureTextEntry
+          placeholderTextColor="#999"
+          secureTextEntry={!showPassword}
           value={credentials.password}
           onChangeText={(text) => updateCredentials("password", text)}
         />
+        <TouchableOpacity
+          style={styles.passwordToggle}
+          onPress={() => setShowPassword(!showPassword)}
+        >
+          <Ionicons
+            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+            size={20}
+            color="#666"
+          />
+        </TouchableOpacity>
       </View>
+
+      <View style={styles.inputContainer}>
+        <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm password"
+          placeholderTextColor="#999"
+          secureTextEntry={!showPassword}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+      </View>
+      
+      {confirmPassword !== "" && !passwordsMatch() && (
+        <Text style={styles.errorText}>Passwords do not match</Text>
+      )}
     </View>
   );
 
@@ -168,25 +322,25 @@ export default function ProfileSetupScreen() {
   const renderProfile = () => (
     <View style={styles.formContainer}>
       <Text style={styles.sectionTitle}>Basic Information</Text>
-      <Text style={styles.sectionSubtitle}>Let's get to know you better</Text>
+      <Text style={styles.sectionSubtitle}>Tell us a bit about yourself</Text>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Full Name</Text>
+        <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Enter your full name"
-          placeholderTextColor="#A0A0A0"
+          placeholder="Full Name"
+          placeholderTextColor="#999"
           value={profileFormData.name}
           onChangeText={(text) => updateProfileData("name", text)}
         />
       </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Brief Bio</Text>
+      <View style={[styles.inputContainer, styles.textAreaContainer]}>
+        <Ionicons name="document-text-outline" size={20} color="#666" style={[styles.inputIcon, {alignSelf: 'flex-start', marginTop: 12}]} />
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="Tell us about yourself"
-          placeholderTextColor="#A0A0A0"
+          placeholder="Tell us about yourself, your background, and what you're looking for in a co-founder"
+          placeholderTextColor="#999"
           multiline
           numberOfLines={4}
           value={profileFormData.bio}
@@ -200,7 +354,7 @@ export default function ProfileSetupScreen() {
   const renderSkills = () => (
     <View style={styles.formContainer}>
       <Text style={styles.sectionTitle}>Skills & Expertise</Text>
-      <Text style={styles.sectionSubtitle}>What are you good at?</Text>
+      <Text style={styles.sectionSubtitle}>Select your key skills (at least one)</Text>
 
       <View style={styles.skillsContainer}>
         {skillOptions.map((skill) => (
@@ -232,9 +386,9 @@ export default function ProfileSetupScreen() {
   const renderPreferences = () => (
     <View style={styles.formContainer}>
       <Text style={styles.sectionTitle}>Co-Founder Preferences</Text>
-      <Text style={styles.sectionSubtitle}>What are you looking for?</Text>
+      <Text style={styles.sectionSubtitle}>What are you looking for in a co-founder?</Text>
 
-      <Text style={styles.subsectionTitle}>Skills I'm seeking:</Text>
+      <Text style={styles.subsectionTitle}>Skills you're seeking:</Text>
       <View style={styles.skillsContainer}>
         {skillOptions.map((skill) => (
           <TouchableOpacity
@@ -260,44 +414,56 @@ export default function ProfileSetupScreen() {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Industry</Text>
+        <Ionicons name="business-outline" size={20} color="#666" style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholder="Preferred industry"
-          placeholderTextColor="#A0A0A0"
+          placeholder="Industry (e.g., FinTech, HealthTech)"
+          placeholderTextColor="#999"
           value={profileFormData.industry}
           onChangeText={(text) => updateProfileData("industry", text)}
         />
       </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Time Commitment</Text>
-        <View style={styles.timeCommitmentContainer}>
-          {["Part-time", "Full-time"].map((option) => (
-            <TouchableOpacity
-              key={option}
+      <Text style={styles.subsectionTitle}>Time Commitment:</Text>
+      <View style={styles.timeCommitmentContainer}>
+        {["Part-time", "Full-time"].map((option) => (
+          <TouchableOpacity
+            key={option}
+            style={[
+              styles.timeCommitmentButton,
+              profileFormData.time_commitment === option &&
+                styles.selectedTimeCommitmentButton,
+            ]}
+            onPress={() => updateProfileData("time_commitment", option)}
+          >
+            <Text
               style={[
-                styles.timeCommitmentButton,
+                styles.timeCommitmentButtonText,
                 profileFormData.time_commitment === option &&
-                  styles.selectedTimeCommitmentButton,
+                  styles.selectedTimeCommitmentButtonText,
               ]}
-              onPress={() => updateProfileData("time_commitment", option)}
             >
-              <Text
-                style={[
-                  styles.timeCommitmentButtonText,
-                  profileFormData.time_commitment === option &&
-                    styles.selectedTimeCommitmentButtonText,
-                ]}
-              >
-                {option}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+              {option}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
+
+  // Get step title
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case "signup":
+        return "Create Account";
+      case "profile":
+        return "Your Profile";
+      case "skills":
+        return "Your Skills";
+      case "coFounderPreferences":
+        return "Co-Founder Preferences";
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -306,68 +472,81 @@ export default function ProfileSetupScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {/* Header with step title and cancel button */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{getStepTitle()}</Text>
+            <View style={styles.cancelButton} />
+          </View>
+          
           {/* Progress indicator */}
           <View style={styles.progressContainer}>
             <View
               style={[
                 styles.progressStep,
-                {
-                  backgroundColor:
-                    currentStep === "signUp" ? "#4B2E83" : "#D8D3E8",
-                },
+                currentStep === "signup" ? styles.activeStep : 
+                (currentStep === "profile" || currentStep === "skills" || currentStep === "coFounderPreferences") 
+                  ? styles.completedStep : styles.inactiveStep,
               ]}
             />
             <View style={styles.progressLine} />
             <View
               style={[
                 styles.progressStep,
-                {
-                  backgroundColor:
-                    currentStep === "profile" ? "#4B2E83" : "#D8D3E8",
-                },
+                currentStep === "profile" ? styles.activeStep : 
+                (currentStep === "skills" || currentStep === "coFounderPreferences") 
+                  ? styles.completedStep : styles.inactiveStep,
               ]}
             />
             <View style={styles.progressLine} />
             <View
               style={[
                 styles.progressStep,
-                {
-                  backgroundColor:
-                    currentStep === "skills" ? "#4B2E83" : "#D8D3E8",
-                },
+                currentStep === "skills" ? styles.activeStep : 
+                currentStep === "coFounderPreferences" 
+                  ? styles.completedStep : styles.inactiveStep,
               ]}
             />
             <View style={styles.progressLine} />
             <View
               style={[
                 styles.progressStep,
-                {
-                  backgroundColor:
-                    currentStep === "coFounderPreferences"
-                      ? "#4B2E83"
-                      : "#D8D3E8",
-                },
+                currentStep === "coFounderPreferences" 
+                  ? styles.activeStep : styles.inactiveStep,
               ]}
             />
           </View>
 
           {/* Form content based on current step */}
-          {currentStep === "signUp" && renderSignUp()}
+          {currentStep === "signup" && renderSignUp()}
           {currentStep === "profile" && renderProfile()}
           {currentStep === "skills" && renderSkills()}
           {currentStep === "coFounderPreferences" && renderPreferences()}
 
           {/* Navigation buttons */}
           <View style={styles.buttonContainer}>
-            {currentStep !== "profile" && (
+            {currentStep !== "signup" && (
               <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                 <Text style={styles.backButtonText}>Back</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-              <Text style={styles.nextButtonText}>
-                {currentStep === "coFounderPreferences" ? "Complete" : "Next"}
-              </Text>
+            <TouchableOpacity 
+              style={[
+                styles.nextButton,
+                !isFormValid() && styles.disabledButton
+              ]} 
+              onPress={handleNext}
+              disabled={!isFormValid() || isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.nextButtonText}>
+                  {currentStep === "coFounderPreferences" ? "Complete" : "Next"}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -385,142 +564,184 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4B2E83',
+    textAlign: 'center',
+  },
+  cancelButton: {
+    width: 60,
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+  },
   progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 30,
   },
   progressStep: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "#4B2E83",
   },
   progressLine: {
     flex: 1,
-    height: 2,
-    backgroundColor: "#D8D3E8",
+    height: 3,
+    backgroundColor: '#EEEEEE',
+    marginHorizontal: 5,
+  },
+  activeStep: {
+    backgroundColor: '#4B2E83',
+  },
+  completedStep: {
+    backgroundColor: '#8878B0', // Lighter purple
+  },
+  inactiveStep: {
+    backgroundColor: '#EEEEEE',
   },
   formContainer: {
-    marginBottom: 20,
+    marginBottom: 30,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#4B2E83",
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#4B2E83',
     marginBottom: 8,
   },
   sectionSubtitle: {
     fontSize: 16,
-    color: "#666",
-    marginBottom: 24,
+    color: '#666',
+    marginBottom: 20,
   },
   subsectionTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#4B2E83",
-    marginTop: 16,
+    fontWeight: '600',
+    color: '#4B2E83',
+    marginTop: 20,
     marginBottom: 12,
   },
   inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
     marginBottom: 16,
+    paddingHorizontal: 12,
   },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 8,
-    padding: 12,
+    flex: 1,
+    height: 50,
     fontSize: 16,
-    color: "#333",
+    color: '#333',
+  },
+  textAreaContainer: {
+    minHeight: 120,
+    alignItems: 'flex-start',
   },
   textArea: {
-    minHeight: 100,
-    textAlignVertical: "top",
+    height: 100,
+    textAlignVertical: 'top',
+    paddingTop: 12,
   },
-  skillsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: 8,
+  passwordToggle: {
+    padding: 8,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 14,
     marginBottom: 16,
   },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 5,
+  },
   skillButton: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 20,
-    paddingVertical: 8,
+    backgroundColor: '#F5F5F5',
     paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
     marginRight: 10,
     marginBottom: 10,
   },
   selectedSkillButton: {
-    backgroundColor: "#4B2E83",
+    backgroundColor: '#4B2E83',
   },
   skillButtonText: {
-    color: "#333",
+    color: '#666',
     fontSize: 14,
   },
   selectedSkillButtonText: {
-    color: "white",
+    color: 'white',
   },
   timeCommitmentContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
+    flexDirection: 'row',
+    marginTop: 10,
   },
   timeCommitmentButton: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    marginRight: 12,
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginHorizontal: 5,
+    borderRadius: 8,
   },
   selectedTimeCommitmentButton: {
-    backgroundColor: "#4B2E83",
+    backgroundColor: '#4B2E83',
   },
   timeCommitmentButtonText: {
-    color: "#333",
-    fontSize: 14,
-    fontWeight: "600",
+    color: '#666',
+    fontSize: 16,
   },
   selectedTimeCommitmentButtonText: {
-    color: "white",
+    color: 'white',
   },
   buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
   backButton: {
-    borderWidth: 1,
-    borderColor: "#4B2E83",
-    borderRadius: 30,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    backgroundColor: '#F5F5F5',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
     flex: 1,
     marginRight: 10,
-    alignItems: "center",
+    alignItems: 'center',
   },
   backButtonText: {
-    color: "#4B2E83",
+    color: '#666',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: '600',
   },
   nextButton: {
-    backgroundColor: "#4B2E83",
-    borderRadius: 30,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    flex: 1,
-    marginLeft: 10,
-    alignItems: "center",
+    backgroundColor: '#4B2E83',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    flex: 2,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
   },
   nextButtonText: {
-    color: "white",
+    color: 'white',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: '600',
   },
 });

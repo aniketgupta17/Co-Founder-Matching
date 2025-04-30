@@ -9,6 +9,7 @@ import { Event } from '../screens/EventsScreen';
 // Screens
 import SwipeableHomeScreen from '../screens/SwipeableHomeScreen';
 import MatchScreen from '../screens/MatchScreen';
+import MatchProfileScreen from '../screens/MatchProfileScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ChatDetailScreen from '../screens/ChatDetailScreen';
 import EventsScreen from '../screens/EventsScreen';
@@ -20,7 +21,12 @@ import SettingsScreen from '../screens/SettingsScreen';
 // Stack param types
 export type ChatStackParamList = {
   MessagesList: undefined;
-  Chat: { chatId: number };
+  Chat: { 
+    chatId: number;
+    name: string;
+    avatar?: string;
+    isGroup?: boolean;
+  };
 };
 
 export type ProfileStackParamList = {
@@ -28,10 +34,15 @@ export type ProfileStackParamList = {
   Settings: undefined;
 };
 
+export type MatchStackParamList = {
+  MatchesList: undefined;
+  MatchProfile: { match: any };
+};
+
 export type EventsStackParamList = {
   EventsList: undefined;
   EventDetail: { event: Event };
-  EventCalendar: { event?: Event };  // 添加这行
+  EventCalendar: { event?: Event };
 };
 
 export type MainTabParamList = {
@@ -46,6 +57,7 @@ export type TabScreenProps<T extends keyof MainTabParamList> = BottomTabScreenPr
 export type ChatStackScreenProps<T extends keyof ChatStackParamList> = StackScreenProps<ChatStackParamList, T>;
 export type ProfileStackScreenProps<T extends keyof ProfileStackParamList> = StackScreenProps<ProfileStackParamList, T>;
 export type EventsStackScreenProps<T extends keyof EventsStackParamList> = StackScreenProps<EventsStackParamList, T>;
+export type MatchStackScreenProps<T extends keyof MatchStackParamList> = StackScreenProps<MatchStackParamList, T>;
 
 type TabBarIconProps = {
   focused: boolean;
@@ -54,16 +66,24 @@ type TabBarIconProps = {
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-const Stack = createStackNavigator<ChatStackParamList>();
+const ChatStack = createStackNavigator<ChatStackParamList>();
 const EventsStack = createStackNavigator<EventsStackParamList>();
 const ProfileStack = createStackNavigator<ProfileStackParamList>();
+const MatchStack = createStackNavigator<MatchStackParamList>();
 
 // === Stack Navigators ===
-const ChatStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="MessagesList" component={ChatScreen} />
-    <Stack.Screen name="Chat" component={ChatDetailScreen} />
-  </Stack.Navigator>
+const ChatStackNavigator = () => (
+  <ChatStack.Navigator screenOptions={{ headerShown: false }}>
+    <ChatStack.Screen name="MessagesList" component={ChatScreen} />
+    <ChatStack.Screen name="Chat" component={ChatDetailScreen} />
+  </ChatStack.Navigator>
+);
+
+const MatchStackNavigator = () => (
+  <MatchStack.Navigator screenOptions={{ headerShown: false }}>
+    <MatchStack.Screen name="MatchesList" component={MatchScreen} />
+    <MatchStack.Screen name="MatchProfile" component={MatchProfileScreen} />
+  </MatchStack.Navigator>
 );
 
 const EventsStackNavigator = () => (
@@ -84,7 +104,8 @@ const ProfileStackNavigator = () => (
 );
 
 // === Wrapped Components ===
-const ChatStackScreen = () => <ChatStack />;
+const ChatStackScreen = () => <ChatStackNavigator />;
+const MatchStackScreen = () => <MatchStackNavigator />;
 const EventsStackScreen = () => <EventsStackNavigator />;
 const ProfileStackScreen = () => <ProfileStackNavigator />;
 
@@ -124,7 +145,7 @@ const TabNavigator = () => {
       })}
     >
       <Tab.Screen name="Home" component={SwipeableHomeScreen} />
-      <Tab.Screen name="Match" component={MatchScreen} />
+      <Tab.Screen name="Match" component={MatchStackScreen} />
       <Tab.Screen name="Messages" component={ChatStackScreen} />
       <Tab.Screen name="Events" component={EventsStackScreen} />
       <Tab.Screen name="Profile" component={ProfileStackScreen} />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -7,12 +7,22 @@ import {
   ScrollView, 
   Image,
   ActivityIndicator,
-  SafeAreaView
+  SafeAreaView,
+  Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { MainTabParamList } from '../navigation/TabNavigator';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MainTabParamList, MatchStackParamList } from '../navigation/TabNavigator';
 import { useMockApi } from '../hooks/useMockApi';
+import { Ionicons } from '@expo/vector-icons';
+
+// Define combined navigation type for Match screen
+type MatchScreenNavigationProp = CompositeNavigationProp<
+  StackNavigationProp<MatchStackParamList, 'MatchesList'>,
+  BottomTabNavigationProp<MainTabParamList>
+>;
 
 interface Match {
   id: number;
@@ -31,7 +41,19 @@ interface MatchData {
 
 const MatchScreen: React.FC = () => {
   const { data, loading, error } = useMockApi('matches') as { data: MatchData | null; loading: boolean; error: string | null };
-  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
+  const navigation = useNavigation<MatchScreenNavigationProp>();
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+
+  // Handle match profile press
+  const handleMatchPress = (match: Match) => {
+    // Navigate to profile view using the stack navigation
+    navigation.navigate('MatchProfile', { match });
+  };
+
+  // Toggle QR code modal
+  const toggleQrModal = () => {
+    setQrModalVisible(!qrModalVisible);
+  };
 
   if (loading) {
     return (
@@ -60,13 +82,25 @@ const MatchScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Matches</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Image 
-              source={{ uri: 'https://randomuser.me/api/portraits/men/75.jpg' }}
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>Matches</Text>
+          </View>
+          <View style={styles.headerRight}>
+            {/* QR Code Button */}
+            <TouchableOpacity 
+              style={styles.qrButton}
+              onPress={toggleQrModal}
+            >
+              <Ionicons name="qr-code-outline" size={24} color="#4B2E83" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+              <Image 
+                source={{ uri: 'https://randomuser.me/api/portraits/men/75.jpg' }}
+                style={styles.profileImage}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Matches List */}
@@ -75,7 +109,7 @@ const MatchScreen: React.FC = () => {
             <TouchableOpacity 
               key={match.id} 
               style={styles.matchCard}
-              onPress={() => navigation.navigate('Messages')}
+              onPress={() => handleMatchPress(match)}
             >
               <Image source={{ uri: match.image }} style={styles.matchImage} />
               <View style={styles.matchInfo}>
@@ -101,6 +135,42 @@ const MatchScreen: React.FC = () => {
           ))}
         </View>
       </ScrollView>
+
+      {/* QR Code Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={qrModalVisible}
+        onRequestClose={toggleQrModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Share Your Profile</Text>
+              <TouchableOpacity onPress={toggleQrModal}>
+                <Ionicons name="close" size={24} color="#4B2E83" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.qrContainer}>
+              {/* Placeholder for QR code image */}
+              <View style={styles.qrCode}>
+                <Text style={styles.qrPlaceholder}>Your QR Code</Text>
+              </View>
+              <Text style={styles.qrInstructions}>
+                Scan this QR code to instantly share your profile with others
+              </Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={toggleQrModal}
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -149,10 +219,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  headerLeft: {
+    flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#4B2E83',
+  },
+  qrButton: {
+    padding: 8,
+    marginRight: 16,
   },
   profileImage: {
     width: 40,
@@ -233,6 +314,64 @@ const styles = StyleSheet.create({
   interestText: {
     color: '#666',
     fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+    maxWidth: 340,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4B2E83',
+  },
+  qrContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  qrCode: {
+    width: 200,
+    height: 200,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  qrPlaceholder: {
+    color: '#666',
+    fontSize: 16,
+  },
+  qrInstructions: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  modalButton: {
+    backgroundColor: '#4B2E83',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
