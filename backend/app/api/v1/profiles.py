@@ -47,13 +47,16 @@ def get_my_profile():
 def create_profile():
     """Create a new profile."""
     data = request.json
+    DEFAULT_AVATAR_URL = 'https://bivbvzynoxlcfbvdkfol.supabase.co/storage/v1/object/sign/avatars/Default_Avatar.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5X2EyNDEwYTYxLTBjYjctNDY4NS04OTM0LWM3MjgwNzBhMDBjMSJ9.eyJ1cmwiOiJhdmF0YXJzL0RlZmF1bHRfQXZhdGFyLnBuZyIsImlhdCI6MTc0NjA4OTcwMCwiZXhwIjoxNzc3NjI1NzAwfQ.KJ2R0b0T462nmPmzZLpM7ibQF9Jvc3J_UCmJ7KX3Odo'
+    
     # This would typically insert into a database
     profile = {
         'id': 999,  # Placeholder ID
         'user_id': data.get('user_id'),
         'skills': data.get('skills', []),
         'interests': data.get('interests', []),
-        'bio': data.get('bio', '')
+        'bio': data.get('bio', ''),
+        'avatar_url': data.get('avatar_url', DEFAULT_AVATAR_URL) 
     }
     return jsonify(profile), 201
 
@@ -67,7 +70,8 @@ def update_profile(profile_id):
         'user_id': data.get('user_id'),
         'skills': data.get('skills', []),
         'interests': data.get('interests', []),
-        'bio': data.get('bio', '')
+        'bio': data.get('bio', ''),
+        'avatar_url': data.get('avatar_url', '')
     }
     return jsonify(profile)
 
