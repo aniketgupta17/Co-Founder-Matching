@@ -1,6 +1,6 @@
 import itertools
 from collections import defaultdict
-from .supabase_service import get_supabase_service
+from .supabase_service import SupabaseService
 
 # Imported weights and mappings from complete_matchmaking.py
 WEIGHTS = {
@@ -60,13 +60,10 @@ COLLAB_STYLE_SYNERGY = {
 class MatchingService:
     """Service for co-founder matching algorithm."""
     
-    def __init__(self):
-        self.supabase = get_supabase_service()
-    
     def generate_matches_for_user(self, user_id, top_n=5):
         """Generate top matches for a specific user."""
         # Get all users from Supabase
-        all_users = self.supabase.get_users()
+        all_users = SupabaseService.get_users()
         
         # Get the user we're matching for
         target_user = next((u for u in all_users if u['id'] == user_id), None)
@@ -377,4 +374,4 @@ class MatchingService:
 # Function to get a matching service instance
 def get_matching_service():
     """Get an instance of the matching service."""
-    return MatchingService() 
+    return MatchingService()

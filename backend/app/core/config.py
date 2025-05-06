@@ -10,10 +10,6 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-for-testing')
     DEBUG = os.getenv('FLASK_ENV', 'development') == 'development'
     
-    # Database settings
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///app.db')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
     # Supabase settings
     SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://example.supabase.co')
     SUPABASE_KEY = os.getenv('SUPABASE_KEY', 'example-key-for-testing')
@@ -26,10 +22,9 @@ class Config:
 class TestConfig(Config):
     """Configuration for testing."""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     
 
 class ProductionConfig(Config):
     """Configuration for production."""
     DEBUG = False
-    TESTING = False 
+    TESTING = False

@@ -1,168 +1,175 @@
 import os
-# Comment out the real supabase import since we're using mock data
-# from supabase import create_client
+from supabase import create_client, Client
 from flask import current_app
-import random
-import time
-import copy
-from .mock_data import MOCK_USERS, MOCK_PROFILES, MOCK_MATCHES
+
+supabase_client = None
+
+def init_supabase(app):
+    global supabase_client
+    url = app.config.get('SUPABASE_URL')
+    key = app.config.get('SUPABASE_KEY')
+    if not url or not key:
+        app.logger.error("Supabase URL or key is missing")
+        raise ValueError("Supabase URL or key is missing")
+    supabase_client = create_client(url, key)
+    app.logger.info("Supabase client initialized")
 
 class SupabaseService:
     """Service for interacting with Supabase."""
     
-    def __init__(self):
-        # For testing, we'll use mock data instead of connecting to Supabase
-        self.use_mock = True
-        
-        # Only try to connect to Supabase if we're not using mock data
-        if not self.use_mock:
-            self.url = current_app.config.get('SUPABASE_URL')
-            self.key = current_app.config.get('SUPABASE_KEY')
-            # Commented out to avoid the need for supabase library
-            # self.client = create_client(self.url, self.key)
-        
-        # Make a deep copy of mock data to avoid modifying the original
-        self.mock_users = copy.deepcopy(MOCK_USERS)
-        self.mock_profiles = copy.deepcopy(MOCK_PROFILES)
-        self.mock_matches = copy.deepcopy(MOCK_MATCHES)
+    @staticmethod
+    def get_client():
+        if supabase_client is None:
+            raise RuntimeError("Supabase client is not initialized")
+        return supabase_client
     
     # User methods
-    def get_users(self):
+    @staticmethod
+    def get_users():
         """Get all users from Supabase with complete profile data for matching."""
-        if self.use_mock:
-            return self.mock_users
-            
-        # Real Supabase implementation would normally be here
-        return []
-    
-    def get_user(self, user_id):
+        try:
+            response = SupabaseService.get_client().table('users').select('*').execute()
+            current_app.logger.info(f"Retrieved {len(response.data)} users")
+            return response.data
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving users: {str(e)}")
+            raise
+
+    @staticmethod
+    def get_user(user_id):
         """Get a specific user by ID with complete profile for matching."""
-        if self.use_mock:
-            user = next((u for u in self.mock_users if u['id'] == user_id), None)
-            return user
-            
-        # Real Supabase implementation would normally be here
-        return None
-    
-    def get_user_by_email(self, email):
+        try:
+            response = SupabaseService.get_client().table('users').select('*').eq('id', user_id).single().execute()
+            return response.data
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving user {user_id}: {str(e)}")
+            raise
+
+    @staticmethod
+    def get_user_by_email(email):
         """Get a user by email."""
-        if self.use_mock:
-            user = next((u for u in self.mock_users if u['email'] == email), None)
-            return user
-            
-        # Real Supabase implementation would normally be here
-        return None
+        try:
+            response = SupabaseService.get_client().table('users').select('*').eq('email', email).single().execute()
+            return response.data
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving user by email {email}: {str(e)}")
+            raise
     
     # Profile methods
-    def get_profiles(self):
+    @staticmethod
+    def get_profiles():
         """Get all profiles from Supabase."""
-        if self.use_mock:
-            return self.mock_profiles
-            
-        # Real Supabase implementation would normally be here
-        return []
-    
-    def get_profile(self, profile_id):
+        try:
+            response = SupabaseService.get_client().table('profiles').select('*').execute()
+            current_app.logger.info(f"Retrieved {len(response.data)} profiles")
+            return response.data
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving profiles: {str(e)}")
+            raise
+
+    @staticmethod
+    def get_profile(profile_id):
         """Get a specific profile by ID."""
-        if self.use_mock:
-            profile = next((p for p in self.mock_profiles if p['id'] == profile_id), None)
-            return profile
-            
-        # Real Supabase implementation would normally be here
-        return None
-    
-    def get_profile_by_user_id(self, user_id):
+        try:
+            response = SupabaseService.get_client().table('profiles').select('*').eq('id', profile_id).single().execute()
+            return response.data
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving profile {profile_id}: {str(e)}")
+            raise
+
+    @staticmethod
+    def get_profile_by_user_id(user_id):
         """Get profile for a specific user."""
-        if self.use_mock:
-            profile = next((p for p in self.mock_profiles if p['user_id'] == user_id), None)
-            return profile
-            
-        # Real Supabase implementation would normally be here
-        return None
+        try:
+            response = SupabaseService.get_client().table('profiles').select('*').eq('user_id', user_id).single().execute()
+            return response.data
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving profile for user {user_id}: {str(e)}")
+            raise
+
+    @staticmethod
+    def create_profile(profile_data):
+        """Create a new profile."""
+        try:
+            response = SupabaseService.get_client().table('profiles').insert(profile_data).execute()
+            current_app.logger.info(f"Created new profile for user: {profile_data.get('user_id')}")
+            return response.data[0] if response.data else None
+        except Exception as e:
+            current_app.logger.error(f"Error creating profile: {str(e)}")
+            raise
+
+    @staticmethod
+    def update_profile(profile_id, profile_data):
+        """Update an existing profile."""
+        try:
+            response = SupabaseService.get_client().table('profiles').update(profile_data).eq('id', profile_id).execute()
+            current_app.logger.info(f"Updated profile {profile_id}")
+            return response.data[0] if response.data else None
+        except Exception as e:
+            current_app.logger.error(f"Error updating profile {profile_id}: {str(e)}")
+            raise
+
+    @staticmethod
+    def delete_profile(profile_id):
+        """Delete a profile."""
+        try:
+            response = SupabaseService.get_client().table('profiles').delete().eq('id', profile_id).execute()
+            current_app.logger.info(f"Deleted profile {profile_id}")
+            return len(response.data) > 0
+        except Exception as e:
+            current_app.logger.error(f"Error deleting profile {profile_id}: {str(e)}")
+            raise
     
     # Matching methods
-    def get_matches(self, user_id):
+    @staticmethod
+    def get_matches(user_id):
         """Get all matches for a user."""
-        if self.use_mock:
-            matches = [m for m in self.mock_matches if m['user_id'] == user_id]
-            return matches
-            
-        # Real Supabase implementation would normally be here
-        return []
-    
-    def get_match(self, match_id):
+        response = SupabaseService.get_client().table('matches').select('*').eq('user_id', user_id).execute()
+        return response.data
+
+    @staticmethod
+    def get_match(match_id):
         """Get a specific match by ID."""
-        if self.use_mock:
-            match = next((m for m in self.mock_matches if m['id'] == match_id), None)
-            return match
-            
-        # Real Supabase implementation would normally be here
-        return None
-    
-    def store_match(self, user_id, match_user_id, score, explanation):
+        response = SupabaseService.get_client().table('matches').select('*').eq('id', match_id).single().execute()
+        return response.data
+
+    @staticmethod
+    def store_match(user_id, match_user_id, score, explanation):
         """Store a match in the database."""
         match_data = {
-            'id': len(self.mock_matches) + 1,
             'user_id': user_id,
             'matched_user_id': match_user_id,
             'compatibility_score': score,
             'explanation': explanation,
             'status': 'pending',
-            'created_at': time.strftime('%Y-%m-%dT%H:%M:%SZ')
         }
         
-        if self.use_mock:
-            # Check if a match already exists
-            existing_match = next((m for m in self.mock_matches 
-                                if m['user_id'] == user_id and m['matched_user_id'] == match_user_id), None)
-            if existing_match:
-                existing_match.update(match_data)
-                return existing_match
-            
-            # Add new match
-            self.mock_matches.append(match_data)
-            return match_data
-            
-        # Real Supabase implementation would normally be here
-        return None
+        response = SupabaseService.get_client().table('matches').insert(match_data).execute()
+        return response.data[0] if response.data else None
     
-    def get_recommended_matches(self, user_id):
+    @staticmethod
+    def get_recommended_matches(user_id):
         """
         Get recommended matches for a user.
-        In a real implementation, this would call the matching service.
+        This is a simplified version and should be replaced with a more sophisticated matching algorithm.
         """
-        # This will be replaced by the actual matching service
-        all_users = self.get_users()
-        existing_matches = self.get_matches(user_id)
-        
-        # Get IDs of already matched users
-        matched_ids = [match['matched_user_id'] for match in existing_matches]
-        
-        # Filter out already matched users and the user themselves
-        recommended = [user for user in all_users if user['id'] != user_id and user['id'] not in matched_ids]
-        
-        # Add a fake compatibility score for demo purposes
-        for user in recommended:
-            user['compatibility_score'] = round(random.uniform(0.7, 1.0), 2)
-        
-        # Sort by compatibility score
-        recommended.sort(key=lambda x: x['compatibility_score'], reverse=True)
-        
-        return recommended[:10]  # Return top 10 matches
-    
-    def update_match_status(self, match_id, status):
-        """Update a match status."""
-        if self.use_mock:
-            match = next((m for m in self.mock_matches if m['id'] == match_id), None)
-            if match:
-                match['status'] = status
-                return match
-            return None
-            
-        # Real Supabase implementation would normally be here
-        return None
+        # Get all users except the current user
+        response = SupabaseService.get_client().table('users').select('*').neq('id', user_id).execute()
+        all_users = response.data
 
-# Initialize service
-def get_supabase_service():
-    """Get an instance of the Supabase service."""
-    return SupabaseService() 
+        # Get existing matches for the user
+        existing_matches = SupabaseService.get_matches(user_id)
+        matched_ids = [match['matched_user_id'] for match in existing_matches]
+
+        # Filter out already matched users
+        recommended = [user for user in all_users if user['id'] not in matched_ids]
+
+        # In a real-world scenario, you would implement a more sophisticated matching algorithm here
+        # For now, we'll just return the first 10 users (or less if there are fewer than 10)
+        return recommended[:10]
+
+    @staticmethod
+    def update_match_status(match_id, status):
+        """Update a match status."""
+        response = SupabaseService.get_client().table('matches').update({'status': status}).eq('id', match_id).execute()
+        return response.data[0] if response.data else None

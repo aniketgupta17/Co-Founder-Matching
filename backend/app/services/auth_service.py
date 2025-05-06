@@ -1,6 +1,6 @@
 from flask import current_app, request, jsonify
 from functools import wraps
-from .supabase_service import get_supabase_service
+from .supabase_service import SupabaseService
 import jwt
 from datetime import datetime, timedelta
 
@@ -8,7 +8,6 @@ class AuthService:
     """Service for handling authentication."""
     
     def __init__(self):
-        self.supabase = get_supabase_service()
         self.secret_key = current_app.config.get('JWT_SECRET_KEY')
         self.token_expiry = current_app.config.get('JWT_ACCESS_TOKEN_EXPIRES', 3600)  # Default 1 hour
     
@@ -16,7 +15,7 @@ class AuthService:
         """Authenticate a user with email and password."""
         # For testing purposes, we're just looking up the user by email
         # and not verifying the password
-        user = self.supabase.get_user_by_email(email)
+        user = SupabaseService.get_user_by_email(email)
         
         if user:
             # Create JWT token
@@ -63,7 +62,7 @@ class AuthService:
         if not user_id:
             return None
             
-        return self.supabase.get_user(user_id)
+        return SupabaseService.get_user(user_id)
 
 # Function to create a decorator for protected routes
 def get_auth_service():
@@ -83,4 +82,4 @@ def login_required(f):
         # Add user to request context
         request.current_user = current_user
         return f(*args, **kwargs)
-    return decorated_function 
+    return decorated_function

@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from .api import register_blueprints
 from .core.config import Config
-from .models import db
+from .services.supabase_service import init_supabase
 
 def create_app(config_class=Config):
     """Create and configure the Flask application."""
@@ -10,8 +10,10 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     
     # Initialize extensions
-    CORS(app)
-    db.init_app(app)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    
+    # Initialize Supabase
+    init_supabase(app)
     
     # Register API blueprints
     register_blueprints(app)
@@ -20,8 +22,10 @@ def create_app(config_class=Config):
     def health_check():
         return {'status': 'healthy'}
     
-    # Create database tables on app creation
-    with app.app_context():
-        db.create_all()
+    # Add error handling
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        app.logger.error(f"Unhandled exception: {str(e)}")
+        return {"error": "An unexpected error occurred"}, 500
     
     return app
