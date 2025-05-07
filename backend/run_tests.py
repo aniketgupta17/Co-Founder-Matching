@@ -14,7 +14,7 @@ import json
 from app import create_app
 
 # Configuration
-HOST = 'localhost'
+HOST = '127.0.0.1'
 PORT = 5000
 BASE_URL = f"http://{HOST}:{PORT}/api/v1"
 
@@ -179,4 +179,25 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\nError during tests: {e}")
     finally:
-        print("Test run complete.") 
+        print("Test run complete.")
+
+
+def test_profiles2():
+    """Test profile endpoints."""
+    print("\n📋 Testing Profile Endpoints...")
+
+    print(BASE_URL)
+
+    # Get all profiles
+    response = requests.get(f"{BASE_URL}/profiles")
+    print_response(response, "Get All Profiles")
+def test_matching():
+    """Test profile endpoints."""
+    print("\n📋 Testing Profile Endpoints...")
+
+    print(BASE_URL)
+
+    # Get all profiles
+    response = requests.get(f"{BASE_URL}/profiles")
+    print_response(response, "Get All Profiles")
+

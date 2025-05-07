@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from . import bp
-from ...services.supabase_service import get_supabase_service
+from ...services.supabase_service import SupabaseService
 from ...services.matching_service import get_matching_service
 from ...services.auth_service import login_required
 
@@ -13,16 +13,14 @@ def get_matches():
     user = request.current_user
     user_id = user['id']
     
-    supabase = get_supabase_service()
-    matches = supabase.get_matches(user_id)
+    matches = SupabaseService.get_matches(user_id)
     return jsonify(matches)
 
 @bp.route('/matches/<int:match_id>', methods=['GET'])
 @login_required
 def get_match(match_id):
     """Get a specific match by ID."""
-    supabase = get_supabase_service()
-    match = supabase.get_match(match_id)
+    match = SupabaseService.get_match(match_id)
     
     if match is None:
         return jsonify({"error": "Match not found"}), 404
@@ -63,12 +61,11 @@ def generate_all_matches():
     
     # Store the matches in the database
     stored_matches = []
-    supabase = get_supabase_service()
     
     for user_id, user_matches in matches.items():
         for match in user_matches:
             # Store the match in the database
-            stored_match = supabase.store_match(
+            stored_match = SupabaseService.store_match(
                 int(user_id),
                 match['match_id'],
                 match['score'],
@@ -92,10 +89,8 @@ def match_action(match_id):
     if action not in ['accept', 'reject', 'connect']:
         return jsonify({'error': 'Invalid action'}), 400
     
-    supabase = get_supabase_service()
-    
     # Verify the match belongs to the current user
-    match = supabase.get_match(match_id)
+    match = SupabaseService.get_match(match_id)
     if not match:
         return jsonify({"error": "Match not found"}), 404
         
@@ -103,7 +98,7 @@ def match_action(match_id):
     if match['user_id'] != user['id'] and match['matched_user_id'] != user['id']:
         return jsonify({"error": "Unauthorized"}), 403
     
-    result = supabase.update_match_status(match_id, action)
+    result = SupabaseService.update_match_status(match_id, action)
     return jsonify(result)
 
 @bp.route('/matches/compatibility', methods=['POST'])
@@ -124,9 +119,8 @@ def check_compatibility():
     matching_service = get_matching_service()
     
     # Get both user objects
-    supabase = get_supabase_service()
-    user_obj = supabase.get_user(user_id)
-    other_user_obj = supabase.get_user(other_user_id)
+    user_obj = SupabaseService.get_user(user_id)
+    other_user_obj = SupabaseService.get_user(other_user_id)
     
     if not other_user_obj:
         return jsonify({"error": "Other user not found"}), 404
@@ -142,4 +136,4 @@ def check_compatibility():
         "compatibility_score": score,
         "explanation": explanation,
         "details": subs
-    }) 
+    })

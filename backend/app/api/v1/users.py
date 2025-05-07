@@ -1,20 +1,18 @@
 from flask import jsonify, request
 from . import bp
-from ...services.supabase_service import get_supabase_service
+from ...services.supabase_service import SupabaseService
 
 # Users endpoints
 @bp.route('/users', methods=['GET'])
 def get_users():
     """Get a list of all users."""
-    supabase = get_supabase_service()
-    users = supabase.get_users()
+    users = SupabaseService.get_users()
     return jsonify(users)
 
 @bp.route('/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     """Get a specific user by ID."""
-    supabase = get_supabase_service()
-    user = supabase.get_user(user_id)
+    user = SupabaseService.get_user(user_id)
     if user is None:
         return jsonify({"error": "User not found"}), 404
     return jsonify(user)
@@ -22,8 +20,7 @@ def get_user(user_id):
 @bp.route('/users/email/<string:email>', methods=['GET'])
 def get_user_by_email(email):
     """Get a user by their email address."""
-    supabase = get_supabase_service()
-    user = supabase.get_user_by_email(email)
+    user = SupabaseService.get_user_by_email(email)
     if user is None:
         return jsonify({"error": "User not found"}), 404
     return jsonify(user)
@@ -37,8 +34,7 @@ def get_current_user():
     if not user_id:
         return jsonify({"error": "Authentication required"}), 401
     
-    supabase = get_supabase_service()
-    user = supabase.get_user(int(user_id))
+    user = SupabaseService.get_user(int(user_id))
     if user is None:
         return jsonify({"error": "User not found"}), 404
     return jsonify(user)
@@ -72,4 +68,4 @@ def update_user(user_id):
 def delete_user(user_id):
     """Delete a user."""
     # This would typically delete from a database
-    return '', 204 
+    return '', 204
