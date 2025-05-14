@@ -200,4 +200,14 @@ def test_matching():
     # Get all profiles
     response = requests.get(f"{BASE_URL}/profiles")
     print_response(response, "Get All Profiles")
+def test_get_all_profiles():
+    """Test profile endpoints."""
+    print("\n📋 Testing Profile Endpoints...")
+
+    print(BASE_URL)
+
+    # Get all profiles
+    response = requests.get(f"{BASE_URL}/profiles")
+    print_response(response, "Get All Profiles")
+
 
