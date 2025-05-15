@@ -38,7 +38,7 @@ def test_login():
     print("\n🔑 Testing Authentication...")
     
     login_data = {
-        "email": "tech@example.com",
+        "email": "uma.williams@example.org",
         "password": "password123"  # Any password works with our mock
     }
     
@@ -210,4 +210,43 @@ def test_get_all_profiles():
     response = requests.get(f"{BASE_URL}/profiles")
     print_response(response, "Get All Profiles")
 
+
+def test_login_test():
+    """Test login endpoint and return the auth token."""
+    print("\n🔑 Testing Authentication...")
+
+    login_data = {
+        "email": "uma.williams@example.org",
+        "password": "password123"  # Any password works with our mock
+    }
+
+    # Print request details
+    print(f"POST {BASE_URL}/login")
+    print(f"Request Body: {json.dumps(login_data)}")
+
+    try:
+        response = requests.post(f"{BASE_URL}/login", json=login_data)
+        print_response(response, "Login")
+
+        if response.status_code == 200:
+            return response.json().get('token')
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error making request: {e}")
+        return None
+
+
+def test_users(token):
+    """Test user endpoints."""
+    print("\n👤 Testing User Endpoints...")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Get all users
+    response = requests.get(f"{BASE_URL}/auth/me", headers=headers)
+    print_response(response, "Get All Users")
+def test_login_all():
+    token=test_login_test()
+    test_users(token)
+    print(token)
 
