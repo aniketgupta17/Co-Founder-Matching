@@ -40,7 +40,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
   ];
 
   // Initialize with some mock messages
-  useEffect(() => {
+  useEffect(() => { 
     const mockMessages = [
       {
         id: 1,

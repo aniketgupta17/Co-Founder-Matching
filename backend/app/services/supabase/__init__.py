@@ -1,0 +1,1 @@
+from .supabase_service import get_supabase_service

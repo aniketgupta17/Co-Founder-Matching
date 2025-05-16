@@ -1,6 +1,6 @@
 import itertools
 from collections import defaultdict
-from .supabase_service import get_supabase_service
+from .supabase.supabase_service import get_supabase_service
 
 # Imported weights and mappings from complete_matchmaking.py
 WEIGHTS = {

@@ -16,3 +16,5 @@ flake8==6.0.0
 pyjwt==2.6.0
 SQLAlchemy==1.4.46
 aniso8601==9.0.1
+
+supabase

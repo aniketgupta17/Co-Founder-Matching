@@ -9,6 +9,99 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chat_members: {
+        Row: {
+          chat_id: number | null
+          created_at: string
+          id: number
+          user_id: string | null
+        }
+        Insert: {
+          chat_id?: number | null
+          created_at?: string
+          id?: number
+          user_id?: string | null
+        }
+        Update: {
+          chat_id?: number | null
+          created_at?: string
+          id?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_members_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chats: {
+        Row: {
+          created_at: string
+          id: number
+          is_group: boolean
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          is_group: boolean
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_group?: boolean
+          name?: string | null
+        }
+        Relationships: []
+      }
+      education_list: {
+        Row: {
+          degree: string | null
+          graduation_year: string | null
+          id: number
+          institution: string | null
+        }
+        Insert: {
+          degree?: string | null
+          graduation_year?: string | null
+          id?: number
+          institution?: string | null
+        }
+        Update: {
+          degree?: string | null
+          graduation_year?: string | null
+          id?: number
+          institution?: string | null
+        }
+        Relationships: []
+      }
+      goals_list: {
+        Row: {
+          goal_name: string
+          id: number
+        }
+        Insert: {
+          goal_name: string
+          id?: number
+        }
+        Update: {
+          goal_name?: string
+          id?: number
+        }
+        Relationships: []
+      }
       interest_list: {
         Row: {
           id: number
@@ -24,6 +117,32 @@ export type Database = {
         }
         Relationships: []
       }
+      match_requests: {
+        Row: {
+          created_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           id: string
@@ -31,6 +150,7 @@ export type Database = {
           status: string | null
           user_1: string | null
           user_2: string | null
+          user_3: string | null
         }
         Insert: {
           id?: string
@@ -38,6 +158,7 @@ export type Database = {
           status?: string | null
           user_1?: string | null
           user_2?: string | null
+          user_3?: string | null
         }
         Update: {
           id?: string
@@ -45,37 +166,45 @@ export type Database = {
           status?: string | null
           user_1?: string | null
           user_2?: string | null
+          user_3?: string | null
         }
         Relationships: []
       }
       messages: {
         Row: {
-          content: string
+          chat_id: number | null
+          content: Json | null
           id: string
-          match_id: string | null
-          sender_id: string | null
           sent_at: string | null
+          user_id: string | null
         }
         Insert: {
-          content: string
+          chat_id?: number | null
+          content?: Json | null
           id?: string
-          match_id?: string | null
-          sender_id?: string | null
           sent_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          content?: string
+          chat_id?: number | null
+          content?: Json | null
           id?: string
-          match_id?: string | null
-          sender_id?: string | null
           sent_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "messages_match_id_fkey"
-            columns: ["match_id"]
+            foreignKeyName: "messages_chat_id_fkey"
+            columns: ["chat_id"]
             isOneToOne: false
-            referencedRelation: "matches"
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -83,60 +212,48 @@ export type Database = {
       profiles: {
         Row: {
           availability: string | null
+          avatar_url: string | null
           bio: string | null
           collab_style: string | null
           created_at: string | null
-          education: Json | null
           email: string | null
-          goals: string | null
           id: string
           industry: string | null
-          interests: string[] | null
           location: string | null
           name: string | null
           seeking_skills: string[] | null
-          skills: string[] | null
           startup_stage: string | null
           time_commitment: string | null
-          work_experience: Json | null
         }
         Insert: {
           availability?: string | null
+          avatar_url?: string | null
           bio?: string | null
           collab_style?: string | null
           created_at?: string | null
-          education?: Json | null
           email?: string | null
-          goals?: string | null
           id: string
           industry?: string | null
-          interests?: string[] | null
           location?: string | null
           name?: string | null
           seeking_skills?: string[] | null
-          skills?: string[] | null
           startup_stage?: string | null
           time_commitment?: string | null
-          work_experience?: Json | null
         }
         Update: {
           availability?: string | null
+          avatar_url?: string | null
           bio?: string | null
           collab_style?: string | null
           created_at?: string | null
-          education?: Json | null
           email?: string | null
-          goals?: string | null
           id?: string
           industry?: string | null
-          interests?: string[] | null
           location?: string | null
           name?: string | null
           seeking_skills?: string[] | null
-          skills?: string[] | null
           startup_stage?: string | null
           time_commitment?: string | null
-          work_experience?: Json | null
         }
         Relationships: []
       }
@@ -182,6 +299,29 @@ export type Database = {
         }
         Relationships: []
       }
+      user_goals: {
+        Row: {
+          goal_id: number
+          user_id: string
+        }
+        Insert: {
+          goal_id: number
+          user_id: string
+        }
+        Update: {
+          goal_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_goals_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals_list"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_interests: {
         Row: {
           interest_id: number
@@ -205,6 +345,27 @@ export type Database = {
           },
         ]
       }
+      user_match: {
+        Row: {
+          match_status: string | null
+          matched_user_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          match_status?: string | null
+          matched_user_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          match_status?: string | null
+          matched_user_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_skills: {
         Row: {
           skill_id: number
@@ -227,6 +388,73 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      users_education: {
+        Row: {
+          education_id: number | null
+          user_id: string
+        }
+        Insert: {
+          education_id?: number | null
+          user_id: string
+        }
+        Update: {
+          education_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_education_education_id_fkey"
+            columns: ["education_id"]
+            isOneToOne: false
+            referencedRelation: "education_list"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users_work_experiences: {
+        Row: {
+          user_id: string
+          work_id: number
+        }
+        Insert: {
+          user_id: string
+          work_id: number
+        }
+        Update: {
+          user_id?: string
+          work_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_work_experiences_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "work_experience_list"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_experience_list: {
+        Row: {
+          company: string | null
+          id: number
+          position: string | null
+          years: number | null
+        }
+        Insert: {
+          company?: string | null
+          id: number
+          position?: string | null
+          years?: number | null
+        }
+        Update: {
+          company?: string | null
+          id?: number
+          position?: string | null
+          years?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {
