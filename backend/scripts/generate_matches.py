@@ -16,7 +16,7 @@ sys.path.append(str(parent_dir))
 
 from app import create_app
 from app.services.matching_service import get_matching_service
-from app.services.supabase_service import get_supabase_service
+from backend.app.services.supabase.supabase_service import get_supabase_service
 
 def generate_matches(app):
     """Generate matches for all users and store them in the database."""

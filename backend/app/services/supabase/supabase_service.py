@@ -8,22 +8,37 @@ from flask import current_app
 from supabase import create_client
 from pydantic import BaseModel, model_validator, field_validator
 import uuid
+from datetime import datetime
+from pydantic import TypeAdapter
 
 
 class ChatMembers(BaseModel):
-    id: uuid
-    name: str
+    id: str
+    name: Optional[str] = "Default Name"
+    avatar_url: Optional[str] = None
 
     class Config:
         extra = "ignore"
+        arbitrary_types_allowed = True
 
 
-class UserChatsRPC(BaseModel):
+class UserChatRPC(BaseModel):
     id: int
     is_group: bool
-    created_at: Any
+    created_at: datetime
+    last_message: Optional[str] = None
+    last_message_timestamp: Optional[datetime] = None
     name: Optional[str] = None
     members: List[ChatMembers]
+
+
+class UserChat(BaseModel):
+    id: int
+    name: str
+    last_message: str
+    timestamp: datetime
+    unread: bool
+    avatar: Optional[str] = None
 
 
 class SupabaseService:
@@ -49,22 +64,73 @@ class SupabaseService:
             logging.error(f"Error getting user by ID: {e}")
             return None
 
-    def get_user_chats(self, user_id: str) -> Optional[List[UserChatsRPC]]:
+    def _process_chat(self, user_id: str, chat: UserChatRPC) -> UserChat | None:
+        try:
+            other_members = [
+                member for member in chat.members if str(member.id) != user_id
+            ]
+
+            if not other_members:
+                logging.warning("No other members in the chat")
+                return
+
+            # Update details for frontend
+            name = chat.name or ", ".join(member.name for member in other_members)[:30]
+            avatar = other_members[0].avatar_url
+
+            # Return chat model
+            return UserChat(
+                id=chat.id,
+                name=name,
+                last_message=chat.last_message,
+                timestamp=chat.last_message_timestamp,
+                unread=True,
+                avatar=avatar,
+            )
+
+        except Exception:
+            logging.error(f"Could not process chat {chat.id}", exc_info=True)
+            return None
+
+    def _process_chats(self, user_id: str, response) -> List[dict]:
+        adapter = TypeAdapter(List[UserChatRPC])
+        rpc_chats = adapter.validate_python(response)
+
+        user_chats = []
+        for chat in rpc_chats:
+            user_chat = self._process_chat(user_id=user_id, chat=chat)
+
+            if user_chat:
+                user_chats.append(user_chat.model_dump())
+
+        return user_chats
+
+    def get_user_group_chats(self, user_id: str) -> List[dict]:
+        try:
+            response = self.client.rpc(
+                "get_user_group_chats", {"_user_id": user_id}
+            ).execute()
+
+            return self._process_chats(user_id=user_id, response=response)
+
+        except Exception:
+            logging.error("Error processing group chats", exc_info=True)
+            raise
+
+    def get_user_chats(self, user_id: str) -> List[dict]:
+        logging.error(f"User ID: {user_id}")
         try:
             response = self.client.rpc(
                 "get_user_chats", {"_user_id": user_id}
             ).execute()
 
-            if response.data and len(response.data) > 0:
-                for chat in response:
-                    if not chat.get("is_group"):
-                        pass
+            logging.error(response)
 
-            return None
+            return self._process_chats(user_id=user_id, response=response.data)
 
-        except Exception as e:
-            logging.error(f"Error fetching user chats: {e}")
-            return None
+        except Exception:
+            logging.error("Error processing private chats", exc_info=True)
+            raise
 
     # # User methods
     # def get_users(self):
