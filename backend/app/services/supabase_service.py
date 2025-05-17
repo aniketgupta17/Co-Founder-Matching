@@ -124,7 +124,7 @@ class SupabaseService:
     @staticmethod
     def get_matches(user_id):
         """Get all matches for a user."""
-        response = SupabaseService.get_client().table('matches').select('*').eq('user_id', user_id).execute()
+        response = SupabaseService.get_client().table('matches').select('*').eq('user_1', user_id).execute()
         return response.data
 
     @staticmethod

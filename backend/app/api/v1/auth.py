@@ -68,27 +68,27 @@ def get_authenticated_user():
     # request.current_user is set by the login_required decorator
     return jsonify(user)
 
-@bp.route('/auth/refresh', methods=['POST'])
+@bp.route('/refresh', methods=['GET'])
+@login_required
 def refresh_token():
     """Refresh the JWT token."""
     auth_header = request.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '):
         return jsonify({"error": "Authorization header required"}), 401
-    
     token = auth_header.split(' ')[1]
     auth_service = get_auth_service()
     payload = auth_service.decode_token(token)
-    
+
     if not payload:
         return jsonify({"error": "Invalid or expired token"}), 401
+
     
     user_id = payload.get('user_id')
     if not user_id:
         return jsonify({"error": "Invalid token payload"}), 401
     
     # Get user from Supabase
-    supabase = auth_service.supabase
-    user = supabase.get_user(user_id)
+    user = SupabaseService.get_user(user_id)
     
     if not user:
         return jsonify({"error": "User not found"}), 404

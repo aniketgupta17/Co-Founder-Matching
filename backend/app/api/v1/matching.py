@@ -12,11 +12,11 @@ def get_matches():
     # Get user from request context (set by login_required decorator)
     user = request.current_user
     user_id = user['id']
-    
+    #
     matches = SupabaseService.get_matches(user_id)
     return jsonify(matches)
 
-@bp.route('/matches/<int:match_id>', methods=['GET'])
+@bp.route('/matches/<string:match_id>', methods=['GET'])
 @login_required
 def get_match(match_id):
     """Get a specific match by ID."""
@@ -27,7 +27,7 @@ def get_match(match_id):
         
     # Check if the match belongs to the current user
     user = request.current_user
-    if match['user_id'] != user['id'] and match['matched_user_id'] != user['id']:
+    if match['user_1'] != user['id'] and match['user_2'] != user['id']:
         return jsonify({"error": "Unauthorized"}), 403
         
     return jsonify(match)

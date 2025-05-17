@@ -238,15 +238,46 @@ def test_login_test():
 
 def test_users(token):
     """Test user endpoints."""
-    print("\n👤 Testing User Endpoints...")
+    print("\n👤 Auth_me...")
 
     headers = {"Authorization": f"Bearer {token}"}
 
     # Get all users
     response = requests.get(f"{BASE_URL}/auth/me", headers=headers)
-    print_response(response, "Get All Users")
+    print_response(response, "Auth_me")
+def test_users_token_refresh(token):
+    """Test user endpoints."""
+    print("\n👤 Testing Refresh Token...")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # refresh Token
+    response = requests.get(f"{BASE_URL}/refresh", headers=headers)
+    print_response(response, "Testing Refresh Token")
+
+def test_users_matches(token):
+    """Test  Matches."""
+    print("\n👤 Test  Matches...")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # refresh Token
+    response = requests.get(f"{BASE_URL}/matches", headers=headers)
+    print_response(response, "Test  Matches")
+def test_matches_id(token,match_id):
+    """Test  Matches."""
+    print("\n👤 Test  Matches ID...")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # refresh Token
+    response = requests.get(f"{BASE_URL}/matches/{match_id}", headers=headers)
+    print_response(response, "Test  Matches ID")
 def test_login_all():
     token=test_login_test()
-    test_users(token)
-    print(token)
+    #test_users(token)
+    # print(token)
+    #test_users_token_refresh(token)
+    test_matches_id(token,"05f14afc-c009-4943-8c6f-abbce56df036")
+
 
