@@ -1,10 +1,8 @@
-from flask import Flask, g, jsonify
+from flask import Flask
 from flask_cors import CORS
 from .api import register_blueprints
 from .core.config import Config
 from .models import db
-from app.services.auth import protected_route
-from app.services.supabase import get_supabase_service
 
 
 def create_app(config_class=Config):
@@ -37,4 +35,11 @@ def create_app(config_class=Config):
 
 if __name__ == "__main__":
     config = Config()
-    create_app(config)
+    app = create_app(config)
+
+    print("\nRegistered Endpoints:")
+    for rule in app.url_map.iter_rules():
+        methods = ",".join(rule.methods)
+        print(f"{rule.rule} [{methods}] -> {rule.endpoint}")
+
+    app.run(debug=True)

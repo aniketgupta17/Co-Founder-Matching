@@ -4,10 +4,8 @@ from typing import Any, Dict, List, Optional
 
 from app.core.config import Config, get_config
 
-from flask import current_app
-from supabase import create_client
-from pydantic import BaseModel, model_validator, field_validator
-import uuid
+from supabase import create_client, AuthError
+from pydantic import BaseModel
 from datetime import datetime
 from pydantic import TypeAdapter
 
@@ -39,6 +37,29 @@ class UserChat(BaseModel):
     timestamp: datetime
     unread: bool
     avatar: Optional[str] = None
+
+
+class CreateMessage(BaseModel):
+    text: str
+    timestamp: datetime
+
+
+class ClientMessage(BaseModel):
+    id: int
+    text: str
+    timestamp: datetime
+    sender_id: str
+    sender_name: Optional[str] = None
+    sender_avatar: Optional[str] = None
+
+    def serialize_for_client(self) -> dict:
+        return {
+            "id": self.id,
+            "text": self.text,
+            "timestamp": str(self.timestamp),
+            "senderName": self.sender_name,
+            "senderAvatar": self.sender_avatar,
+        }
 
 
 class SupabaseService:
@@ -111,26 +132,80 @@ class SupabaseService:
                 "get_user_group_chats", {"_user_id": user_id}
             ).execute()
 
-            return self._process_chats(user_id=user_id, response=response)
+            return self._process_chats(user_id=user_id, response=response.data)
 
         except Exception:
             logging.error("Error processing group chats", exc_info=True)
             raise
 
     def get_user_chats(self, user_id: str) -> List[dict]:
-        logging.error(f"User ID: {user_id}")
         try:
             response = self.client.rpc(
                 "get_user_chats", {"_user_id": user_id}
             ).execute()
-
-            logging.error(response)
 
             return self._process_chats(user_id=user_id, response=response.data)
 
         except Exception:
             logging.error("Error processing private chats", exc_info=True)
             raise
+
+    def user_has_chat_access(self, user_id: str, chat_id: int) -> bool:
+        try:
+            response = self.client.rpc(
+                "user_has_chat_access", {"_user_id": user_id, "_chat_id": chat_id}
+            ).execute()
+
+            if response.data:
+                return response.data
+
+            return False
+
+        except Exception:
+            logging.error("Error checking chat access", exc_info=True)
+            return False
+
+    def get_chat_messages(self, user_id: str, chat_id: int) -> List[dict]:
+        try:
+            if not self.user_has_chat_access(user_id=user_id, chat_id=chat_id):
+                raise AuthError("User does not have access to this chat")
+
+            response = self.client.rpc(
+                "get_chat_messages", {"_chat_id": chat_id}
+            ).execute()
+
+            return response.data
+
+        except Exception:
+            logging.error("Error fetching chat messages", exc_info=True)
+            raise
+
+    def create_chat_message(
+        self, user_id: str, chat_id: int, message: CreateMessage
+    ) -> bool:
+        try:
+            if not self.user_has_chat_access(user_id=user_id, chat_id=chat_id):
+                raise AuthError("user does not have access to this chat")
+
+            response = self.client.rpc(
+                "create_chat_message",
+                {
+                    "_chat_id": chat_id,
+                    "_user_id": user_id,
+                    "_sent_at": message.timestamp,
+                    "_content": message.text,
+                },
+            ).execute()
+
+            if response.data:
+                return response.data
+
+            return False
+
+        except Exception:
+            logging.error("Failed to create message", exc_info=True)
+
+            return False
 
     # # User methods
     # def get_users(self):

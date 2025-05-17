@@ -12,12 +12,18 @@ import {
   ScrollView,
   Modal,
   Alert,
+  Button,
 } from "react-native";
 import { useMockApi } from "../hooks/useMockApi";
 import { ChatStackScreenProps } from "../navigation/TabNavigator";
 import { Ionicons } from "@expo/vector-icons";
-import { createPrivateChatRPC, testAuth } from "../services/chatService";
+import {
+  getUserChats,
+  getUserGroupChats,
+  testAuth,
+} from "../services/chatService";
 import { useApi } from "../hooks/useAPI";
+
 interface Chat {
   id: number;
   name: string;
@@ -93,13 +99,19 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
     participants: number;
   } | null>(null);
   const [groups, setGroups] = useState<Chat[]>([]);
+  const {
+    submit: fetchPrivateChats,
+    data: privateChatsData,
+    loading: privateChatsLoading,
+    errors: privateChatsErrors,
+  } = useApi(getUserChats);
 
   const {
-    submit: submitTest,
-    data: dataTest,
-    loading: loadingTest,
-    errors: loadingErrors,
-  } = useApi(testAuth);
+    submit: fetchGroupChats,
+    data: groupChatsData,
+    loading: groupChatsLoading,
+    errors: groupChatsErrors,
+  } = useApi(getUserGroupChats);
 
   // Mock contacts for group creation
   const mockContacts = [
@@ -132,64 +144,64 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
 
   // Initialize mock groups
   useEffect(() => {
-    const initialGroups: Chat[] = [
-      {
-        id: 101,
-        name: "Co-Founder Team",
-        avatar: "https://i.imgur.com/XsD0Ofl.png",
-        lastMessage: "Let's schedule our next team meeting!",
-        timestamp: new Date(Date.now() - 1800000).toISOString(),
-        unread: true,
-        isGroup: true,
-        participants: 4,
-      },
-    ];
-
-    submitTest();
-    console.log(dataTest);
-
-    setGroups(initialGroups);
-  }, [submitTest]);
-
-  // Filter chats based on active tab and search query
-  const getFilteredChats = () => {
-    if (!data?.chats) return [];
-
-    // Filter by tab type first
-    let filteredByType: Chat[] = [];
-
     if (activeTab === "Direct") {
-      filteredByType = data.chats.filter((chat: Chat) => !chat.isGroup);
-    } else if (activeTab === "Groups") {
-      // Combine mock groups with any groups from the API
-      const apiGroups = data.chats.filter((chat: Chat) => chat.isGroup);
-      filteredByType = [...groups, ...apiGroups];
-    } else if (activeTab === "AI") {
-      // Return mock AI chat
-      return [
-        {
-          id: 999,
-          name: "Co-Founder AI",
-          avatar: "https://i.imgur.com/7XL3VFr.png", // AI icon placeholder
-          lastMessage: "How can I help with your startup today?",
-          timestamp: new Date().toISOString(),
-          unread: false,
-        },
-      ];
+      fetchPrivateChats();
     }
 
-    // Then filter by search query
+    if (activeTab === "Groups") {
+      fetchGroupChats();
+    }
+  }, [activeTab, fetchPrivateChats, fetchGroupChats]);
+
+  // Filter chats by tab and search query
+  const getFilteredChats = () => {
+    // Handle loading and errors
+    if (activeTab === "Direct") {
+      if (privateChatsLoading) return [];
+
+      if (privateChatsErrors) {
+        console.error("Error fetching chats", privateChatsErrors);
+        return [];
+      }
+    }
+
+    if (activeTab === "Groups") {
+      if (groupChatsLoading) return [];
+
+      if (groupChatsErrors) {
+        console.error("Error fetching chats", groupChatsErrors);
+      }
+    }
+
+    // Populate chats by active tab
+    let filteredChats: Chat[] = [];
+
+    switch (activeTab) {
+      case "Direct":
+        filteredChats = privateChatsData || [];
+        break;
+
+      case "Groups":
+        filteredChats = groupChatsData || [];
+        break;
+
+      case "AI":
+        filteredChats = [];
+    }
+
+    // Filter chats search query
     if (searchQuery.trim()) {
-      return filteredByType.filter((chat) =>
+      return filteredChats.filter((chat) =>
         chat.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    return filteredByType;
+    return filteredChats;
   };
 
   const handleChatPress = (chat: Chat) => {
     // Navigate to the specific chat screen
+    console.log("Chat ID", chat.id);
     navigation.navigate("Chat", {
       chatId: chat.id,
       name: chat.name,

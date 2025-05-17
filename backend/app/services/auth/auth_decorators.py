@@ -53,6 +53,6 @@ def protected_route(f):
             logging.error(f"Unknown error: {e}", exc_info=True)
             return jsonify({"error": "Authentication error"}), 500
 
-        return f(user_id=user_id, *args, **kwargs)
+        return f(*args, **kwargs)
 
     return decorated
