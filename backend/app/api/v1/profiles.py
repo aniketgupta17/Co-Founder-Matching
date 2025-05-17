@@ -16,7 +16,7 @@ def get_profiles():
         current_app.logger.error(f"Error in get_profiles: {str(e)}")
         return jsonify({"error": "An error occurred while fetching profiles"}), 500
 
-@bp.route('/profiles/<int:profile_id>', methods=['GET'])
+@bp.route('/profiles/<string:profile_id>', methods=['GET'])
 def get_profile(profile_id):
     """Get a specific profile by ID."""
     current_app.logger.info(f"Received request for get_profile with id: {profile_id}")

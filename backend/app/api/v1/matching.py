@@ -79,7 +79,7 @@ def generate_all_matches():
         "matches_count": len(stored_matches)
     })
 
-@bp.route('/matches/<int:match_id>/action', methods=['POST'])
+@bp.route('/matches/<string:match_id>/action', methods=['POST'])
 @login_required
 def match_action(match_id):
     """Take action on a match (accept/reject/connect)."""

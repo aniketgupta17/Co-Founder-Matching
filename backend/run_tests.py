@@ -273,11 +273,23 @@ def test_matches_id(token,match_id):
     # refresh Token
     response = requests.get(f"{BASE_URL}/matches/{match_id}", headers=headers)
     print_response(response, "Test  Matches ID")
+
+def test_matches_recommend(token):
+    """Test  Matches."""
+    print("\n👤 Test  Matches Recommend...")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # refresh Token
+    response = requests.get(f"{BASE_URL}/matches/recommend", headers=headers)
+    print_response(response, "Test  Matches Recommend")
+
 def test_login_all():
     token=test_login_test()
     #test_users(token)
     # print(token)
     #test_users_token_refresh(token)
-    test_matches_id(token,"05f14afc-c009-4943-8c6f-abbce56df036")
+    #test_matches_id(token,"05f14afc-c009-4943-8c6f-abbce56df036")
+    test_matches_recommend(token)
 
 
