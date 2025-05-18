@@ -1,1 +1,0 @@
-from .pinecone_vector_db_models import PCIndexRecord
