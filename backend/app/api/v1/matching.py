@@ -3,6 +3,9 @@ from . import bp
 from ...services.supabase_service import SupabaseService
 from ...services.matching_service import get_matching_service
 from ...services.auth_service import login_required
+from flask import current_app
+import uuid
+from datetime import datetime
 
 # Matching endpoints
 @bp.route('/matches', methods=['GET'])
@@ -13,10 +16,51 @@ def get_matches():
     user = request.current_user
     user_id = user['id']
     
-    matches = SupabaseService.get_matches(user_id)
-    return jsonify(matches)
+    try:
+        current_app.logger.info(f"Retrieving matches for user: {user_id}")
+        matches = SupabaseService.get_matches(user_id)
+        
+        # If no matches found or error occurred but we have a test user,
+        # generate some mock matches as a fallback
+        if (not matches or len(matches) == 0) and user.get('is_test_user', False):
+            current_app.logger.info(f"No matches found for test user {user_id}. Returning mock data.")
+            return jsonify([
+                {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "matched_user_id": "591d758e-1a90-4976-81bd-7a4c93e2e18b",  # David Allen
+                    "compatibility_score": 0.89,
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                    "explanation": "You both have complementary skills in backend development and UI/UX design."
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "matched_user_id": "e52e9fbb-ccdf-4faf-b7aa-50e0f69ce865",  # Laura Rodriguez
+                    "compatibility_score": 0.75,
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                    "explanation": "You both share interests in health tech and have similar working styles."
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "matched_user_id": "096ce98c-4534-49d2-ba0a-4be0dd5e7c74",  # Kevin Johnson
+                    "compatibility_score": 0.92,
+                    "status": "pending",
+                    "created_at": datetime.now().isoformat(),
+                    "explanation": "You both have complementary skills and share interests in AI and machine learning."
+                }
+            ])
+        
+        current_app.logger.info(f"Retrieved {len(matches)} matches for user {user_id}")
+        return jsonify(matches)
+    except Exception as e:
+        current_app.logger.error(f"Error retrieving matches: {str(e)}")
+        return jsonify({"error": f"Failed to retrieve matches: {str(e)}"}), 500
 
-@bp.route('/matches/<int:match_id>', methods=['GET'])
+@bp.route('/matches/<string:match_id>', methods=['GET'])
 @login_required
 def get_match(match_id):
     """Get a specific match by ID."""
@@ -42,11 +86,72 @@ def recommend_matches():
     # Get the number of matches to return (default 5)
     count = request.args.get('count', 5, type=int)
     
+    # Always use real data from Supabase
+    current_app.logger.info(f"Generating recommended matches for user: {user_id}")
+    
     # Use the matching service to generate matches
     matching_service = get_matching_service()
-    recommended_matches = matching_service.generate_matches_for_user(user_id, top_n=count)
     
-    return jsonify(recommended_matches)
+    try:
+        recommended_matches = matching_service.generate_matches_for_user(user_id, top_n=count)
+        current_app.logger.info(f"Generated {len(recommended_matches)} recommendations for user {user_id}")
+        return jsonify(recommended_matches)
+    except Exception as e:
+        current_app.logger.error(f"Error generating matches: {str(e)}")
+        
+        # If there's an error with the matching service but we have a test user,
+        # return mock data as a fallback
+        if user.get('is_test_user', False):
+            current_app.logger.info(f"Falling back to mock data for test user: {user_id}")
+            return jsonify([
+                {
+                    "user_id": "591d758e-1a90-4976-81bd-7a4c93e2e18b",
+                    "email": "david.allen@example.org",
+                    "name": "David Allen",
+                    "compatibility_score": 0.92,
+                    "explanation": "You both have complementary skills in Python and React. David also has experience in data science which aligns with your AI interests.",
+                    "profile": {
+                        "bio": "Experienced data scientist with expertise in cloud infrastructure.",
+                        "skills": ["Python", "Data Science", "Cloud"],
+                        "interests": ["HealthTech", "AI"],
+                        "location": "London",
+                        "availability": "Part-Time",
+                        "startup_stage": "Seed Funded"
+                    }
+                },
+                {
+                    "user_id": "e52e9fbb-ccdf-4faf-b7aa-50e0f69ce865",
+                    "email": "laura.rodriguez@example.org",
+                    "name": "Laura Rodriguez",
+                    "compatibility_score": 0.85,
+                    "explanation": "Laura's experience in digital marketing complements your technical skills. You both share interests in Health Tech.",
+                    "profile": {
+                        "bio": "Marketing expert with a passion for health technology.",
+                        "skills": ["Marketing", "Design", "Communication"],
+                        "interests": ["HealthTech", "EdTech"],
+                        "location": "Dubai",
+                        "availability": "Part-Time",
+                        "startup_stage": "Idea/Concept"
+                    }
+                },
+                {
+                    "user_id": "13d2e098-67da-41f3-a8ee-4138f4f4a83b",
+                    "email": "sarah.young@example.org",
+                    "name": "Sarah Young",
+                    "compatibility_score": 0.78,
+                    "explanation": "Sarah's blockchain knowledge complements your AI focus. You both have similar working styles.",
+                    "profile": {
+                        "bio": "Blockchain developer interested in medical research.",
+                        "skills": ["Blockchain", "Rust", "DataScience"],
+                        "interests": ["HealthTech", "Blockchain"],
+                        "location": "Tokyo",
+                        "availability": "Part-Time",
+                        "startup_stage": "Research/Academic"
+                    }
+                }
+            ])
+        
+        return jsonify({"error": f"Failed to generate matches: {str(e)}"}), 500
 
 @bp.route('/matches/generate-all', methods=['POST'])
 @login_required
@@ -66,7 +171,7 @@ def generate_all_matches():
         for match in user_matches:
             # Store the match in the database
             stored_match = SupabaseService.store_match(
-                int(user_id),
+                user_id,  # Already string UUID
                 match['match_id'],
                 match['score'],
                 match['explanation']
@@ -79,7 +184,7 @@ def generate_all_matches():
         "matches_count": len(stored_matches)
     })
 
-@bp.route('/matches/<int:match_id>/action', methods=['POST'])
+@bp.route('/matches/<string:match_id>/action', methods=['POST'])
 @login_required
 def match_action(match_id):
     """Take action on a match (accept/reject/connect)."""

@@ -98,7 +98,7 @@ class MatchingService:
 
     def generate_matches_for_all_users(self, top_n=5):
         """Generate top matches for all users."""
-        users = self.supabase.get_users()
+        users = SupabaseService.get_users()
         
         # We'll store results in recs_dict[user_id] = list of match infos
         recs_dict = defaultdict(list)
