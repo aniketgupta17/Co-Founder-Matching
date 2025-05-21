@@ -4,6 +4,7 @@ import { Database } from "types/supabase";
 const supabase = getSupabaseClient();
 import { useApi } from "../hooks/useAPI";
 import { BASE_URL } from "../config/api";
+import { ChatRow } from "types/chats";
 
 type InsertChat = Partial<Database["public"]["Tables"]["chats"]["Insert"]>;
 type InsertChatUser = Partial<
@@ -23,6 +24,36 @@ interface Chat {
   unread: boolean;
   isGroup?: boolean;
   participants?: number;
+}
+
+export async function createChat(
+  accessToken: string | null,
+  userIds: string[],
+  name?: string
+) {
+  try {
+    const url = `${BASE_URL}/chats/create`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : "",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        created_at: new Date().toISOString(),
+        user_ids: userIds,
+        name: name || null,
+      }),
+    });
+
+    if (!response.ok) throw new Error("Failed chat creation");
+
+    const responseData = await response.json();
+    return responseData.data as ChatRow;
+  } catch (error) {
+    console.error("Failed to create chat:", error);
+    return;
+  }
 }
 
 export async function createPrivateChatRPC(
@@ -73,17 +104,24 @@ function unpackChats(apiChats: any) {
 }
 
 export async function getUserChats(accessToken: string | null) {
-  const response = await fetch(`${BASE_URL}/chats/single`, {
+  const url = `${BASE_URL}/chats/single`;
+  console.log(url);
+  console.log(accessToken);
+  const response = await fetch(url, {
+    method: "GET",
     headers: {
       Authorization: accessToken ? `Bearer ${accessToken}` : "",
     },
   });
+
+  console.log("Response", response);
 
   // If not response ok, thow error
   if (!response.ok) throw new Error("Failed to fetch user private chats");
 
   // Unpack data
   const responseData = await response.json();
+  console.log("Received response data", responseData);
   const apiChats = responseData.data;
 
   return unpackChats(apiChats);
@@ -91,6 +129,7 @@ export async function getUserChats(accessToken: string | null) {
 
 export async function getUserGroupChats(accessToken: string | null) {
   const response = await fetch(`${BASE_URL}/chats/group`, {
+    method: "GET",
     headers: {
       Authorization: accessToken ? `Bearer ${accessToken}` : "",
     },
@@ -167,6 +206,7 @@ export async function sendChatMessage(
     method: "POST",
     headers: {
       Authorization: accessToken ? `Bearer ${accessToken}` : "",
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(apiMessage),
   });
@@ -179,5 +219,6 @@ export async function sendChatMessage(
   if (!responseData.success) throw Error("Message creation failed");
 
   // Return message
+  console.log(responseData.data);
   return responseData.data;
 }

@@ -11,22 +11,22 @@ export type Database = {
     Tables: {
       chat_members: {
         Row: {
-          chat_id: number | null
+          chat_id: number
           created_at: string
           id: number
-          user_id: string | null
+          user_id: string
         }
         Insert: {
-          chat_id?: number | null
+          chat_id: number
           created_at?: string
           id?: number
-          user_id?: string | null
+          user_id: string
         }
         Update: {
-          chat_id?: number | null
+          chat_id?: number
           created_at?: string
           id?: number
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -37,7 +37,71 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "chat_members_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "chat_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "chat_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_reads: {
+        Row: {
+          chat_id: number | null
+          id: number
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id?: number | null
+          id?: number
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: number | null
+          id?: number
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_reads_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_reads_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "chat_reads_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -50,21 +114,32 @@ export type Database = {
           created_at: string
           id: number
           is_group: boolean
+          last_message_id: string | null
           name: string | null
         }
         Insert: {
           created_at?: string
           id?: number
           is_group: boolean
+          last_message_id?: string | null
           name?: string | null
         }
         Update: {
           created_at?: string
           id?: number
           is_group?: boolean
+          last_message_id?: string | null
           name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chats_last_message_id_fkey"
+            columns: ["last_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       education_list: {
         Row: {
@@ -138,6 +213,13 @@ export type Database = {
             foreignKeyName: "match_requests_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "match_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -145,52 +227,58 @@ export type Database = {
       }
       matches: {
         Row: {
+          compatibility_score: number | null
+          created_at: string | null
+          explanation: string | null
           id: string
-          matched_at: string | null
+          matched_user_id: string
           status: string | null
-          user_1: string | null
-          user_2: string | null
-          user_3: string | null
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
+          compatibility_score?: number | null
+          created_at?: string | null
+          explanation?: string | null
           id?: string
-          matched_at?: string | null
+          matched_user_id: string
           status?: string | null
-          user_1?: string | null
-          user_2?: string | null
-          user_3?: string | null
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
+          compatibility_score?: number | null
+          created_at?: string | null
+          explanation?: string | null
           id?: string
-          matched_at?: string | null
+          matched_user_id?: string
           status?: string | null
-          user_1?: string | null
-          user_2?: string | null
-          user_3?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
       messages: {
         Row: {
-          chat_id: number | null
-          content: Json | null
+          chat_id: number
+          content: string | null
           id: string
-          sent_at: string | null
-          user_id: string | null
+          sent_at: string
+          user_id: string
         }
         Insert: {
-          chat_id?: number | null
-          content?: Json | null
+          chat_id: number
+          content?: string | null
           id?: string
-          sent_at?: string | null
-          user_id?: string | null
+          sent_at?: string
+          user_id: string
         }
         Update: {
-          chat_id?: number | null
-          content?: Json | null
+          chat_id?: number
+          content?: string | null
           id?: string
-          sent_at?: string | null
-          user_id?: string | null
+          sent_at?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -199,6 +287,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "chats"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "messages_user_id_fkey"
@@ -219,11 +321,14 @@ export type Database = {
           email: string | null
           id: string
           industry: string | null
+          interests: Json | null
           location: string | null
           name: string | null
-          seeking_skills: string[] | null
+          seeking_skills: Json | null
+          skills: Json | null
           startup_stage: string | null
           time_commitment: string | null
+          user_id: string | null
         }
         Insert: {
           availability?: string | null
@@ -234,11 +339,14 @@ export type Database = {
           email?: string | null
           id: string
           industry?: string | null
+          interests?: Json | null
           location?: string | null
           name?: string | null
-          seeking_skills?: string[] | null
+          seeking_skills?: Json | null
+          skills?: Json | null
           startup_stage?: string | null
           time_commitment?: string | null
+          user_id?: string | null
         }
         Update: {
           availability?: string | null
@@ -249,13 +357,31 @@ export type Database = {
           email?: string | null
           id?: string
           industry?: string | null
+          interests?: Json | null
           location?: string | null
           name?: string | null
-          seeking_skills?: string[] | null
+          seeking_skills?: Json | null
+          skills?: Json | null
           startup_stage?: string | null
           time_commitment?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey1"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
@@ -299,6 +425,91 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          id: string
+          joined_at: string | null
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          role?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          role?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "teams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_goals: {
         Row: {
           goal_id: number
@@ -318,6 +529,13 @@ export type Database = {
             columns: ["goal_id"]
             isOneToOne: false
             referencedRelation: "goals_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_goals_user_id_fkey1"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -389,6 +607,120 @@ export type Database = {
           },
         ]
       }
+      users: {
+        Row: {
+          aud: string | null
+          banned_until: string | null
+          confirmation_sent_at: string | null
+          confirmation_token: string | null
+          confirmed_at: string | null
+          created_at: string | null
+          deleted_at: string | null
+          email: string | null
+          email_change: string | null
+          email_change_confirm_status: number | null
+          email_change_sent_at: string | null
+          email_change_token_current: string | null
+          email_change_token_new: string | null
+          email_confirmed_at: string | null
+          encrypted_password: string | null
+          id: string
+          instance_id: string | null
+          invited_at: string | null
+          is_anonymous: boolean
+          is_sso_user: boolean
+          is_super_admin: boolean | null
+          last_sign_in_at: string | null
+          phone: string | null
+          phone_change: string | null
+          phone_change_sent_at: string | null
+          phone_change_token: string | null
+          phone_confirmed_at: string | null
+          raw_app_meta_data: Json | null
+          raw_user_meta_data: Json | null
+          reauthentication_sent_at: string | null
+          reauthentication_token: string | null
+          recovery_sent_at: string | null
+          recovery_token: string | null
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aud?: string | null
+          banned_until?: string | null
+          confirmation_sent_at?: string | null
+          confirmation_token?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          email_change?: string | null
+          email_change_confirm_status?: number | null
+          email_change_sent_at?: string | null
+          email_change_token_current?: string | null
+          email_change_token_new?: string | null
+          email_confirmed_at?: string | null
+          encrypted_password?: string | null
+          id: string
+          instance_id?: string | null
+          invited_at?: string | null
+          is_anonymous?: boolean
+          is_sso_user?: boolean
+          is_super_admin?: boolean | null
+          last_sign_in_at?: string | null
+          phone?: string | null
+          phone_change?: string | null
+          phone_change_sent_at?: string | null
+          phone_change_token?: string | null
+          phone_confirmed_at?: string | null
+          raw_app_meta_data?: Json | null
+          raw_user_meta_data?: Json | null
+          reauthentication_sent_at?: string | null
+          reauthentication_token?: string | null
+          recovery_sent_at?: string | null
+          recovery_token?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aud?: string | null
+          banned_until?: string | null
+          confirmation_sent_at?: string | null
+          confirmation_token?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          email_change?: string | null
+          email_change_confirm_status?: number | null
+          email_change_sent_at?: string | null
+          email_change_token_current?: string | null
+          email_change_token_new?: string | null
+          email_confirmed_at?: string | null
+          encrypted_password?: string | null
+          id?: string
+          instance_id?: string | null
+          invited_at?: string | null
+          is_anonymous?: boolean
+          is_sso_user?: boolean
+          is_super_admin?: boolean | null
+          last_sign_in_at?: string | null
+          phone?: string | null
+          phone_change?: string | null
+          phone_change_sent_at?: string | null
+          phone_change_token?: string | null
+          phone_confirmed_at?: string | null
+          raw_app_meta_data?: Json | null
+          raw_user_meta_data?: Json | null
+          reauthentication_sent_at?: string | null
+          reauthentication_token?: string | null
+          recovery_sent_at?: string | null
+          recovery_token?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       users_education: {
         Row: {
           education_id: number | null
@@ -458,10 +790,200 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      enriched_chat_members: {
+        Row: {
+          avatar_url: string | null
+          chat_id: number | null
+          created_at: string | null
+          id: number | null
+          name: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_members_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_members_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "chat_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enriched_chats: {
+        Row: {
+          avatar_url: string | null
+          chat_name: string | null
+          created_at: string | null
+          id: number | null
+          is_group: boolean | null
+          last_message_id: string | null
+          last_message_text: string | null
+          participants: number | null
+          sent_at: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chats_last_message_id_fkey"
+            columns: ["last_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_id_fkey1"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enriched_matches: {
+        Row: {
+          bio: string | null
+          compatibility_score: number | null
+          created_at: string | null
+          explanation: string | null
+          id: string | null
+          image: string | null
+          interests: Json | null
+          matched_user_id: string | null
+          name: string | null
+          skills: Json | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      create_chat_message: {
+        Args: {
+          _chat_id: number
+          _user_id: string
+          _content: string
+          _sent_at: string
+        }
+        Returns: {
+          message_id: string
+          text: string
+          sent_at: string
+          sender_id: string
+          sender_name: string
+          sender_avatar_url: string
+        }[]
+      }
+      create_private_chat: {
+        Args: { _first_user_id: string; _second_user_id: string }
+        Returns: number
+      }
+      find_chat_by_exact_members: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          chat_id: number
+        }[]
+      }
+      get_chat_messages: {
+        Args: { _chat_id: number }
+        Returns: {
+          id: string
+          chat_id: number
+          user_id: string
+          content: string
+          sent_at: string
+          name: string
+          avatar_url: string
+        }[]
+      }
+      get_message_chats: {
+        Args: { _chat_id: number }
+        Returns: {
+          id: string
+          chat_id: number
+          user_id: string
+          avatar_url: string
+          sent_at: string
+          content: string
+        }[]
+      }
+      get_user_by_id: {
+        Args: { _user_id: string }
+        Returns: {
+          id: string
+          email: string
+        }[]
+      }
+      get_user_chats: {
+        Args: { _user_id: string }
+        Returns: {
+          id: number
+          created_at: string
+          is_group: boolean
+          name: string
+          last_message: string
+          last_message_timestamp: string
+          members: Json
+        }[]
+      }
+      get_user_group_chats: {
+        Args: { _chat_id: number } | { _user_id: string }
+        Returns: {
+          id: number
+          created_at: string
+          is_group: boolean
+          name: string
+          last_message: string
+          last_message_timestamp: string
+          members: Json
+        }[]
+      }
+      has_user_read_chat: {
+        Args: { _chat_id: number }
+        Returns: boolean
+      }
+      insert_message_with_join: {
+        Args: {
+          _chat_id: string
+          _sender_id: string
+          _content: string
+          _sent_at: string
+        }
+        Returns: {
+          message_id: string
+          content: string
+          created_at: string
+          sender_name: string
+          sender_avatar_url: string
+        }[]
+      }
+      user_has_chat_access: {
+        Args: { _chat_id: number; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       skills:

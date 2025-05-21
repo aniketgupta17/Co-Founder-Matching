@@ -14,44 +14,21 @@ import {
 } from "react-native";
 import { ChatStackScreenProps } from "../navigation/TabNavigator";
 import { Ionicons } from "@expo/vector-icons";
-import { useApi } from "../hooks/useAPI";
-import {
-  getChatMessages,
-  sendChatMessage,
-  ApiMessage,
-} from "../services/chatService";
-
-interface Message {
-  id: number;
-  text: string;
-  timestamp: string;
-  senderId: number;
-  senderName?: string;
-  senderAvatar?: string;
-}
+import { Message } from "../types/chatMessages";
+import { useSupabase } from "../hooks/supabase";
+import { useChatMessages } from "../hooks/useChatMessages";
 
 const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
   route,
   navigation,
 }) => {
   const { chatId, name, avatar, isGroup } = route.params;
+  const [userId, setUserId] = useState<string | null>("");
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const {
-    submit: fetchChatMessages,
-    data: chatMessagesData,
-    loading: chatMessagesLoading,
-    errors: chatMessagesErrors,
-  } = useApi(getChatMessages);
-
-  const {
-    submit: sendApiMessage,
-    data: sendMessageData,
-    loading: sendMessageLoading,
-    errors: sendMessageErrors,
-  } = useApi(sendChatMessage);
+  const { supabase } = useSupabase();
+  const { messages, sendMessage } = useChatMessages(supabase, chatId);
 
   // Mock group participants
   const mockParticipants = [
@@ -77,42 +54,26 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
     },
   ];
 
-  // Initialize messages
   useEffect(() => {
-    console.log("Fetching chat messages for", chatId);
-    const loadMessages = async () => {
-      try {
-        const messages = await fetchChatMessages(chatId);
-        setMessages(messages || []);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-        setMessages([]);
+    // Initial scroll to bottom
+    const timer = setTimeout(() => {
+      if (flatListRef.current && messages.length > 0) {
+        flatListRef.current.scrollToEnd({ animated: false });
       }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [messages.length]);
+
+  useEffect(() => {
+    const getUserId = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUserId(user?.id ?? null);
     };
-    loadMessages();
-  }, [chatId, isGroup, fetchChatMessages]);
-
-  const sendMessage = async () => {
-    if (message.trim()) {
-      try {
-        const apiMessage: ApiMessage = {
-          text: message.trim(),
-          timestamp: new Date().toISOString(),
-        };
-
-        const newMessage = await sendApiMessage(chatId, apiMessage);
-        setMessages([...messages, newMessage]);
-        setMessage("");
-
-        // Scroll to bottom when new message is added
-        setTimeout(() => {
-          flatListRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-      } catch (error) {
-        console.error("Failed to send message", error);
-      }
-    }
-  };
+    getUserId();
+  }, [supabase]);
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -131,7 +92,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
   };
 
   const renderMessage = ({ item, index }: { item: Message; index: number }) => {
-    const isCurrentUser = item.senderId === 4;
+    const isCurrentUser = item.senderId === userId;
     const showSender = isGroup && !isCurrentUser;
 
     // Check if we need to show date header
@@ -260,6 +221,9 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
         renderItem={renderMessage}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.messagesList}
+        onContentSizeChange={() =>
+          flatListRef.current?.scrollToEnd({ animated: true })
+        }
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
       />
 
@@ -285,7 +249,12 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
             styles.sendButton,
             !message.trim() && styles.disabledSendButton,
           ]}
-          onPress={sendMessage}
+          onPress={() => {
+            if (userId && message.trim()) {
+              sendMessage(message);
+              setMessage("");
+            }
+          }}
           disabled={!message.trim()}
         >
           <Ionicons

@@ -7,39 +7,17 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   Modal,
   Alert,
-  Button,
 } from "react-native";
 import { useMockApi } from "../hooks/useMockApi";
 import { ChatStackScreenProps } from "../navigation/TabNavigator";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  getUserChats,
-  getUserGroupChats,
-  testAuth,
-} from "../services/chatService";
-import { useApi } from "../hooks/useAPI";
-
-interface Chat {
-  id: number;
-  name: string;
-  avatar?: string;
-  initials?: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: boolean;
-  isGroup?: boolean;
-  participants?: number;
-}
-
-interface ChatData {
-  message: string;
-  chats: Chat[];
-}
+import { useChats } from "../hooks/useChats";
+import { useSupabase } from "../hooks/supabase";
+import { Chat } from "../types/chats";
 
 // Mock QR code SVG - this would be generated dynamically in a real app
 const QR_CODE_SVG = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -94,24 +72,13 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
   const [groupDescription, setGroupDescription] = useState("");
   const [selectedContacts, setSelectedContacts] = useState<number[]>([]);
   const [showQRCodeModal, setShowQRCodeModal] = useState(false);
+  const { supabase } = useSupabase();
+  const { chats, readChat } = useChats(supabase);
   const [qrGroup, setQrGroup] = useState<{
     name: string;
     participants: number;
   } | null>(null);
   const [groups, setGroups] = useState<Chat[]>([]);
-  const {
-    submit: fetchPrivateChats,
-    data: privateChatsData,
-    loading: privateChatsLoading,
-    errors: privateChatsErrors,
-  } = useApi(getUserChats);
-
-  const {
-    submit: fetchGroupChats,
-    data: groupChatsData,
-    loading: groupChatsLoading,
-    errors: groupChatsErrors,
-  } = useApi(getUserGroupChats);
 
   // Mock contacts for group creation
   const mockContacts = [
@@ -142,52 +109,28 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
     },
   ];
 
-  // Initialize mock groups
-  useEffect(() => {
-    if (activeTab === "Direct") {
-      fetchPrivateChats();
-    }
-
-    if (activeTab === "Groups") {
-      fetchGroupChats();
-    }
-  }, [activeTab, fetchPrivateChats, fetchGroupChats]);
-
   // Filter chats by tab and search query
   const getFilteredChats = () => {
-    // Handle loading and errors
-    if (activeTab === "Direct") {
-      if (privateChatsLoading) return [];
-
-      if (privateChatsErrors) {
-        console.error("Error fetching chats", privateChatsErrors);
-        return [];
-      }
-    }
-
-    if (activeTab === "Groups") {
-      if (groupChatsLoading) return [];
-
-      if (groupChatsErrors) {
-        console.error("Error fetching chats", groupChatsErrors);
-      }
-    }
-
     // Populate chats by active tab
     let filteredChats: Chat[] = [];
 
     switch (activeTab) {
       case "Direct":
-        filteredChats = privateChatsData || [];
+        filteredChats = chats.filter((chat) => !chat.isGroup) || [];
         break;
 
       case "Groups":
-        filteredChats = groupChatsData || [];
+        filteredChats = chats.filter((chat) => chat.isGroup) || [];
         break;
 
       case "AI":
         filteredChats = [];
     }
+
+    filteredChats.sort((a, b) => {
+      if (!a.timestamp || !b.timestamp) return 0;
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
 
     // Filter chats search query
     if (searchQuery.trim()) {
@@ -202,6 +145,7 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
   const handleChatPress = (chat: Chat) => {
     // Navigate to the specific chat screen
     console.log("Chat ID", chat.id);
+    readChat(chat.id);
     navigation.navigate("Chat", {
       chatId: chat.id,
       name: chat.name,
@@ -303,7 +247,9 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
       <View style={styles.chatInfo}>
         <View style={styles.chatHeader}>
           <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.timestamp}>{formatTime(item.timestamp)}</Text>
+          <Text style={styles.timestamp}>
+            {item.timestamp ? formatTime(item.timestamp) : ""}
+          </Text>
         </View>
 
         <Text

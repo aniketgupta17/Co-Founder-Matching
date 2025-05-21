@@ -33,6 +33,7 @@ export const useApi = <
 
       try {
         setLoading(true);
+        console.log("Request with token:", accessToken);
         const resp = await apiRequest(accessToken, ...args);
         setData(resp);
         setErrors(null);

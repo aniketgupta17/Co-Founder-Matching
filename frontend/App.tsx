@@ -3,23 +3,30 @@ import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import RootNavigator from "./app/navigation/RootNavigator";
-import { AuthProvider, useAuth } from "./app/hooks/supabase";
+import { AuthProvider, useAuth, useSupabase } from "./app/hooks/supabase";
+import { ProfileProvider } from "./app/hooks/useProfile";
 
 // Wrapper component that uses the auth hook
 function AppContent() {
   const { session, loading } = useAuth();
-  
+  const { supabase } = useSupabase();
+
   // Log authentication state for debugging
   useEffect(() => {
     if (!loading) {
-      console.log("Auth state updated:", session ? "Logged in" : "Not logged in");
+      console.log(
+        "Auth state updated:",
+        session ? "Logged in" : "Not logged in"
+      );
     }
   }, [session, loading]);
 
   return (
     <SafeAreaProvider>
       <StatusBar style="auto" />
-      <RootNavigator />
+      <ProfileProvider supabase={supabase}>
+        <RootNavigator />
+      </ProfileProvider>
     </SafeAreaProvider>
   );
 }
