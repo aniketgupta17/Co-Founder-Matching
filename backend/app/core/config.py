@@ -18,6 +18,9 @@ class Config:
     SUPABASE_URL = os.environ.get('SUPABASE_URL')
     SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
     
+    # HuggingFace - For the chatbot
+    HUGGINGFACE_API_TOKEN = os.environ.get('HF_API_TOKEN')
+    
     @classmethod
     def check_config(cls):
         """Check if all required config values are set."""
@@ -31,6 +34,10 @@ class Config:
         
         print(f"Supabase URL: {cls.SUPABASE_URL[:20]}...")
         print(f"Environment: {'Development' if cls.DEBUG else 'Production'}")
+        if cls.HUGGINGFACE_API_TOKEN:
+            print(f"HuggingFace API token is set")
+        else:
+            print(f"Warning: HuggingFace API token is not set. Chatbot will use fallback responses.")
         
         return True
 

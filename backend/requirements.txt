@@ -14,3 +14,4 @@ SQLAlchemy==1.4.46
 aniso8601==9.0.1
 colorama==0.4.6
 uuid==1.30
+huggingface_hub==0.21.4

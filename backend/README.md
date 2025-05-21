@@ -14,6 +14,7 @@ This API powers a co-founder matching application that helps entrepreneurs find 
 - Match recommendation system
 - Chat/messaging between matched users
 - Match acceptance/rejection with cooldown period
+- AI-powered business advisor chatbot
 
 ## API Flow
 
@@ -25,6 +26,7 @@ The application follows this user flow:
 4. **Match Actions**: Users can accept or reject recommended matches.
 5. **Conversations**: When two users mutually accept each other, they can start a conversation.
 6. **Messaging**: Users can exchange messages within conversations.
+7. **Business Advice**: Users can get AI-powered guidance on business planning and finance.
 
 ## Getting Started
 
@@ -32,6 +34,7 @@ The application follows this user flow:
 
 - Python 3.8+
 - Supabase account
+- HuggingFace API token (for chatbot functionality)
 
 ### Installation
 
@@ -56,6 +59,7 @@ SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_key
 JWT_SECRET_KEY=your_jwt_secret
 JWT_ACCESS_TOKEN_EXPIRES=3600  # 1 hour
+HF_API_TOKEN=your_huggingface_api_token  # For chatbot functionality
 ```
 
 4. Create required database tables
@@ -76,14 +80,11 @@ You can test the complete API flow using the included test script:
 python test_api_flow.py
 ```
 
-This script will:
-1. Register a new test user
-2. Login with the user credentials
-3. Create and update a profile
-4. Get match recommendations
-5. Accept a match
-6. Create a conversation
-7. Send and retrieve messages
+To test the chatbot functionality:
+
+```
+python test_public_chatbot.py
+```
 
 ## Complete API Endpoints Reference
 
@@ -176,6 +177,16 @@ This script will:
   - Query parameters: `?q=search_term`
   - Response: `[{ "id": "user_id", "email": "user@example.com", ... }, ... ]`
 
+### Chatbot Endpoints
+
+- `POST /api/v1/chatbot` - Get business advice from the AI chatbot (requires authentication)
+  - Request: `{ "message": "How do I create a business plan?" }`
+  - Response: `{ "success": true, "message": "Here's how to create a business plan..." }`
+
+- `POST /api/v1/public/chatbot` - Public endpoint for the AI chatbot (no authentication required)
+  - Request: `{ "message": "What funding options are available for startups?" }`
+  - Response: `{ "success": true, "message": "Here are the funding options..." }`
+
 ## Database Schema
 
 The application uses Supabase with the following tables:
@@ -195,8 +206,21 @@ The API is now fully functional with all critical issues resolved. The following
 - Match actions (accept, reject)
 - Conversation management
 - Messaging between matched users
+- AI-powered business advisor chatbot
 
 All endpoints have been thoroughly tested and are ready for frontend integration.
+
+## Chatbot Feature
+
+The AI-powered business advisor chatbot provides guidance on:
+- Business model development
+- Startup funding options and strategies
+- Financial planning and forecasting
+- Pitch deck creation
+- Investor relations
+- UQ Ventures resources
+
+The chatbot is optimized for mobile interfaces, providing concise, actionable advice in a format suitable for small screens. For more details on the chatbot implementation, see [CHATBOT_README.md](CHATBOT_README.md).
 
 ## Known Limitations
 
