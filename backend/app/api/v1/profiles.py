@@ -17,16 +17,16 @@ def get_profiles():
         current_app.logger.error(f"Error in get_profiles: {str(e)}")
         return jsonify({"error": "An error occurred while fetching profiles"}), 500
 
-@bp.route('/profiles/<string:profile_id>', methods=['GET'])
-def get_profile(profile_id):
-    """Get a specific profile by ID."""
-    current_app.logger.info(f"Received request for get_profile with id: {profile_id}")
+@bp.route('/profiles/<string:user_id>', methods=['GET'])
+def get_profile(user_id):
+    """Get a specific profile by user ID."""
+    current_app.logger.info(f"Received request for get_profile with id: {user_id}")
     try:
-        profile = SupabaseService.get_profile(profile_id)
+        profile = SupabaseService.get_profile(user_id)
         if profile is None:
-            current_app.logger.warning(f"Profile not found for id: {profile_id}")
+            current_app.logger.warning(f"Profile not found for id: {user_id}")
             return jsonify({"error": "Profile not found"}), 404
-        current_app.logger.info(f"Retrieved profile for id: {profile_id}")
+        current_app.logger.info(f"Retrieved profile for id: {user_id}")
         return jsonify(profile)
     except Exception as e:
         current_app.logger.error(f"Error in get_profile: {str(e)}")
@@ -76,97 +76,149 @@ def get_my_profile():
 @login_required
 def create_profile():
     """Create a new profile."""
-    current_app.logger.info("Received request to create_profile")
-    data = request.json
-    
-    if not data:
-        return jsonify({"error": "Request body must be JSON"}), 400
-    
     try:
-        # Use the current authenticated user ID
+        data = request.json
         user_id = request.current_user['id']
         
-        # Check if user already has a profile
-        existing_profile = SupabaseService.get_profile(user_id)
+        current_app.logger.info(f"Creating profile for user {user_id}")
+        
+        # Add user_id to the profile data
+        data['user_id'] = user_id
+        data['id'] = user_id  # Set both id and user_id to the same value
+        
+        # Check for required fields for a complete profile
+        required_fields = [
+            'name', 'bio', 'location', 'industry', 'skills', 'interests', 
+            'collab_style', 'startup_stage', 'time_commitment', 'availability'
+        ]
+        
+        # Check which fields are missing
+        missing_fields = []
+        for field in required_fields:
+            if field not in data or not data[field]:
+                missing_fields.append(field)
+            elif field in ['skills', 'interests'] and isinstance(data[field], list) and len(data[field]) == 0:
+                missing_fields.append(field)
+        
+        # Set is_complete based on missing fields
+        is_complete = len(missing_fields) == 0
+        data['is_complete'] = is_complete
+        data['created_at'] = datetime.now().isoformat()
+        data['updated_at'] = datetime.now().isoformat()
+        
+        # Check if profile already exists
+        existing_profile = SupabaseService.get_profile_by_user_id(user_id)
         if existing_profile:
-            return jsonify({"error": "User already has a profile"}), 400
-        
-        # Create profile data based on confirmed schema fields
-        profile_data = {
-            'id': user_id,  # In Supabase, profile ID is the same as user ID
-            'user_id': user_id,
-            'name': data.get('name', request.current_user.get('user_metadata', {}).get('name', '')),
-            'email': data.get('email', request.current_user.get('email', ''))
-        }
-        
-        # Add optional fields if provided
-        for field in ['bio', 'avatar_url', 'location', 'industry', 'collab_style', 
-                     'startup_stage', 'time_commitment', 'availability']:
-            if field in data:
-                profile_data[field] = data.get(field)
-        
-        # Explicitly set created_at field
-        profile_data['created_at'] = datetime.now().isoformat()
-        
-        # Try to create profile
-        try:
-            profile = SupabaseService.create_profile(profile_data)
+            # Update existing profile
+            current_app.logger.info(f"Profile already exists for user {user_id}, updating it")
+            profile = SupabaseService.update_profile(existing_profile['id'], data)
             if profile:
-                current_app.logger.info(f"Created profile for user: {user_id}")
-                return jsonify(profile), 201
+                response_data = {
+                    "profile": profile,
+                    "is_complete": is_complete
+                }
+                
+                # If profile is not complete, add guidance
+                if not is_complete:
+                    response_data["missing_fields"] = missing_fields
+                    response_data["completion_percentage"] = int(100 * (len(required_fields) - len(missing_fields)) / len(required_fields))
+                    response_data["message"] = "Your profile is incomplete. Please complete the missing fields to get better matches."
+                else:
+                    response_data["message"] = "Your profile is complete! You're ready to find co-founder matches."
+                
+                return jsonify(response_data)
             else:
+                return jsonify({"error": "Failed to update existing profile"}), 500
+        else:
+            # Create new profile
+            current_app.logger.info(f"Creating new profile for user {user_id}")
+            profile = SupabaseService.create_profile(data)
+            
+            if profile:
+                response_data = {
+                    "profile": profile,
+                    "is_complete": is_complete
+                }
+                
+                # If profile is not complete, add guidance
+                if not is_complete:
+                    response_data["missing_fields"] = missing_fields
+                    response_data["completion_percentage"] = int(100 * (len(required_fields) - len(missing_fields)) / len(required_fields))
+                    response_data["message"] = "Your profile is incomplete. Please complete the missing fields to get better matches."
+                else:
+                    response_data["message"] = "Your profile is complete! You're ready to find co-founder matches."
+                
+                return jsonify(response_data)
+            else:
+                # Try checking if there's an issue with the database schema
+                table_check = SupabaseService.ensure_profiles_table()
+                if "error" in table_check:
+                    return jsonify({
+                        "error": "Failed to create profile due to database schema issues",
+                        "details": table_check,
+                        "message": "Please ensure your Supabase database has all required tables and columns"
+                    }), 500
+                
                 return jsonify({"error": "Failed to create profile"}), 500
-        except Exception as e:
-            current_app.logger.error(f"Error creating profile: {str(e)}")
-            return jsonify({
-                "error": "Failed to create profile",
-                "details": str(e)
-            }), 500
     except Exception as e:
-        current_app.logger.error(f"Error in create_profile: {str(e)}")
+        current_app.logger.error(f"An error occurred while creating the profile: {str(e)}")
         return jsonify({"error": f"An error occurred while creating the profile: {str(e)}"}), 500
 
-@bp.route('/profiles/<string:profile_id>', methods=['PUT'])
+@bp.route('/profiles/<string:user_id>', methods=['PUT'])
 @login_required
-def update_profile(profile_id):
-    """Update an existing profile."""
-    current_app.logger.info(f"Received request to update_profile with id: {profile_id}")
-    data = request.json
+def update_profile(user_id):
+    """Update a profile."""
+    # Check if the user is updating their own profile
+    if request.current_user["id"] != user_id:
+        return jsonify({"error": "You can only update your own profile"}), 403
     
+    data = request.json
     if not data:
         return jsonify({"error": "Request body must be JSON"}), 400
     
+    # Check for required fields for a complete profile
+    required_fields = [
+        'name', 'bio', 'location', 'industry', 'skills', 'interests', 
+        'collab_style', 'startup_stage', 'time_commitment', 'availability'
+    ]
+    
+    # Check which fields are missing
+    missing_fields = []
+    for field in required_fields:
+        if field not in data or not data[field]:
+            missing_fields.append(field)
+        elif field in ['skills', 'interests'] and isinstance(data[field], list) and len(data[field]) == 0:
+            missing_fields.append(field)
+    
+    # Set is_complete based on missing fields
+    is_complete = len(missing_fields) == 0
+    data['is_complete'] = is_complete
+    data['updated_at'] = datetime.now().isoformat()
+    
     try:
-        # Get the profile to check ownership
-        current_profile = SupabaseService.get_profile(profile_id)
-        if not current_profile:
-            return jsonify({"error": "Profile not found"}), 404
-            
-        # Check if user is updating their own profile
-        if current_profile.get('user_id') != request.current_user['id']:
-            return jsonify({"error": "You don't have permission to update this profile"}), 403
+        current_app.logger.info(f"Updating profile for user {user_id} (complete: {is_complete})")
+        profile = SupabaseService.update_profile(user_id, data)
         
-        # Create update data with only fields that exist in the schema
-        update_data = {}
-        for field in ['name', 'bio', 'avatar_url', 'location', 'industry', 
-                     'collab_style', 'startup_stage', 'time_commitment', 'availability', 'email']:
-            if field in data:
-                update_data[field] = data[field]
-        
-        # Add updated_at timestamp
-        update_data['updated_at'] = datetime.now().isoformat()
-        
-        # Perform the update
-        profile = SupabaseService.update_profile(profile_id, update_data)
-        if profile is None:
-            current_app.logger.warning(f"Failed to update profile for id: {profile_id}")
+        if not profile:
             return jsonify({"error": "Failed to update profile"}), 500
-            
-        current_app.logger.info(f"Updated profile for id: {profile_id}")
-        return jsonify(profile)
+        
+        response_data = {
+            "profile": profile,
+            "is_complete": is_complete
+        }
+        
+        # If profile is not complete, add guidance
+        if not is_complete:
+            response_data["missing_fields"] = missing_fields
+            response_data["completion_percentage"] = int(100 * (len(required_fields) - len(missing_fields)) / len(required_fields))
+            response_data["message"] = "Your profile is incomplete. Please complete the missing fields to get better matches."
+        else:
+            response_data["message"] = "Your profile is complete! You're ready to find co-founder matches."
+        
+        return jsonify(response_data)
     except Exception as e:
-        current_app.logger.error(f"Error in update_profile: {str(e)}")
-        return jsonify({"error": f"An error occurred while updating the profile: {str(e)}"}), 500
+        current_app.logger.error(f"Error updating profile: {str(e)}")
+        return jsonify({"error": str(e)}), 400
 
 @bp.route('/profiles/<string:profile_id>', methods=['DELETE'])
 @login_required
@@ -196,50 +248,15 @@ def delete_profile(profile_id):
         current_app.logger.error(f"Error in delete_profile: {str(e)}")
         return jsonify({"error": f"An error occurred while deleting the profile: {str(e)}"}), 500
 
-# Helper endpoint to ensure profile table exists
 @bp.route('/profiles/ensure-table', methods=['POST'])
 @login_required
 def ensure_profiles_table():
-    """Ensure that profiles table exists in the database."""
+    """Ensure the profiles table exists with all required columns."""
     try:
-        user_id = request.current_user['id']
-        current_app.logger.info(f"Ensuring profiles table exists for user: {user_id}")
-        
-        # Create profiles table if it doesn't exist
-        create_profiles_table = """
-        CREATE TABLE IF NOT EXISTS profiles (
-            id UUID PRIMARY KEY,
-            user_id UUID NOT NULL,
-            name TEXT,
-            email TEXT,
-            bio TEXT,
-            avatar_url TEXT,
-            location TEXT,
-            industry TEXT,
-            skills JSONB,
-            interests JSONB,
-            collab_style TEXT,
-            startup_stage TEXT,
-            time_commitment TEXT,
-            availability TEXT,
-            seeking_skills JSONB,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        );
-        """
-        
-        # Execute the SQL query
-        client = SupabaseService.get_client()
-        
-        try:
-            client.postgrest.rpc('exec_sql', {'sql': create_profiles_table}).execute()
-            return jsonify({"message": "Profiles table created successfully"})
-        except Exception as e:
-            current_app.logger.error(f"Error creating profiles table: {str(e)}")
-            return jsonify({
-                "error": "Failed to create profiles table. This likely means you don't have permission to create tables or the RPC function doesn't exist.",
-                "message": "Please ensure the profiles table is created in your Supabase project using migrations or the Supabase dashboard."
-            }), 500
+        result = SupabaseService.ensure_profiles_table()
+        return jsonify(result)
     except Exception as e:
-        current_app.logger.error(f"Error ensuring profiles table: {str(e)}")
-        return jsonify({"error": f"Failed to ensure profiles table: {str(e)}"}), 500
+        return jsonify({
+            "error": "Failed to create profiles table. This likely means you don't have permission to create tables or the RPC function doesn't exist.",
+            "message": "Please ensure the profiles table is created in your Supabase project using migrations or the Supabase dashboard."
+        }), 500

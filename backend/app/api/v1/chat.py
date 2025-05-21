@@ -219,7 +219,7 @@ def send_message(conversation_id):
                     return jsonify({
                         "error": "Failed to send message",
                         "details": str(e),
-                        "message": "The messages table may not exist or has a different schema."
+                        "message": "The conversation_messages table may not exist or has a different schema."
                     }), 500
             except Exception as e2:
                 return jsonify({
@@ -255,9 +255,9 @@ def ensure_chat_tables():
         );
         """
         
-        # Create messages table if it doesn't exist
+        # Create conversation_messages table if it doesn't exist
         create_messages_table = """
-        CREATE TABLE IF NOT EXISTS messages (
+        CREATE TABLE IF NOT EXISTS conversation_messages (
             id UUID PRIMARY KEY,
             conversation_id UUID NOT NULL,
             sender_id UUID NOT NULL,

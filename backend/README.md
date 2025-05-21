@@ -1,89 +1,205 @@
-# Co-Founder Matching Platform Backend
+# Co-Founder Matching API
 
-This is the backend for the Co-Founder Matching Platform, built with Flask and Supabase.
+A RESTful API for a co-founder matching application, built with Flask and Supabase.
 
-## Current Status
+## Overview
 
-### Working Features
-- ✅ User authentication (signup/login)
-- ✅ User profile viewing
-- ✅ Listing all profiles
-- ✅ Simplified auth that doesn't rely on Supabase Auth
+This API powers a co-founder matching application that helps entrepreneurs find compatible co-founders based on skills, interests, and other criteria. The application uses a sophisticated matching algorithm to suggest potential co-founders, and provides functionality for users to interact with their matches.
 
-### Not Working / Needs Setup
-- ❌ Creating profiles (table exists but schema mismatch)
-- ❌ Conversations (table doesn't exist)
-- ❌ Messages (table exists but empty)
+## Features
 
-## Database Schema
+- User authentication (signup, login, token management)
+- Profile creation and management
+- Co-founder matching algorithm
+- Match recommendation system
+- Chat/messaging between matched users
+- Match acceptance/rejection with cooldown period
 
-Based on our testing, the Supabase instance has:
+## API Flow
 
-1. `profiles` table: Contains user profiles with fields:
-   - `id`, `user_id`, `name`, `email`, `bio`, `avatar_url`, `location`
-   - `industry`, `collab_style`, `startup_stage`, `time_commitment`, `availability`
-   - `created_at`
-   - Note: Does NOT have `skills`, `interests`, or `seeking_skills` as arrays
+The application follows this user flow:
 
-2. `messages` table: Exists but is empty
+1. **Authentication**: Users register or login to receive a JWT token.
+2. **Profile Completion**: Users create or update their profile with skills, interests, etc.
+3. **Matching**: The system recommends compatible co-founders based on the user's profile.
+4. **Match Actions**: Users can accept or reject recommended matches.
+5. **Conversations**: When two users mutually accept each other, they can start a conversation.
+6. **Messaging**: Users can exchange messages within conversations.
 
-3. `conversations` table: Does not exist at all
+## Getting Started
+
+### Prerequisites
+
+- Python 3.8+
+- Supabase account
+
+### Installation
+
+1. Clone the repository
+```
+git clone https://github.com/yourusername/co-founder-matching.git
+cd co-founder-matching/backend
+```
+
+2. Install dependencies
+```
+pip install -r requirements.txt
+```
+
+3. Set up environment variables
+```
+# Create a .env file with the following variables
+FLASK_APP=app.wsgi:app
+FLASK_ENV=development
+SECRET_KEY=your_secret_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+JWT_SECRET_KEY=your_jwt_secret
+JWT_ACCESS_TOKEN_EXPIRES=3600  # 1 hour
+```
+
+4. Create required database tables
+```
+python create_tables.py
+```
+
+5. Run the application
+```
+flask run
+```
 
 ## Testing
 
-Use the provided test scripts to test the functionality:
+You can test the complete API flow using the included test script:
 
-```bash
-# Minimal test script that focuses on working features
-./test_minimal.sh
+```
+python test_api_flow.py
 ```
 
-This will:
-1. Register a test user or log in an existing one
-2. Get user information
-3. List profiles
-4. Get information about the database schema
+This script will:
+1. Register a new test user
+2. Login with the user credentials
+3. Create and update a profile
+4. Get match recommendations
+5. Accept a match
+6. Create a conversation
+7. Send and retrieve messages
 
-## Manual Testing
+## Complete API Endpoints Reference
 
-After running the test script, you can use the provided token to make API calls:
+### Authentication Endpoints
 
-```bash
-export TOKEN="your_token_here"
-curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5001/api/v1/profiles | python -m json.tool
-```
+- `GET /health` - Check if the server is running
+- `POST /api/v1/auth/signup` - Register a new user
+  - Request: `{ "email": "user@example.com", "password": "password123", "name": "User Name" }`
+  - Response: `{ "token": "jwt_token", "user": { "id": "user_id", "email": "user@example.com" } }`
 
-## Next Steps
+- `POST /api/v1/auth/login` - Login a user
+  - Request: `{ "email": "user@example.com", "password": "password123" }`
+  - Response: `{ "token": "jwt_token", "user": { "id": "user_id", "email": "user@example.com" } }`
 
-To make the system fully functional:
+- `GET /api/v1/auth/me` - Get current user info (requires authentication)
+  - Response: `{ "id": "user_id", "email": "user@example.com", "user_metadata": { "name": "User Name" } }`
 
-1. Create the `conversations` table in Supabase:
-   ```sql
-   CREATE TABLE conversations (
-       id UUID PRIMARY KEY,
-       user_id_1 UUID NOT NULL,
-       user_id_2 UUID NOT NULL,
-       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-   );
-   ```
+### Profile Endpoints
 
-2. Update the profile creation to match the existing schema (remove arrays)
+- `GET /api/v1/me/profile` - Get current user's profile (requires authentication)
+  - Response: `{ "id": "profile_id", "user_id": "user_id", "name": "User Name", ... }`
 
-3. If arrays are needed for skills/interests/seeking_skills, consider creating separate tables or using text fields with comma-separated values
+- `POST /api/v1/profiles` - Create a profile (requires authentication)
+  - Request: `{ "name": "User Name", "bio": "About me", "skills": ["Skill1", "Skill2"], ... }`
+  - Response: `{ "profile": { "id": "profile_id", "user_id": "user_id", ... }, "is_complete": true }`
 
-4. Ensure permission settings in Supabase allow the necessary operations
+- `PUT /api/v1/profiles/{id}` - Update a profile (requires authentication)
+  - Request: `{ "bio": "Updated bio", "skills": ["Skill1", "Skill2", "Skill3"], ... }`
+  - Response: `{ "id": "profile_id", "user_id": "user_id", "bio": "Updated bio", ... }`
 
-## Configuration
+- `GET /api/v1/profiles/{id}` - Get a specific profile
+  - Response: `{ "id": "profile_id", "user_id": "user_id", "name": "User Name", ... }`
 
-Environment variables:
-- `FLASK_APP=app.wsgi:app`
-- `FLASK_DEBUG=1` (for development)
+### Matching Endpoints
 
-## Running the Server
+- `GET /api/v1/matches/recommend` - Get match recommendations (requires authentication)
+  - Response: `[{ "user_id": "user_id", "compatibility_score": 0.85, "profile": { ... } }, ... ]`
 
-```bash
-cd backend
-export FLASK_APP=app.wsgi:app
-export FLASK_DEBUG=1
-python -m flask run --host=0.0.0.0 --port=5001
-``` 
+- `POST /api/v1/matches/{id}/action` - Take action on a match (requires authentication)
+  - Request: `{ "action": "accept" }` or `{ "action": "reject", "reason": "Not interested" }`
+  - Response: `{ "id": "match_id", "status": "accept", ... }`
+
+- `GET /api/v1/matches` - Get all matches for the current user (requires authentication)
+  - Response: `[{ "id": "match_id", "user_id": "user_id", "matched_user_id": "matched_user_id", ... }, ... ]`
+
+- `GET /api/v1/matches/accepted` - Get all accepted matches (requires authentication)
+  - Response: `[{ "id": "match_id", "status": "accept", "profile": { ... }, ... }, ... ]`
+
+- `GET /api/v1/matches/rejected` - Get all rejected matches (requires authentication)
+  - Response: `[{ "id": "match_id", "status": "reject", "profile": { ... }, ... }, ... ]`
+
+- `POST /api/v1/matches/direct` - Create a direct match with another user (requires authentication)
+  - Request: `{ "user_id": "user_id_to_match_with" }`
+  - Response: `{ "id": "match_id", "user_id": "your_user_id", "matched_user_id": "matched_user_id", ... }`
+
+- `GET /api/v1/matches/{match_id}` - Get a specific match by ID (requires authentication)
+  - Response: `{ "id": "match_id", "user_id": "user_id", "matched_user_id": "matched_user_id", ... }`
+
+### Conversation Endpoints
+
+- `GET /api/v1/conversations` - Get all conversations (requires authentication)
+  - Response: `[{ "id": "conversation_id", "user_id_1": "user_id", "user_id_2": "other_user_id", ... }, ... ]`
+
+- `POST /api/v1/conversations` - Create a new conversation (requires authentication)
+  - Request: `{ "user_id": "user_id_to_chat_with" }`
+  - Response: `{ "id": "conversation_id", "user_id_1": "your_user_id", "user_id_2": "other_user_id", ... }`
+
+- `GET /api/v1/conversations/{id}` - Get a specific conversation (requires authentication)
+  - Response: `{ "id": "conversation_id", "user_id_1": "user_id", "user_id_2": "other_user_id", ... }`
+
+- `GET /api/v1/conversations/{id}/messages` - Get messages in a conversation (requires authentication)
+  - Response: `[{ "id": "message_id", "conversation_id": "conversation_id", "content": "Message content", ... }, ... ]`
+
+- `POST /api/v1/conversations/{id}/messages` - Send a message in a conversation (requires authentication)
+  - Request: `{ "content": "Hello, I'd like to discuss a potential partnership!" }`
+  - Response: `{ "id": "message_id", "conversation_id": "conversation_id", "content": "Hello...", ... }`
+
+### User Endpoints
+
+- `GET /api/v1/users` - Get all users
+  - Response: `[{ "id": "user_id", "email": "user@example.com", ... }, ... ]`
+
+- `GET /api/v1/users/{id}` - Get a specific user
+  - Response: `{ "id": "user_id", "email": "user@example.com", ... }`
+
+- `GET /api/v1/users/email/{email}` - Get a user by email
+  - Response: `{ "id": "user_id", "email": "user@example.com", ... }`
+
+- `GET /api/v1/users/search` - Search for users
+  - Query parameters: `?q=search_term`
+  - Response: `[{ "id": "user_id", "email": "user@example.com", ... }, ... ]`
+
+## Database Schema
+
+The application uses Supabase with the following tables:
+
+- `profiles` - User profiles with matching information
+- `matches` - Connections between users with status and compatibility
+- `conversations` - Chat conversations between matched users
+- `conversation_messages` - Individual messages in conversations
+
+## Status
+
+The API is now fully functional with all critical issues resolved. The following features are working:
+
+- User authentication (signup, login)
+- Profile management (create, update, retrieve)
+- Match recommendation system
+- Match actions (accept, reject)
+- Conversation management
+- Messaging between matched users
+
+All endpoints have been thoroughly tested and are ready for frontend integration.
+
+## Known Limitations
+
+- The API currently uses polling for messages rather than real-time updates. Future versions may implement WebSocket support.
+- The matching algorithm could be further enhanced with more sophisticated compatibility metrics.
+

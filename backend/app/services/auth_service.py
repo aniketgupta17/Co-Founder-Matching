@@ -18,8 +18,9 @@ class AuthService:
         try:
             current_app.logger.info(f"Attempting to register user: {email}")
             
-            # Generate a unique user ID
-            user_id = str(uuid.uuid4())
+            # Generate a user ID deterministically based on email
+            # This ensures the same email always gets the same ID
+            user_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, email))
             
             # Create user object with metadata
             user = {

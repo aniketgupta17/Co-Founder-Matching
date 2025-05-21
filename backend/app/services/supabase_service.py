@@ -1,6 +1,8 @@
 import os
 from supabase import create_client, Client
 from flask import current_app
+from datetime import datetime
+import uuid
 
 supabase_client = None
 
@@ -108,29 +110,146 @@ class SupabaseService:
     def get_profile_by_user_id(user_id):
         """Get profile for a specific user."""
         try:
-            response = SupabaseService.get_client().table('profiles').select('*').eq('user_id', user_id).single().execute()
-            return response.data
+            current_app.logger.info(f"Retrieving profile for user ID: {user_id}")
+            # First try looking up by user_id field
+            try:
+                response = SupabaseService.get_client().table('profiles').select('*').eq('user_id', user_id).single().execute()
+                if response.data:
+                    current_app.logger.info(f"Profile found for user_id: {user_id}")
+                    return response.data
+            except Exception as e:
+                current_app.logger.warning(f"Error retrieving profile by user_id field: {str(e)}")
+            
+            # Then try looking up by id field (in case user_id is stored as id)
+            try:
+                response = SupabaseService.get_client().table('profiles').select('*').eq('id', user_id).single().execute()
+                if response.data:
+                    current_app.logger.info(f"Profile found with id: {user_id}")
+                    return response.data
+            except Exception as e:
+                current_app.logger.warning(f"Error retrieving profile by id field: {str(e)}")
+            
+            current_app.logger.warning(f"No profile found for user: {user_id}")
+            return None
         except Exception as e:
             current_app.logger.error(f"Error retrieving profile for user {user_id}: {str(e)}")
-            raise
+            return None
 
     @staticmethod
     def create_profile(profile_data):
         """Create a new profile."""
         try:
-            response = SupabaseService.get_client().table('profiles').insert(profile_data).execute()
-            current_app.logger.info(f"Created new profile for user: {profile_data.get('user_id')}")
-            return response.data[0] if response.data else None
+            current_app.logger.info(f"Creating profile for user: {profile_data.get('user_id', profile_data.get('id'))}")
+            
+            # Make sure both id and user_id are set
+            user_id = profile_data.get('user_id', profile_data.get('id'))
+            if not user_id:
+                raise ValueError("Either user_id or id must be provided in profile_data")
+            
+            profile_data['user_id'] = user_id
+            profile_data['id'] = user_id
+            
+            # Check if the user exists in the users table
+            try:
+                user_exists = False
+                try:
+                    user_response = SupabaseService.get_client().table('users').select('id').eq('id', user_id).execute()
+                    if user_response.data and len(user_response.data) > 0:
+                        user_exists = True
+                        current_app.logger.info(f"User {user_id} found in users table")
+                    else:
+                        current_app.logger.warning(f"User {user_id} not found in users table")
+                except Exception as e:
+                    current_app.logger.warning(f"Error checking if user exists in users table: {str(e)}")
+                
+                # If user doesn't exist in users table, create a record first
+                if not user_exists:
+                    current_app.logger.info(f"User {user_id} not found in users table. Creating a user record.")
+                    user_data = {
+                        'id': user_id,
+                        'email': profile_data.get('email', f"{user_id}@example.com"),
+                        'raw_user_meta_data': {'name': profile_data.get('name', 'User')}
+                    }
+                    
+                    try:
+                        # Insert the user first
+                        user_insert = SupabaseService.get_client().table('users').insert(user_data).execute()
+                        if user_insert.data and len(user_insert.data) > 0:
+                            current_app.logger.info(f"Created user record: {user_id}")
+                            user_exists = True
+                        else:
+                            current_app.logger.warning(f"Failed to create user record for: {user_id}")
+                    except Exception as ue:
+                        current_app.logger.warning(f"Error creating user record: {str(ue)}")
+                
+                # Only proceed with profile creation if the user exists
+                if user_exists:
+                    # First check if profile already exists
+                    existing_profile = None
+                    try:
+                        existing_profile_response = SupabaseService.get_client().table('profiles').select('*').eq('user_id', user_id).execute()
+                        if existing_profile_response.data and len(existing_profile_response.data) > 0:
+                            existing_profile = existing_profile_response.data[0]
+                            current_app.logger.info(f"Profile already exists for user: {user_id}")
+                    except Exception as e:
+                        current_app.logger.warning(f"Error checking for existing profile: {str(e)}")
+                    
+                    if existing_profile:
+                        # Update existing profile
+                        response = SupabaseService.get_client().table('profiles').update(profile_data).eq('id', existing_profile['id']).execute()
+                        if response.data and len(response.data) > 0:
+                            current_app.logger.info(f"Updated existing profile for user: {user_id}")
+                            return response.data[0]
+                        else:
+                            current_app.logger.warning(f"Failed to update existing profile for user: {user_id}")
+                            return None
+                    else:
+                        # Create new profile
+                        response = SupabaseService.get_client().table('profiles').insert(profile_data).execute()
+                        if response.data and len(response.data) > 0:
+                            current_app.logger.info(f"Created new profile for user: {user_id}")
+                            return response.data[0]
+                        else:
+                            current_app.logger.warning(f"No data returned after profile creation for user: {user_id}")
+                            return None
+                else:
+                    current_app.logger.error(f"Cannot create profile without a valid user in the users table: {user_id}")
+                    return None
+            except Exception as e:
+                current_app.logger.error(f"Error checking/creating user record: {str(e)}")
+                return None
         except Exception as e:
             current_app.logger.error(f"Error creating profile: {str(e)}")
-            raise
+            return None
 
     @staticmethod
     def update_profile(profile_id, profile_data):
         """Update an existing profile."""
         try:
+            # Check if all required fields are present for a complete profile
+            required_fields = ['name', 'bio', 'location', 'industry', 'skills', 'interests', 
+                            'collab_style', 'startup_stage', 'time_commitment', 'availability']
+            
+            # Check if all required fields have values
+            is_complete = True
+            for field in required_fields:
+                if field not in profile_data or not profile_data[field]:
+                    is_complete = False
+                    break
+                    
+            # For array fields, check if they're non-empty
+            array_fields = ['skills', 'interests']
+            for field in array_fields:
+                if field in profile_data and (not profile_data[field] or len(profile_data[field]) == 0):
+                    is_complete = False
+                    break
+            
+            # Set the completeness flag and updated timestamp
+            profile_data['is_complete'] = is_complete
+            profile_data['updated_at'] = datetime.now().isoformat()
+            
             response = SupabaseService.get_client().table('profiles').update(profile_data).eq('id', profile_id).execute()
-            current_app.logger.info(f"Updated profile {profile_id}")
+            current_app.logger.info(f"Updated profile {profile_id} (is_complete: {is_complete})")
             return response.data[0] if response.data else None
         except Exception as e:
             current_app.logger.error(f"Error updating profile {profile_id}: {str(e)}")
@@ -151,55 +270,249 @@ class SupabaseService:
     @staticmethod
     def get_matches(user_id):
         """Get all matches for a user."""
-        response = SupabaseService.get_client().table('matches').select('*').eq('user_id', user_id).execute()
-        return response.data
+        try:
+            current_app.logger.info(f"Retrieving matches for user: {user_id}")
+            # Get matches where the user is the initiator
+            response1 = SupabaseService.get_client().table('matches').select('*').eq('user_id', user_id).execute()
+            matches = response1.data if response1.data else []
+            
+            # Get matches where the user is the matched user
+            response2 = SupabaseService.get_client().table('matches').select('*').eq('matched_user_id', user_id).execute()
+            if response2.data:
+                matches.extend(response2.data)
+            
+            current_app.logger.info(f"Retrieved {len(matches)} matches for user {user_id}")
+            return matches
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving matches for user {user_id}: {str(e)}")
+            return []
 
     @staticmethod
     def get_match(match_id):
         """Get a specific match by ID."""
-        response = SupabaseService.get_client().table('matches').select('*').eq('id', match_id).single().execute()
-        return response.data
+        try:
+            current_app.logger.info(f"Getting match with ID: {match_id}")
+            response = SupabaseService.get_client().table('matches').select('*').eq('id', match_id).execute()
+            
+            if response.data and len(response.data) > 0:
+                current_app.logger.info(f"Found match with ID: {match_id}")
+                return response.data[0]
+            else:
+                current_app.logger.warning(f"No match found with ID: {match_id}")
+                return None
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving match: {str(e)}")
+            return None
 
     @staticmethod
     def store_match(user_id, match_user_id, score, explanation):
         """Store a match in the database."""
-        match_data = {
-            'user_id': user_id,
-            'matched_user_id': match_user_id,
-            'compatibility_score': score,
-            'explanation': explanation,
-            'status': 'pending',
-        }
-        
-        response = SupabaseService.get_client().table('matches').insert(match_data).execute()
-        return response.data[0] if response.data else None
+        try:
+            current_app.logger.info(f"Storing match between {user_id} and {match_user_id}")
+            
+            # First, check if this match already exists
+            try:
+                existing_match = SupabaseService.get_client().table('matches').select('*').eq('user_id', user_id).eq('matched_user_id', match_user_id).execute()
+                
+                if existing_match.data and len(existing_match.data) > 0:
+                    match_id = existing_match.data[0]['id']
+                    current_app.logger.info(f"Match already exists between {user_id} and {match_user_id}, updating")
+                    
+                    # Update the existing match with new score and explanation
+                    match_data = {
+                        'compatibility_score': score,
+                        'explanation': explanation,
+                        'updated_at': datetime.now().isoformat(),
+                        # Reset rejected_at if it was previously rejected but now re-matched
+                        'rejected_at': None
+                    }
+                    
+                    update_response = SupabaseService.get_client().table('matches').update(match_data).eq('id', match_id).execute()
+                    current_app.logger.info(f"Updated match between {user_id} and {match_user_id}")
+                    
+                    if update_response.data and len(update_response.data) > 0:
+                        return update_response.data[0]
+                    return None
+            except Exception as e:
+                current_app.logger.error(f"Error checking for existing match: {str(e)}")
+            
+            # If no existing match, create a new one
+            match_id = str(uuid.uuid4())
+            
+            # Check if the reverse match exists (matched_user_id -> user_id)
+            related_match_id = None
+            try:
+                reverse_match = SupabaseService.get_client().table('matches').select('id').eq('user_id', match_user_id).eq('matched_user_id', user_id).execute()
+                if reverse_match.data and len(reverse_match.data) > 0:
+                    related_match_id = reverse_match.data[0]['id']
+                    current_app.logger.info(f"Found related match {related_match_id}")
+            except Exception as e:
+                current_app.logger.warning(f"Error checking for reverse match: {str(e)}")
+            
+            # Create the match record
+            match_data = {
+                'id': match_id,
+                'user_id': user_id,
+                'matched_user_id': match_user_id,
+                'related_match_id': related_match_id,
+                'compatibility_score': score,
+                'explanation': explanation,
+                'status': 'pending',
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            response = SupabaseService.get_client().table('matches').insert(match_data).execute()
+            
+            # If we found a related match, update it with this match's ID
+            if related_match_id:
+                try:
+                    SupabaseService.get_client().table('matches').update({'related_match_id': match_id}).eq('id', related_match_id).execute()
+                except Exception as e:
+                    current_app.logger.warning(f"Error updating related match: {str(e)}")
+            
+            current_app.logger.info(f"Created match between {user_id} and {match_user_id}")
+            return response.data[0] if response.data and len(response.data) > 0 else None
+        except Exception as e:
+            current_app.logger.error(f"Error storing match: {str(e)}")
+            return None
     
     @staticmethod
     def get_recommended_matches(user_id):
-        """
-        Get recommended matches for a user.
-        This is a simplified version and should be replaced with a more sophisticated matching algorithm.
-        """
-        # Get all users except the current user
-        response = SupabaseService.get_client().table('users').select('*').neq('id', user_id).execute()
-        all_users = response.data
+        """Get recommended matches for a user, excluding previously rejected matches within 30 days."""
+        try:
+            current_app.logger.info(f"Retrieving recommended matches for user: {user_id}")
+            
+            # First, get the user's profile to check if it's complete
+            profile = SupabaseService.get_profile_by_user_id(user_id)
+            if not profile:
+                current_app.logger.warning(f"No profile found for user {user_id}")
+                return []
+            
+            if not profile.get('is_complete', False):
+                current_app.logger.warning(f"Profile for user {user_id} is not complete")
+                return {"error": "Your profile is not complete", "message": "Please complete your profile to see matches"}
+            
+            # Get all matches for the user
+            existing_matches = SupabaseService.get_client().table('matches').select('*').eq('user_id', user_id).execute()
+            existing_matches_data = existing_matches.data if existing_matches.data else []
+            
+            # Get matches where user is the matched_user_id (other user initiated)
+            other_matches = SupabaseService.get_client().table('matches').select('*').eq('matched_user_id', user_id).execute()
+            other_matches_data = other_matches.data if other_matches.data else []
+            
+            # Combine all matches
+            all_matches = existing_matches_data + other_matches_data
+            
+            # Extract the IDs of users already matched with
+            matched_user_ids = set()
+            for match in all_matches:
+                # Exclude matches that were rejected more than 30 days ago
+                if match.get('status') == 'reject' and match.get('rejected_at'):
+                    # Check if 30 days have passed since rejection
+                    if SupabaseService._is_rejection_expired(match.get('rejected_at')):
+                        continue
+                    
+                if match.get('user_id') == user_id:
+                    matched_user_ids.add(match.get('matched_user_id'))
+                else:
+                    matched_user_ids.add(match.get('user_id'))
+            
+            # Get all users
+            users_response = SupabaseService.get_client().table('users').select('*').execute()
+            all_users = users_response.data if users_response.data else []
+            
+            # Filter out users that already have matches with the current user
+            potential_matches = []
+            for u in all_users:
+                if u.get('id') != user_id and u.get('id') not in matched_user_ids:
+                    # Get the user's profile
+                    other_profile = SupabaseService.get_profile_by_user_id(u.get('id'))
+                    if other_profile and other_profile.get('is_complete', False):
+                        # Only include users with complete profiles
+                        potential_matches.append({
+                            'id': u.get('id'),
+                            'email': u.get('email'),
+                            'profile': other_profile
+                        })
+            
+            current_app.logger.info(f"Found {len(potential_matches)} potential new matches for user {user_id}")
+            return potential_matches
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving recommended matches: {str(e)}")
+            return []
 
-        # Get existing matches for the user
-        existing_matches = SupabaseService.get_matches(user_id)
-        matched_ids = [match['matched_user_id'] for match in existing_matches]
-
-        # Filter out already matched users
-        recommended = [user for user in all_users if user['id'] not in matched_ids]
-
-        # In a real-world scenario, you would implement a more sophisticated matching algorithm here
-        # For now, we'll just return the first 10 users (or less if there are fewer than 10)
-        return recommended[:10]
+    @staticmethod
+    def _is_rejection_expired(rejected_at_str):
+        """Check if 30 days have passed since a match was rejected."""
+        try:
+            rejected_at = datetime.fromisoformat(rejected_at_str.replace('Z', '+00:00'))
+            now = datetime.now()
+            
+            # Calculate difference in days
+            delta = now - rejected_at
+            return delta.days >= 30
+        except Exception as e:
+            current_app.logger.error(f"Error checking rejection expiry: {str(e)}")
+            return False
 
     @staticmethod
     def update_match_status(match_id, status):
-        """Update a match status."""
-        response = SupabaseService.get_client().table('matches').update({'status': status}).eq('id', match_id).execute()
-        return response.data[0] if response.data else None
+        """Update the status of a match."""
+        try:
+            # First get the match to check if we need to update related match
+            match = SupabaseService.get_match(match_id)
+            if not match:
+                current_app.logger.error(f"Match {match_id} not found")
+                return None
+            
+            # Prepare update data
+            update_data = {
+                'status': status,
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            # If rejecting, set the rejected_at timestamp
+            if status == 'reject':
+                update_data['rejected_at'] = datetime.now().isoformat()
+                
+            # If both users accept, create a conversation
+            if status == 'accept' and match.get('related_match_id'):
+                related_match = SupabaseService.get_match(match['related_match_id'])
+                if related_match and related_match.get('status') == 'accept':
+                    # Both users have accepted - change status to 'connected'
+                    update_data['status'] = 'connected'
+                    
+                    # Create a conversation between the users
+                    conversation_data = {
+                        'id': str(uuid.uuid4()),
+                        'user_id_1': match['user_id'],
+                        'user_id_2': match['matched_user_id'],
+                        'created_at': datetime.now().isoformat()
+                    }
+                    
+                    try:
+                        SupabaseService.create_conversation(conversation_data)
+                        current_app.logger.info(f"Created conversation for match {match_id}")
+                        
+                        # Also update the related match to 'connected'
+                        try:
+                            SupabaseService.get_client().table('matches').update({
+                                'status': 'connected',
+                                'updated_at': datetime.now().isoformat()
+                            }).eq('id', match['related_match_id']).execute()
+                        except Exception as e:
+                            current_app.logger.error(f"Error updating related match status: {str(e)}")
+                    except Exception as e:
+                        current_app.logger.error(f"Error creating conversation: {str(e)}")
+            
+            # Update the match status
+            response = SupabaseService.get_client().table('matches').update(update_data).eq('id', match_id).execute()
+            current_app.logger.info(f"Updated match {match_id} status to {status}")
+            return response.data[0] if response.data else None
+        except Exception as e:
+            current_app.logger.error(f"Error updating match status: {str(e)}")
+            return None
 
     @classmethod
     def get_user_profile(cls, user_id):
@@ -306,11 +619,22 @@ class SupabaseService:
             client = cls.get_client()
             
             # Get matches where the user is either the initiator or the matched user
-            response = client.table('matches').select('*').or_(f'user_id.eq.{user_id},matched_user_id.eq.{user_id}').execute()
+            # Use filters and or instead of or_
+            response = client.table('matches').select('*').filter(
+                'user_id', 'eq', user_id
+            ).execute()
             
-            if response.data:
-                return response.data
-            return []
+            # Also get matches where user is the matched user
+            response2 = client.table('matches').select('*').filter(
+                'matched_user_id', 'eq', user_id
+            ).execute()
+            
+            # Combine the results
+            matches = response.data + response2.data if response.data and response2.data else []
+            matches = response.data if response.data and not response2.data else matches
+            matches = response2.data if not response.data and response2.data else matches
+            
+            return matches
         except Exception as e:
             current_app.logger.error(f"Error getting user match history: {str(e)}")
             return []
@@ -323,13 +647,25 @@ class SupabaseService:
             current_app.logger.info(f"Retrieving conversations for user: {user_id}")
             client = cls.get_client()
             
-            # Using OR to get conversations where user is either participant
-            response = client.table('conversations').select('*').or_(
-                f'user_id_1.eq.{user_id},user_id_2.eq.{user_id}'
+            # Get conversations where user is the first participant
+            response1 = client.table('conversations').select('*').filter(
+                'user_id_1', 'eq', user_id
             ).execute()
             
-            current_app.logger.info(f"Retrieved {len(response.data)} conversations for user: {user_id}")
-            return response.data
+            # Get conversations where user is the second participant
+            response2 = client.table('conversations').select('*').filter(
+                'user_id_2', 'eq', user_id
+            ).execute()
+            
+            # Combine the results
+            conversations = []
+            if response1.data:
+                conversations.extend(response1.data)
+            if response2.data:
+                conversations.extend(response2.data)
+            
+            current_app.logger.info(f"Retrieved {len(conversations)} conversations for user: {user_id}")
+            return conversations
         except Exception as e:
             current_app.logger.error(f"Error retrieving conversations: {str(e)}")
             # Create the conversations table if it doesn't exist
@@ -345,14 +681,29 @@ class SupabaseService:
             current_app.logger.info(f"Finding conversation between users: {user_id_1} and {user_id_2}")
             client = cls.get_client()
             
-            # Check both possible arrangements of user IDs
-            response = client.table('conversations').select('*').or_(
-                f'(user_id_1.eq.{user_id_1},user_id_2.eq.{user_id_2}),(user_id_1.eq.{user_id_2},user_id_2.eq.{user_id_1})'
-            ).single().execute()
+            # Check first arrangement (user1 is first, user2 is second)
+            response1 = client.table('conversations').select('*').filter(
+                'user_id_1', 'eq', user_id_1
+            ).filter(
+                'user_id_2', 'eq', user_id_2
+            ).execute()
             
-            if response.data:
+            # If found, return it
+            if response1.data and len(response1.data) > 0:
                 current_app.logger.info(f"Found conversation between users: {user_id_1} and {user_id_2}")
-                return response.data
+                return response1.data[0]
+            
+            # Check second arrangement (user2 is first, user1 is second)
+            response2 = client.table('conversations').select('*').filter(
+                'user_id_1', 'eq', user_id_2
+            ).filter(
+                'user_id_2', 'eq', user_id_1
+            ).execute()
+            
+            if response2.data and len(response2.data) > 0:
+                current_app.logger.info(f"Found conversation between users: {user_id_1} and {user_id_2}")
+                return response2.data[0]
+            
             current_app.logger.info(f"No conversation found between users: {user_id_1} and {user_id_2}")
             return None
         except Exception as e:
@@ -427,7 +778,7 @@ class SupabaseService:
             current_app.logger.info(f"Retrieving messages for conversation: {conversation_id}")
             client = cls.get_client()
             
-            response = client.table('messages').select('*').eq(
+            response = client.table('conversation_messages').select('*').eq(
                 'conversation_id', conversation_id
             ).order('created_at', desc=False).execute()
             
@@ -436,8 +787,8 @@ class SupabaseService:
         except Exception as e:
             current_app.logger.error(f"Error retrieving messages: {str(e)}")
             # Handle case where table doesn't exist
-            if "relation \"messages\" does not exist" in str(e):
-                current_app.logger.info("Messages table does not exist, returning empty list")
+            if "relation \"conversation_messages\" does not exist" in str(e):
+                current_app.logger.info("Conversation_messages table does not exist, returning empty list")
                 return []
             return []
 
@@ -448,7 +799,7 @@ class SupabaseService:
             current_app.logger.info(f"Retrieving latest message for conversation: {conversation_id}")
             client = cls.get_client()
             
-            response = client.table('messages').select('*').eq(
+            response = client.table('conversation_messages').select('*').eq(
                 'conversation_id', conversation_id
             ).order('created_at', desc=True).limit(1).execute()
             
@@ -468,16 +819,16 @@ class SupabaseService:
             current_app.logger.info(f"Creating message in conversation: {message_data['conversation_id']}")
             client = cls.get_client()
             
-            # Try to create the messages table if it doesn't exist
+            # Try to create the conversation_messages table if it doesn't exist
             try:
-                client.table('messages').select('count').limit(1).execute()
+                client.table('conversation_messages').select('count').limit(1).execute()
             except Exception as table_e:
-                if "relation \"messages\" does not exist" in str(table_e):
-                    current_app.logger.warning("Messages table does not exist. Creating it...")
+                if "relation \"conversation_messages\" does not exist" in str(table_e):
+                    current_app.logger.warning("Conversation_messages table does not exist. Creating it...")
                     # In production, we'd use proper SQL migration
                     # For this demo, we'll just handle the error gracefully
                     sql = """
-                    CREATE TABLE IF NOT EXISTS messages (
+                    CREATE TABLE IF NOT EXISTS conversation_messages (
                         id UUID PRIMARY KEY,
                         conversation_id UUID NOT NULL,
                         sender_id UUID NOT NULL,
@@ -490,7 +841,7 @@ class SupabaseService:
                     # Execute SQL is typically handled through migrations
                     # We'll just continue with the insert and let it fail if necessary
             
-            response = client.table('messages').insert(message_data).execute()
+            response = client.table('conversation_messages').insert(message_data).execute()
             
             if response.data and len(response.data) > 0:
                 current_app.logger.info(f"Created message: {message_data['id']}")
@@ -509,7 +860,7 @@ class SupabaseService:
             client = cls.get_client()
             
             # Update messages where user is the receiver and messages are unread
-            response = client.table('messages').update(
+            response = client.table('conversation_messages').update(
                 {'is_read': True}
             ).eq('conversation_id', conversation_id).eq('receiver_id', user_id).eq('is_read', False).execute()
             
@@ -527,7 +878,7 @@ class SupabaseService:
             client = cls.get_client()
             
             # Count messages where user is the receiver and messages are unread
-            response = client.table('messages').select('count').eq(
+            response = client.table('conversation_messages').select('count').eq(
                 'conversation_id', conversation_id
             ).eq('receiver_id', user_id).eq('is_read', False).execute()
             
@@ -540,3 +891,117 @@ class SupabaseService:
         except Exception as e:
             current_app.logger.error(f"Error getting unread count: {str(e)}")
             return 0
+
+    @staticmethod
+    def ensure_profiles_table():
+        """Ensure the profiles table exists with all required columns."""
+        try:
+            current_app.logger.info("Ensuring profiles table exists with all required columns")
+            
+            # Try direct approach - create a profile with all required fields
+            # This will either work or fail with a helpful error message
+            client = SupabaseService.get_client()
+            
+            # Create a dummy profile with all required fields
+            dummy_profile = {
+                'user_id': '00000000-0000-0000-0000-000000000000',  # Dummy user ID
+                'name': 'Schema Setup',
+                'email': 'schema@example.com',
+                'bio': 'Schema setup profile',
+                'avatar_url': 'https://example.com/avatar.png',
+                'location': 'Test Location',
+                'industry': 'Test Industry',
+                'skills': [],
+                'interests': [],
+                'collab_style': 'Test Style',
+                'startup_stage': 'Idea/Concept',
+                'time_commitment': 'Full-time',
+                'availability': 'Weekdays',
+                'seeking_skills': []
+            }
+            
+            # Try to insert the dummy profile
+            response = client.table('profiles').insert(dummy_profile).execute()
+            
+            # If successful, delete the dummy profile
+            if response.data:
+                dummy_id = response.data[0]['id']
+                client.table('profiles').delete().eq('id', dummy_id).execute()
+            
+            current_app.logger.info("Profiles table structure verified successfully")
+            return {"message": "Profiles table structure verified successfully"}
+            
+        except Exception as e:
+            current_app.logger.error(f"Error ensuring profiles table: {str(e)}")
+            
+            # If the error is about missing columns, extract the column name
+            error_msg = str(e)
+            if "Could not find the" in error_msg and "column" in error_msg:
+                # Try to extract the column name from the error message
+                import re
+                match = re.search(r"Could not find the '(\w+)' column", error_msg)
+                if match:
+                    missing_column = match.group(1)
+                    return {
+                        "error": f"Missing column '{missing_column}' in profiles table",
+                        "message": f"Please add the '{missing_column}' column to your profiles table in Supabase"
+                    }
+            
+            return {
+                "error": "Failed to verify profiles table structure",
+                "message": f"Error: {str(e)}"
+            }
+
+    @staticmethod
+    def update_match_reason(match_id, reason):
+        """Update the rejection reason for a match."""
+        try:
+            current_app.logger.info(f"Updating match {match_id} rejection reason")
+            
+            # Check if the reason field exists in the database
+            # If not, we'll need to first ensure it exists
+            # This field might not be in all installations
+            try:
+                # First, check if the column exists
+                client = SupabaseService.get_client()
+                
+                # Create rejection_reason column if it doesn't exist
+                sql = """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                  WHERE table_name = 'matches' AND column_name = 'rejection_reason')
+                    THEN
+                        ALTER TABLE matches ADD COLUMN rejection_reason TEXT;
+                    END IF;
+                END
+                $$;
+                """
+                
+                # Execute the SQL (this might fail if user doesn't have permission)
+                try:
+                    client.rpc('exec_sql', {'sql': sql}).execute()
+                    current_app.logger.info("Ensured rejection_reason column exists")
+                except Exception as e:
+                    current_app.logger.warning(f"Failed to ensure column exists: {str(e)}")
+                    # Continue anyway - column might already exist
+            except Exception as e:
+                current_app.logger.warning(f"Error checking column: {str(e)}")
+            
+            # Update the match with the rejection reason
+            update_data = {
+                'rejection_reason': reason,
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            response = SupabaseService.get_client().table('matches').update(update_data).eq('id', match_id).execute()
+            
+            if response.data and len(response.data) > 0:
+                current_app.logger.info(f"Updated match {match_id} rejection reason")
+                return response.data[0]
+            else:
+                current_app.logger.error(f"Failed to update match {match_id} rejection reason")
+                return None
+        except Exception as e:
+            current_app.logger.error(f"Error updating match rejection reason: {str(e)}")
+            return None

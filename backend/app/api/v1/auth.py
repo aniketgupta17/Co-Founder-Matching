@@ -3,6 +3,7 @@ from . import bp
 from ...services.auth_service import get_auth_service, login_required
 from ...services.supabase_service import SupabaseService
 import uuid
+from datetime import datetime
 
 @bp.route('/auth/ping', methods=['GET'])
 def ping():
@@ -59,7 +60,10 @@ def signup():
             'startup_stage': '',
             'time_commitment': '',
             'availability': '',
-            'seeking_skills': []
+            'seeking_skills': [],
+            'is_complete': False,
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
         }
         
         profile = SupabaseService.create_profile(profile_data)
@@ -67,6 +71,16 @@ def signup():
         
         # Augment the result with profile info
         result['profile'] = profile
+        
+        # Add profile completeness flag and next steps
+        result['profile_complete'] = False
+        result['next_steps'] = {
+            "message": "Your profile is incomplete. Please complete your profile to find matches.",
+            "required_fields": [
+                "bio", "location", "industry", "skills", "interests", 
+                "collab_style", "startup_stage", "time_commitment", "availability"
+            ]
+        }
     except Exception as e:
         current_app.logger.error(f"Error creating default profile for new user: {str(e)}")
         # Continue with registration even if profile creation fails
@@ -100,6 +114,17 @@ def login():
         profile = SupabaseService.get_profile(user_id)
         if profile:
             result['profile'] = profile
+            result['profile_complete'] = profile.get('is_complete', False)
+            
+            # If profile is incomplete, add next steps
+            if not profile.get('is_complete', False):
+                result['next_steps'] = {
+                    "message": "Your profile is incomplete. Please complete your profile to find matches.",
+                    "required_fields": [
+                        "bio", "location", "industry", "skills", "interests", 
+                        "collab_style", "startup_stage", "time_commitment", "availability"
+                    ]
+                }
     except Exception as e:
         current_app.logger.error(f"Error fetching profile for user {user_id}: {str(e)}")
         # Continue login flow even if profile fetch fails
@@ -205,4 +230,50 @@ def get_schema_info():
         })
     except Exception as e:
         current_app.logger.error(f"Error getting schema info: {str(e)}")
-        return jsonify({"error": f"Failed to get schema info: {str(e)}"}), 500 
+        return jsonify({"error": f"Failed to get schema info: {str(e)}"}), 500
+
+@bp.route('/auth/profile/completeness', methods=['GET'])
+@login_required
+def check_profile_completeness():
+    """Check if the user's profile is complete and what fields are missing."""
+    user_id = request.current_user['id']
+    
+    try:
+        profile = SupabaseService.get_profile_by_user_id(user_id)
+        if not profile:
+            return jsonify({
+                "error": "Profile not found",
+                "message": "Please create a profile first"
+            }), 404
+        
+        # List of required fields for a complete profile
+        required_fields = [
+            'name', 'bio', 'location', 'industry', 'skills', 'interests', 
+            'collab_style', 'startup_stage', 'time_commitment', 'availability'
+        ]
+        
+        # Check which fields are missing
+        missing_fields = []
+        for field in required_fields:
+            if field not in profile or not profile[field]:
+                missing_fields.append(field)
+            elif field in ['skills', 'interests'] and len(profile[field]) == 0:
+                missing_fields.append(field)
+        
+        # Profile is complete if no fields are missing
+        is_complete = len(missing_fields) == 0
+        
+        # Update the is_complete flag in the database if it doesn't match
+        if is_complete != profile.get('is_complete', False):
+            profile['is_complete'] = is_complete
+            SupabaseService.update_profile(profile['id'], {'is_complete': is_complete})
+        
+        return jsonify({
+            "is_complete": is_complete,
+            "profile": profile,
+            "missing_fields": missing_fields,
+            "completion_percentage": int(100 * (len(required_fields) - len(missing_fields)) / len(required_fields))
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error checking profile completeness: {str(e)}")
+        return jsonify({"error": f"Failed to check profile completeness: {str(e)}"}), 500 
