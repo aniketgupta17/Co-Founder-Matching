@@ -1,8 +1,94 @@
-from flask import jsonify, request
+from flask import jsonify, request, current_app
 from . import bp
 from ...services.auth_service import get_auth_service, login_required
 from ...services.supabase_service import SupabaseService
+import uuid
+from datetime import datetime
+
+@bp.route('/auth/ping', methods=['GET'])
+def ping():
+    """Simple ping endpoint to check if the API is running."""
+    return jsonify({"status": "ok", "message": "API is running"}), 200
+
 # Auth endpoints
+@bp.route('/auth/signup', methods=['POST'])
+def signup():
+    """Register a new user and return a JWT token."""
+    data = request.json
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+        
+    email = data.get('email')
+    password = data.get('password')
+    name = data.get('name')
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+    
+    # Log the registration attempt with extra details
+    current_app.logger.info(f"Attempting to register user: {email} with name: {name}")
+    
+    auth_service = get_auth_service()
+    result = auth_service.register(email, password, name)
+    
+    if not result:
+        current_app.logger.error(f"Registration failed for email: {email}")
+        return jsonify({"error": "Registration failed. Please check logs for details."}), 400
+        
+    # If the result contains an error message, return it
+    if isinstance(result, dict) and 'error' in result:
+        current_app.logger.warning(f"Registration warning: {result['error']}")
+        return jsonify(result), 400
+    
+    # Create a default profile for the new user
+    try:
+        user_id = result['user']['id']
+        DEFAULT_AVATAR_URL = 'https://bivbvzynoxlcfbvdkfol.supabase.co/storage/v1/object/sign/avatars/Default_Avatar.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InN0b3JhZ2UtdXJsLXNpZ25pbmcta2V5X2EyNDEwYTYxLTBjYjctNDY4NS04OTM0LWM3MjgwNzBhMDBjMSJ9.eyJ1cmwiOiJhdmF0YXJzL0RlZmF1bHRfQXZhdGFyLnBuZyIsImlhdCI6MTc0NjA4OTcwMCwiZXhwIjoxNzc3NjI1NzAwfQ.KJ2R0b0T462nmPmzZLpM7ibQF9Jvc3J_UCmJ7KX3Odo'
+        
+        profile_data = {
+            'id': user_id,  # In Supabase, profile ID is the same as user ID
+            'user_id': user_id,
+            'skills': [],
+            'interests': [],
+            'bio': '',
+            'avatar_url': DEFAULT_AVATAR_URL,
+            'name': name or '',
+            'email': email,
+            'location': '',
+            'industry': '',
+            'collab_style': '',
+            'startup_stage': '',
+            'time_commitment': '',
+            'availability': '',
+            'seeking_skills': [],
+            'is_complete': False,
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        profile = SupabaseService.create_profile(profile_data)
+        current_app.logger.info(f"Created default profile for new user: {user_id}")
+        
+        # Augment the result with profile info
+        result['profile'] = profile
+        
+        # Add profile completeness flag and next steps
+        result['profile_complete'] = False
+        result['next_steps'] = {
+            "message": "Your profile is incomplete. Please complete your profile to find matches.",
+            "required_fields": [
+                "bio", "location", "industry", "skills", "interests", 
+                "collab_style", "startup_stage", "time_commitment", "availability"
+            ]
+        }
+    except Exception as e:
+        current_app.logger.error(f"Error creating default profile for new user: {str(e)}")
+        # Continue with registration even if profile creation fails
+        # The profile can be created later
+    
+    current_app.logger.info(f"User registered successfully: {email}")
+    return jsonify(result), 201
+
 @bp.route('/auth/login', methods=['POST'])
 def login():
     """Authenticate a user and return a JWT token."""
@@ -22,81 +108,172 @@ def login():
     if not result:
         return jsonify({"error": "Invalid credentials"}), 401
     
+    # Try to get the user's profile
+    try:
+        user_id = result['user']['id']
+        profile = SupabaseService.get_profile(user_id)
+        if profile:
+            result['profile'] = profile
+            result['profile_complete'] = profile.get('is_complete', False)
+            
+            # If profile is incomplete, add next steps
+            if not profile.get('is_complete', False):
+                result['next_steps'] = {
+                    "message": "Your profile is incomplete. Please complete your profile to find matches.",
+                    "required_fields": [
+                        "bio", "location", "industry", "skills", "interests", 
+                        "collab_style", "startup_stage", "time_commitment", "availability"
+                    ]
+                }
+    except Exception as e:
+        current_app.logger.error(f"Error fetching profile for user {user_id}: {str(e)}")
+        # Continue login flow even if profile fetch fails
+    
+    current_app.logger.info(f"User logged in: {email}")
     return jsonify(result)
 
-
+# Keeping this alias for backward compatibility
 @bp.route('/login', methods=['POST'])
 def login_user():
-    """Authenticate a user and return a JWT token."""
-    data = request.json
-    if not data:
-        return jsonify({"error": "Request body must be JSON"}), 400
-
-    email = data.get('email')
-    password = data.get('password')
-
-    if not email or not password:
-        return jsonify({"error": "Email and password are required"}), 400
-
-    auth_service = get_auth_service()
-    result = auth_service.authenticate(email, password)
-
-    if not result:
-        return jsonify({"error": "Invalid credentials"}), 401
-
-    return jsonify(result)
+    """Alias for the /auth/login endpoint."""
+    return login()
 
 @bp.route('/auth/me', methods=['GET'])
 @login_required
 def get_authenticated_user():
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
-        return jsonify({"error": "Authorization header required"}), 401
-
-    token = auth_header.split(' ')[1]
-    auth_service = get_auth_service()
-    payload = auth_service.decode_token(token)
-
-    if not payload:
-        return jsonify({"error": "Invalid or expired token"}), 401
-
-    user_id = payload.get('user_id')
-    user = SupabaseService.get_user(user_id)
-    if not user_id:
-        return jsonify({"error": "Invalid token payload"}), 401
     """Get the authenticated user's information."""
-    # request.current_user is set by the login_required decorator
-    return jsonify(user)
+    try:
+        # request.current_user is set by the login_required decorator
+        user_id = request.current_user['id']
+        user = request.current_user
+        
+        # Add profile information if available
+        try:
+            profile = SupabaseService.get_profile(user_id)
+            if profile:
+                user['profile'] = profile
+        except Exception as e:
+            current_app.logger.error(f"Error getting profile for user {user_id}: {str(e)}")
+            # Continue without profile info
+        
+        current_app.logger.info(f"Retrieved authenticated user info for ID: {user_id}")
+        return jsonify(user)
+    except Exception as e:
+        current_app.logger.error(f"Error in get_authenticated_user: {str(e)}")
+        return jsonify({"error": "Failed to retrieve user information"}), 500
 
 @bp.route('/auth/refresh', methods=['POST'])
+@login_required
 def refresh_token():
     """Refresh the JWT token."""
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
-        return jsonify({"error": "Authorization header required"}), 401
+    try:
+        user = request.current_user
+        
+        auth_service = get_auth_service()
+        new_token = auth_service.generate_token(user)
+        
+        current_app.logger.info(f"Token refreshed for user ID: {user['id']}")
+        return jsonify({
+            "token": new_token,
+            "user": user
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error in refresh_token: {str(e)}")
+        return jsonify({"error": "Failed to refresh token"}), 500
+
+@bp.route('/auth/schema', methods=['GET'])
+@login_required
+def get_schema_info():
+    """Get information about the database schema."""
+    try:
+        client = SupabaseService.get_client()
+        
+        # Try to get a list of tables
+        tables_info = []
+        try:
+            response = client.rpc('get_schema').execute()
+            if response.data:
+                tables_info = response.data
+        except Exception as e:
+            current_app.logger.error(f"Error getting schema via RPC: {str(e)}")
+            tables_info = [{"message": f"Error getting schema: {str(e)}"}]
+        
+        # Try to query for specific tables we care about
+        tables_status = {}
+        for table in ['profiles', 'conversations', 'messages', 'users']:
+            try:
+                response = client.table(table).select('count').limit(1).execute()
+                tables_status[table] = {
+                    "exists": True,
+                    "count": response.data[0]['count'] if response.data else 0
+                }
+            except Exception as e:
+                tables_status[table] = {
+                    "exists": False,
+                    "error": str(e)
+                }
+        
+        # Try to get column info for profiles table
+        profile_columns = []
+        try:
+            response = client.rpc('list_columns', {'table_name': 'profiles'}).execute()
+            if response.data:
+                profile_columns = response.data
+        except Exception as e:
+            current_app.logger.error(f"Error getting profile columns: {str(e)}")
+            profile_columns = [{"message": f"Error getting profile columns: {str(e)}"}]
+        
+        return jsonify({
+            "tables_info": tables_info,
+            "tables_status": tables_status,
+            "profile_columns": profile_columns
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting schema info: {str(e)}")
+        return jsonify({"error": f"Failed to get schema info: {str(e)}"}), 500
+
+@bp.route('/auth/profile/completeness', methods=['GET'])
+@login_required
+def check_profile_completeness():
+    """Check if the user's profile is complete and what fields are missing."""
+    user_id = request.current_user['id']
     
-    token = auth_header.split(' ')[1]
-    auth_service = get_auth_service()
-    payload = auth_service.decode_token(token)
-    
-    if not payload:
-        return jsonify({"error": "Invalid or expired token"}), 401
-    
-    user_id = payload.get('user_id')
-    if not user_id:
-        return jsonify({"error": "Invalid token payload"}), 401
-    
-    # Get user from Supabase
-    supabase = auth_service.supabase
-    user = supabase.get_user(user_id)
-    
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
-    # Generate new token
-    new_token = auth_service.generate_token(user)
-    
-    return jsonify({
-        "token": new_token,
-        "user": user
-    }) 
+    try:
+        profile = SupabaseService.get_profile_by_user_id(user_id)
+        if not profile:
+            return jsonify({
+                "error": "Profile not found",
+                "message": "Please create a profile first"
+            }), 404
+        
+        # List of required fields for a complete profile
+        required_fields = [
+            'name', 'bio', 'location', 'industry', 'skills', 'interests', 
+            'collab_style', 'startup_stage', 'time_commitment', 'availability'
+        ]
+        
+        # Check which fields are missing
+        missing_fields = []
+        for field in required_fields:
+            if field not in profile or not profile[field]:
+                missing_fields.append(field)
+            elif field in ['skills', 'interests'] and len(profile[field]) == 0:
+                missing_fields.append(field)
+        
+        # Profile is complete if no fields are missing
+        is_complete = len(missing_fields) == 0
+        
+        # Update the is_complete flag in the database if it doesn't match
+        if is_complete != profile.get('is_complete', False):
+            profile['is_complete'] = is_complete
+            SupabaseService.update_profile(profile['id'], {'is_complete': is_complete})
+        
+        return jsonify({
+            "is_complete": is_complete,
+            "profile": profile,
+            "missing_fields": missing_fields,
+            "completion_percentage": int(100 * (len(required_fields) - len(missing_fields)) / len(required_fields))
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error checking profile completeness: {str(e)}")
+        return jsonify({"error": f"Failed to check profile completeness: {str(e)}"}), 500 
