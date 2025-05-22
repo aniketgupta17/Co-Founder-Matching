@@ -9,7 +9,7 @@ export const useSkillsAndInterests = (supabase: SupabaseClient) => {
   const fetchInterestOptions = async () => {
     try {
       const { data, error } = await supabase
-        .from("interests_list")
+        .from("interest_list")
         .select("name");
 
       if (error || !data)
@@ -24,7 +24,7 @@ export const useSkillsAndInterests = (supabase: SupabaseClient) => {
 
   const fetchSkillOptions = async () => {
     try {
-      const { data, error } = await supabase.from("skills_list").select("name");
+      const { data, error } = await supabase.from("skill_list").select("name");
 
       if (error || !data)
         throw error ? error : new Error("Failed to fetch skills");

@@ -55,6 +55,59 @@ export async function createChat(
     return;
   }
 }
+export async function createAIChat(accessToken: string | null) {
+  try {
+    const url = `${BASE_URL}/chats/create/ai`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : "",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) throw new Error("Failed AI chat creation");
+
+    const responseData = await response.json();
+    return responseData.data as ChatRow;
+  } catch (error) {
+    console.error("Failed to create chat:", error);
+    return;
+  }
+}
+
+export async function chatWithBot(
+  accessToken: string | null,
+  message: string,
+  chatId: number
+): Promise<{ success: boolean; message: string; error?: string } | undefined> {
+  try {
+    const url = `${BASE_URL}/chatbot`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : "",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: message,
+        chat_id: chatId,
+      }),
+    });
+
+    if (!response.ok) throw new Error("Failed to get chatbot response");
+
+    const responseData = await response.json();
+    return responseData;
+  } catch (error) {
+    console.error("Failed to communicate with chatbot:", error);
+    return {
+      success: false,
+      message: "Failed to communicate with chatbot",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
 
 export async function createPrivateChatRPC(
   firstUserId: string,

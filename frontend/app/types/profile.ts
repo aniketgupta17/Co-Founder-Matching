@@ -6,11 +6,12 @@ export type RawProfileRowUpdate =
 
 export type ProfileRowUpdate = Omit<
   RawProfileRowUpdate,
-  "skills" | "seeking_skills" | "interests" | "name" | "bio"
+  "skills" | "seeking_skills" | "interests" | "name" | "bio" | "role"
 > & {
   name?: string;
   bio?: string;
   industry?: string;
+  role?: string;
   skills: string[];
   seeking_skills: string[];
   interests: string[];

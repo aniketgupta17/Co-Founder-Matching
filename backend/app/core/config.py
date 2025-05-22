@@ -24,6 +24,8 @@ class Config:
     print(SUPABASE_URL)
     print(SUPABASE_KEY)
 
+    SUPABASE_AI_USER = os.environ.get("SUPABASE_AI_USER")
+
     # HuggingFace - For the chatbot
     HUGGINGFACE_API_TOKEN = os.environ.get("HF_API_TOKEN")
 
@@ -35,6 +37,8 @@ class Config:
             missing.append("SUPABASE_URL")
         if not cls.SUPABASE_KEY:
             missing.append("SUPABASE_KEY")
+        if not cls.SUPABASE_AI_USER:
+            missing.append("SUPABASE_AI_USER")
         if missing:
             raise ValueError(
                 f"Missing required environment variables: {', '.join(missing)}"

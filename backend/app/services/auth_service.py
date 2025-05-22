@@ -89,7 +89,6 @@ class AuthService:
     def decode_token(self, token):
         """Decode a JWT token."""
         try:
-            current_app.logger.error(self.secret_key)
             payload = jwt.decode(
                 token, self.secret_key, algorithms=["HS256"], audience="authenticated"
             )

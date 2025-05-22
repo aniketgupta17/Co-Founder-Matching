@@ -17,6 +17,7 @@ export interface Chat {
   initials?: string;
   unread: boolean;
   participants?: number;
+  isAi?: boolean;
 }
 
 export const chatRowToChat = (
@@ -42,7 +43,7 @@ export const chatRowToChat = (
     );
   }
 
-  return {
+  const chat = {
     id: chatRow.id,
     name: name,
     lastMessage: chatRow.last_message_text,
@@ -51,5 +52,8 @@ export const chatRowToChat = (
     unread: unread,
     avatar: chatRow.avatar_url || null,
     participants: chatRow.participants,
+    isAi: chatRow.is_ai ?? false,
   };
+  console.log(chat);
+  return chat;
 };

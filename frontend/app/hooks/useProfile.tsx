@@ -5,10 +5,11 @@ import {
   ReactNode,
   useState,
   useEffect,
+  useCallback,
 } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Profile } from "../types/profile";
-import { ProfileRowUpdate } from "../types/profile";
+
 type ProfileContextType = {
   profile: Profile | null;
   loading: boolean;
@@ -31,41 +32,7 @@ export const ProfileProvider = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const updateProfile = async (profileUpdate: ProfileRowUpdate) => {
-    if (!profile) {
-      console.error("No active profile");
-      return;
-    }
-
-    try {
-      // Update with timestamp
-      const updateWithTimestamp = {
-        ...profileUpdate,
-        updated_at: new Date().toISOString(),
-      };
-      const { data, error } = await supabase
-        .from("profiles")
-        .update(updateWithTimestamp)
-        .eq("id", profile.id)
-        .select();
-
-      if (error) {
-        console.error("Supabase error updating profile:", error);
-        return;
-      }
-
-      if (!data) {
-        console.error("No profile update data returned");
-        return;
-      }
-      setProfile(data[0]);
-    } catch (error) {
-      console.error("Uncaught profile update error:", error);
-      return;
-    }
-  };
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -78,19 +45,19 @@ export const ProfileProvider = ({
       if (userError || !user) {
         throw new Error(userError?.message || "User not found");
       }
+
       console.log("Fetching profile with ID:", user.id);
       const { data, error: profileError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
-        .single();
+        .eq("id", user.id);
 
       if (profileError) {
         console.error("Supabase error fetching profile:", profileError);
         throw new Error(profileError.message);
       }
-
-      setProfile(data as Profile);
+      console.log("Profile data:", data[0]);
+      setProfile(data[0] as Profile);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
@@ -99,18 +66,25 @@ export const ProfileProvider = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
 
+  // Initial profile fetch on mount
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  // Auth state change listener
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (event, _) => {
-        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-          console.log("Change event occured");
+        console.log("Auth event occurred:", event);
+        if (event === "SIGNED_IN") {
           fetchProfile();
-          console.log("Change event fetched profile:", profile);
         }
         if (event === "SIGNED_OUT") {
           setProfile(null);
+          setError(null);
+          setLoading(false);
         }
       }
     );
@@ -118,13 +92,12 @@ export const ProfileProvider = ({
     return () => {
       subscription?.subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, fetchProfile]); // Added fetchProfile to dependencies
 
   const value = {
     profile,
     loading,
     error,
-    updateProfile,
     refreshProfile: fetchProfile,
   };
 

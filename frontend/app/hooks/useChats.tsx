@@ -166,7 +166,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
           timestamp: row.created_at,
           participants: row.participants,
           name: chatName,
-          unread: !hasRead,
+          unread: hasRead,
+          isAi: row.is_ai,
         };
       });
 

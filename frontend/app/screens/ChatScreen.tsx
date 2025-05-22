@@ -18,6 +18,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useChats } from "../hooks/useChats";
 import { useSupabase } from "../hooks/supabase";
 import { Chat } from "../types/chats";
+import { useApi } from "../hooks/useAPI";
+import { createAIChat } from "../services/chatService";
 
 // Mock QR code SVG - this would be generated dynamically in a real app
 const QR_CODE_SVG = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -78,6 +80,12 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
     participants: number;
   } | null>(null);
   const [groups, setGroups] = useState<Chat[]>([]);
+  const {
+    data: aiChatData,
+    loading: loadingAiChat,
+    errors: errorsAiChat,
+    submit: createAi,
+  } = useApi(createAIChat);
 
   // Mock contacts for group creation
   const mockContacts = [
@@ -115,15 +123,18 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
 
     switch (activeTab) {
       case "Direct":
-        filteredChats = chats.filter((chat) => !chat.isGroup) || [];
+        filteredChats =
+          chats.filter((chat) => !chat.isGroup && !chat.isAi) || [];
         break;
 
       case "Groups":
-        filteredChats = chats.filter((chat) => chat.isGroup) || [];
+        filteredChats =
+          chats.filter((chat) => chat.isGroup && !chat.isAi) || [];
         break;
 
       case "AI":
-        filteredChats = [];
+        filteredChats = chats.filter((chat) => chat.isAi);
+        break;
     }
 
     filteredChats.sort((a, b) => {
@@ -150,6 +161,7 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
       name: chat.name,
       avatar: chat.avatar,
       isGroup: chat.isGroup,
+      isAi: chat.isAi,
     });
   };
 
@@ -374,6 +386,14 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
               onPress={() => setCreateGroupVisible(true)}
             >
               <Text style={styles.createButtonText}>Create a Group</Text>
+            </TouchableOpacity>
+          )}
+          {activeTab === "AI" && (
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => createAi()}
+            >
+              <Text style={styles.createButtonText}>Chat with Venture Bot</Text>
             </TouchableOpacity>
           )}
         </View>

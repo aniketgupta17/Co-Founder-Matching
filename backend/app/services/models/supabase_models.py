@@ -6,12 +6,14 @@ class CreateChat(BaseModel):
     created_at: str
     user_ids: List[str]
     name: Optional[str] = None
+    is_ai: Optional[bool] = False
 
     def dump_insert_chat(self) -> List[dict]:
         return {
             "created_at": self.created_at,
             "name": self.name,
             "is_group": len(self.user_ids) > 2,
+            "is_ai": False,
         }
 
     def dump_insert_members(self, chat_id: int) -> List[dict]:

@@ -372,3 +372,17 @@ def create_chat():
     except Exception as e:
         current_app.logger.error(f"Error creating chat: {str(e)}")
         return jsonify({"data": None, "error": "Failed to create chat"}), 500
+
+
+@bp.route("/chats/create/ai", methods=["POST"])
+@login_required
+def create_ai_chat():
+    try:
+        user_id = request.current_user["id"]
+        chat_row = SupabaseService.create_ai_chat(user_id)
+
+        return jsonify({"data": chat_row, "error": None})
+
+    except Exception as e:
+        current_app.logger.error(f"Error creating chat: {str(e)}")
+        return jsonify({"data": None, "error": "Failed to create chat"}), 500

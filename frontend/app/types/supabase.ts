@@ -113,6 +113,7 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          is_ai: boolean | null
           is_group: boolean
           last_message_id: string | null
           name: string | null
@@ -120,6 +121,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
+          is_ai?: boolean | null
           is_group: boolean
           last_message_id?: string | null
           name?: string | null
@@ -127,6 +129,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+          is_ai?: boolean | null
           is_group?: boolean
           last_message_id?: string | null
           name?: string | null
@@ -536,6 +539,7 @@ export type Database = {
           is_complete: boolean | null
           location: string | null
           name: string | null
+          role: string | null
           seeking_skills: Json | null
           skills: Json | null
           startup_stage: string | null
@@ -555,6 +559,7 @@ export type Database = {
           is_complete?: boolean | null
           location?: string | null
           name?: string | null
+          role?: string | null
           seeking_skills?: Json | null
           skills?: Json | null
           startup_stage?: string | null
@@ -574,6 +579,7 @@ export type Database = {
           is_complete?: boolean | null
           location?: string | null
           name?: string | null
+          role?: string | null
           seeking_skills?: Json | null
           skills?: Json | null
           startup_stage?: string | null
@@ -1035,6 +1041,7 @@ export type Database = {
           chat_name: string | null
           created_at: string | null
           id: number | null
+          is_ai: boolean | null
           is_group: boolean | null
           last_message_id: string | null
           last_message_text: string | null
@@ -1049,6 +1056,57 @@ export type Database = {
             columns: ["last_message_id"]
             isOneToOne: false
             referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enriched_matches: {
+        Row: {
+          bio: string | null
+          compatibility_score: number | null
+          created_at: string | null
+          explanation: string | null
+          id: string | null
+          image: string | null
+          industry: string | null
+          interests: Json | null
+          matched_user_id: string | null
+          name: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
+          related_match_id: string | null
+          skills: Json | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_matched_user_id_fkey"
+            columns: ["matched_user_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "matches_matched_user_id_fkey"
+            columns: ["matched_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "matches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,6 @@ import { Credentials } from "../types/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { ProfileRowUpdate } from "../types/profile";
 import { useSkillsAndInterests } from "../hooks/useSkillsAndInterests";
-import { useProfile } from "hooks/useProfile";
 
 type ProfileSetupStep =
   | "signup"
@@ -43,6 +42,40 @@ export default function ProfileSetupScreen() {
     email: "",
     password: "",
   });
+
+  const updateProfile = async (id: string, profileUpdate: ProfileRowUpdate) => {
+    try {
+      // Update with timestamp
+      const { id: _, ...updateData } = profileUpdate;
+
+      const updateWithTimestamp = {
+        ...updateData,
+        updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(updateWithTimestamp)
+        .eq("id", id)
+        .select();
+
+      if (error) {
+        console.error("Supabase error updating profile:", error);
+        return;
+      }
+
+      if (!data) {
+        console.error("No profile update data returned");
+        return;
+      }
+
+      console.info("Update returned data:", data[0]);
+
+      return data[0];
+    } catch (error) {
+      console.error("Uncaught profile update error:", error);
+      return;
+    }
+  };
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -50,6 +83,7 @@ export default function ProfileSetupScreen() {
     id: "",
     name: "",
     bio: "",
+    role: "",
     industry: "",
     skills: [],
     seeking_skills: [],
@@ -211,7 +245,10 @@ export default function ProfileSetupScreen() {
     } else {
       // Final step - save profile and proceed to main app
       console.log("Final step - updating profile and navigating to MainTabs");
-      update;
+      if (!user) {
+        throw Error("Profile creation requires active user session");
+      }
+      updateProfile(user.id, profileFormData);
       setIsLoading(true);
 
       try {
@@ -365,6 +402,22 @@ export default function ProfileSetupScreen() {
           placeholderTextColor="#999"
           value={profileFormData.name}
           onChangeText={(text) => updateProfileData("name", text)}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Ionicons
+          name="ribbon-outline"
+          size={20}
+          color="#666"
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Current Role"
+          placeholderTextColor="#999"
+          value={profileFormData.role}
+          onChangeText={(text) => updateProfileData("role", text)}
         />
       </View>
 

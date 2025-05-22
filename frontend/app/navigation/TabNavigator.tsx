@@ -17,6 +17,7 @@ import EventDetailScreen from "../screens/EventDetailScreen";
 import EventCalendarScreen from "../screens/EventCalenderScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import EditProfileScreen from "../screens/EditProfileScreen";
 
 // Stack param types
 export type ChatStackParamList = {
@@ -24,14 +25,16 @@ export type ChatStackParamList = {
   Chat: {
     chatId: number;
     name: string;
-    avatar?: string | null;
+    avatar?: string;
     isGroup?: boolean;
+    isAi?: boolean;
   };
 };
 
 export type ProfileStackParamList = {
   Profile: undefined;
   Settings: undefined;
+  EditProfile: { profile: any };
 };
 
 export type MatchStackParamList = {
@@ -42,7 +45,7 @@ export type MatchStackParamList = {
 export type EventsStackParamList = {
   EventsList: undefined;
   EventDetail: { event: Event };
-  EventCalendar: { event?: Event };
+  EventCalendar: { event?: Event; newMeeting?: Event };
 };
 
 export type MainTabParamList = {
@@ -107,6 +110,7 @@ const ProfileStackNavigator = () => (
   <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
     <ProfileStack.Screen name="Profile" component={ProfileScreen} />
     <ProfileStack.Screen name="Settings" component={SettingsScreen} />
+    <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
   </ProfileStack.Navigator>
 );
 

@@ -17,19 +17,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { Message } from "../types/chatMessages";
 import { useSupabase } from "../hooks/supabase";
 import { useChatMessages } from "../hooks/useChatMessages";
+import { useApi } from "../hooks/useAPI";
+import { chatWithBot } from "../services/chatService";
 
 const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
   route,
   navigation,
 }) => {
-  const { chatId, name, avatar, isGroup } = route.params;
+  const { chatId, name, avatar, isGroup, isAi } = route.params;
   const [userId, setUserId] = useState<string | null>("");
   const [message, setMessage] = useState("");
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const { supabase } = useSupabase();
   const { messages, sendMessage } = useChatMessages(supabase, chatId);
-
+  const { submit: sendAiMessage } = useApi(chatWithBot);
   // Mock group participants
   const mockParticipants = [
     {
@@ -253,6 +255,12 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
             if (userId && message.trim()) {
               sendMessage(message);
               setMessage("");
+
+              console.log("is Ai", isAi);
+
+              if (isAi === true) {
+                sendAiMessage(message, chatId);
+              }
             }
           }}
           disabled={!message.trim()}

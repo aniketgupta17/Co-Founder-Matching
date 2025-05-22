@@ -1,7 +1,7 @@
 import os
 from supabase import create_client, Client
 from flask import current_app
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from typing import List
 from .models import CreateChat
@@ -146,7 +146,7 @@ class SupabaseService:
                     SupabaseService.get_client()
                     .table("profiles")
                     .select("*")
-                    .eq("user_id", user_id)
+                    .eq("id", user_id)
                     .single()
                     .execute()
                 )
@@ -1452,4 +1452,89 @@ class SupabaseService:
 
         except Exception as e:
             current_app.logger.error(f"Failed to create new chat: {str(e)}")
+            return None
+
+    @classmethod
+    def create_ai_chat(cls, user_id: str):
+        try:
+            client = cls.get_client()
+            ai_id = current_app.config.get("SUPABASE_AI_USER")
+            user_ids = [user_id, ai_id]
+
+            # Return existing chat
+            existing_chat_id = cls._chat_exists(user_ids)
+            if existing_chat_id:
+                existing_chat_response = (
+                    client.table("chats")
+                    .select("*")
+                    .eq("id", existing_chat_id)
+                    .execute()
+                )
+
+                # If failed, return None
+                if not existing_chat_response.data:
+                    current_app.logger.error(f"No existing chat data returned")
+                    return None
+
+                return existing_chat_response.data[0]
+
+            new_chat = [{"name": "VenturesBot", "is_group": False, "is_ai": True}]
+            new_chat_response = client.table("chats").insert(new_chat).execute()
+
+            if not new_chat_response.data:
+                current_app.logger.error(f"No new chat data returned")
+                return None
+
+            new_chat_row = new_chat_response.data[0]
+            new_chat_id = new_chat_row["id"]
+            inserts = [
+                {"user_id": user_id, "chat_id": new_chat_id},
+                {"user_id": ai_id, "chat_id": new_chat_id},
+            ]
+            client.table("chat_members").insert(inserts).execute()
+
+            return new_chat_row
+
+        except Exception as e:
+            current_app.logger.error(f"Failed to create new AI chat: {str(e)}")
+            return None
+
+    @classmethod
+    def send_ai_message(cls, message: str, chat_id: int):
+        try:
+            client = cls.get_client()
+
+            sent_at = datetime.now(timezone.utc).isoformat()
+            ai_id = current_app.config.get("SUPABASE_AI_USER")
+
+            message_insert = [
+                {
+                    "chat_id": chat_id,
+                    "sent_at": sent_at,
+                    "content": message,
+                    "user_id": ai_id,
+                }
+            ]
+
+            message_response = client.table("messages").insert(message_insert).execute()
+            message_data = message_response.data
+
+            if not message_data:
+                current_app.logger.error(f"No new chat data returned")
+                return None
+
+            chat_response = (
+                client.table("chats")
+                .update({"last_message_id": message_data[0]["id"]})
+                .eq("id", chat_id)
+                .execute()
+            )
+            chat_data = chat_response.data
+
+            if not chat_data:
+                current_app.logger.error(f"No chat update data returned")
+                return None
+
+        except Exception as e:
+            current_app.logger.error(f"Failed to send AI chat message: {str(e)}")
             return None
