@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "front": "cd frontend && npm run start",
+    "update-types": "cd frontend && npm run update-types",
+    "back": "cd backend && flask run --port=5001 --debug",
+    "dev": "concurrently \"npm run front\" \"npm run back\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
