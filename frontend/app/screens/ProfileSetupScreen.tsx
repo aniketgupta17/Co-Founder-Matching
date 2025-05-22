@@ -43,6 +43,21 @@ export default function ProfileSetupScreen() {
     password: "",
   });
 
+  // If we already have a session, we're here because the profile is incomplete
+  // So skip the signup step and start from profile step
+  useEffect(() => {
+    if (session && user && currentStep === "signup") {
+      console.log("User already logged in, skipping signup step");
+      // Set profile ID from existing user
+      setProfileFormData(prevData => ({
+        ...prevData,
+        id: user.id
+      }));
+      // Move directly to profile step
+      setCurrentStep("profile");
+    }
+  }, [session, user]);
+
   const updateProfile = async (id: string, profileUpdate: ProfileRowUpdate) => {
     try {
       // Update with timestamp

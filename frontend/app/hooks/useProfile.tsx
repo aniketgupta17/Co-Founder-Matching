@@ -57,6 +57,27 @@ export const ProfileProvider = ({
         throw new Error(profileError.message);
       }
       console.log("Profile data:", data[0]);
+      
+      // Ensure profile has the is_complete field properly set
+      if (data && data[0]) {
+        // If is_complete is null, explicitly set it to false
+        if (data[0].is_complete === null) {
+          data[0].is_complete = false;
+          
+          // Also update the database
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ is_complete: false })
+            .eq("id", user.id);
+            
+          if (updateError) {
+            console.error("Error updating is_complete flag:", updateError);
+          } else {
+            console.log("Set is_complete to false for incomplete profile");
+          }
+        }
+      }
+      
       setProfile(data[0] as Profile);
     } catch (err) {
       setError(
