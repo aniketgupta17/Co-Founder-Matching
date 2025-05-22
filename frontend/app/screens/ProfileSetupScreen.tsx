@@ -20,6 +20,7 @@ import { Credentials } from "../types/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { ProfileRowUpdate } from "../types/profile";
 import { useSkillsAndInterests } from "../hooks/useSkillsAndInterests";
+import { useProfile } from "../hooks/useProfile";
 
 type ProfileSetupStep =
   | "signup"
@@ -34,6 +35,7 @@ export default function ProfileSetupScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const { supabase } = useSupabase();
   const { skills, interests } = useSkillsAndInterests(supabase);
+  const { refreshProfile } = useProfile();
 
   const { signUp, session, user } = useAuth();
 
@@ -276,6 +278,9 @@ export default function ProfileSetupScreen() {
         console.log("Updating profile with data:", completeProfileData);
         if (completeProfileData.id) {
           await updateProfile(completeProfileData.id, completeProfileData);
+          
+          // Refresh profile data to ensure it's updated in the app
+          await refreshProfile();
         } else {
           throw new Error("Profile ID is missing");
         }
