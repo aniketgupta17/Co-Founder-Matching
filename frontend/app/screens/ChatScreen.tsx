@@ -159,7 +159,7 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
     navigation.navigate("Chat", {
       chatId: chat.id,
       name: chat.name,
-      avatar: chat.avatar,
+      avatar: chat.avatar ? chat.avatar : "",
       isGroup: chat.isGroup,
       isAi: chat.isAi,
     });

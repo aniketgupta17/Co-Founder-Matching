@@ -44,6 +44,7 @@ const MatchScreen: React.FC = () => {
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const { supabase } = useSupabase();
   const { matches } = useMatches(supabase);
+
   // Handle match profile press
   const handleMatchPress = (match: Match) => {
     // Navigate to profile view using the stack navigation

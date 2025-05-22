@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -44,20 +50,106 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
   const [message, setMessage] = useState("");
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const flatListRef = useRef<FlatList>(null);
   const [userId, setUserId] = useState<string | null>("");
   const { supabase } = useSupabase();
-  const { messages, sendMessage } = useChatMessages(supabase, chatId);
   const { readChat } = useChats();
+  const { messages: hookMessages, sendMessage } = useChatMessages(
+    supabase,
+    chatId
+  );
   const { submit: sendAiMessage } = useApi(chatWithBot);
 
-  // Read all chat messages when they change
+  // Robust scroll to end function
+  const scrollToEnd = useCallback(
+    (animated: boolean = true) => {
+      if (flatListRef.current) {
+        // Use setTimeout to ensure the FlatList has rendered
+        setTimeout(() => {
+          try {
+            flatListRef.current?.scrollToEnd({ animated });
+          } catch (error) {
+            console.log("Scroll to end failed:", error);
+            // Fallback: try scrolling to a specific index
+            if (hookMessages.length > 0) {
+              try {
+                flatListRef.current?.scrollToIndex({
+                  index: hookMessages.length - 1,
+                  animated,
+                });
+              } catch (indexError) {
+                console.log("Scroll to index failed:", indexError);
+              }
+            }
+          }
+        }, 100);
+      }
+    },
+    [hookMessages.length]
+  );
+
+  // Read chat on mount
   useEffect(() => {
-    if (messages && messages.length > 0 && chatId) {
-      console.info("Reading chat messages");
-      readChat(chatId);
+    readChat(chatId);
+    setIsInitialLoad(true);
+  }, [chatId]);
+
+  // Handle initial scroll and new messages
+  useEffect(() => {
+    if (hookMessages.length > 0) {
+      if (isInitialLoad) {
+        // For initial load, scroll without animation and with longer delay
+        setTimeout(() => {
+          scrollToEnd(false);
+          setIsInitialLoad(false);
+        }, 200);
+      } else {
+        // For new messages, scroll with animation
+        scrollToEnd(true);
+      }
     }
-  }, [messages, chatId, readChat]);
+  }, [hookMessages.length, isInitialLoad, scrollToEnd]);
+
+  // Use memorized messages to avoid re-renders
+  const messages = useMemo(() => {
+    return hookMessages;
+  }, [hookMessages]);
+
+  // Handle content size change (when messages are rendered)
+  const handleContentSizeChange = useCallback(() => {
+    if (!isInitialLoad) {
+      scrollToEnd(true);
+    }
+  }, [isInitialLoad, scrollToEnd]);
+
+  // Handle layout change
+  const handleLayout = useCallback(() => {
+    if (isInitialLoad && hookMessages.length > 0) {
+      setTimeout(() => {
+        scrollToEnd(false);
+      }, 50);
+    }
+  }, [isInitialLoad, hookMessages.length, scrollToEnd]);
+
+  // const handleReadChat = useCallback(() => {
+  //   if (chatId) {
+  //     console.info("Reading chat messages");
+  //     readChat(chatId);
+  //   }
+  // }, [chatId, readChat]);
+
+  // // Read all chat messages when they change
+  // useEffect(() => {
+  //   if (messages && messages.length > 0) {
+  //     // Add a small delay to prevent rapid successive calls
+  //     const timeoutId = setTimeout(() => {
+  //       handleReadChat();
+  //     }, 100);
+
+  //     return () => clearTimeout(timeoutId);
+  //   }
+  // }, [messages.length, handleReadChat]);
 
   useEffect(() => {
     const getUserId = async () => {

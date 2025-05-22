@@ -146,6 +146,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     // If no unread messages found, chat is fully read
     return read;
   };
+
   const fetchOtherChatMembers = async (chatId: number) => {
     if (!profile) return [];
 

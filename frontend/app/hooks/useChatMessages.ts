@@ -128,6 +128,7 @@ export const useChatMessages = (supabase: SupabaseClient, chatId: number) => {
         user_id: profile.id,
         sent_at: sentAt,
       } as InsertMessage;
+
       const { data, error } = await supabase
         .from("messages")
         .insert([insertMessage])
@@ -151,7 +152,7 @@ export const useChatMessages = (supabase: SupabaseClient, chatId: number) => {
         member?.memberName,
         member?.memberAvatar
       );
-      setMessages((prev) => [...prev, serverMessage]);
+      // setMessages((prev) => [...prev, serverMessage]);
 
       // Update last message for chat
       await updateLastMessage(serverMessage.id);
@@ -168,12 +169,15 @@ export const useChatMessages = (supabase: SupabaseClient, chatId: number) => {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "chat_members",
           filter: `chat_id=eq.${chatId}`,
         },
-        (_) => fetchMembers()
+        (_) => {
+          console.info("Fetching due to message change");
+          fetchMembers();
+        }
       )
       .subscribe();
 
@@ -218,7 +222,7 @@ export const useChatMessages = (supabase: SupabaseClient, chatId: number) => {
     return () => {
       channel.unsubscribe();
     };
-  }, [chatId, supabase, members, fetchMessages]);
+  }, [chatId, supabase, fetchMessages]);
 
   return { members, messages, sendMessage };
 };

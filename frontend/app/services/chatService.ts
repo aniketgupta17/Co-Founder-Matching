@@ -49,6 +49,7 @@ export async function createChat(
     if (!response.ok) throw new Error("Failed chat creation");
 
     const responseData = await response.json();
+
     return responseData.data as ChatRow;
   } catch (error) {
     console.error("Failed to create chat:", error);
