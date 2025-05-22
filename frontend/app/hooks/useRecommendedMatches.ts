@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./supabase";
 import { fetchRecommendedMatches } from "../services/matchService";
-import { ProfileRow } from "../types/profile";
+import { ProfileRow, Profile, profileRowToProfile } from "../types/profile";
 
 export const useRecommendedMatches = () => {
-  const [recommendedMatches, setRecommendedMatches] = useState<ProfileRow[]>([]);
+  const [recommendedMatches, setRecommendedMatches] = useState<Profile[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { session } = useAuth();
@@ -20,11 +20,15 @@ export const useRecommendedMatches = () => {
       console.log("Attempting to fetch recommended matches with token:", accessToken ? "Present" : "Missing");
       
       // Use the match service to fetch recommended profiles
-      const matches = await fetchRecommendedMatches(accessToken);
+      const matchesRows = await fetchRecommendedMatches(accessToken);
       
-      if (matches && matches.length > 0) {
-        console.log(`Successfully fetched ${matches.length} recommended matches`);
-        setRecommendedMatches(matches);
+      if (matchesRows && matchesRows.length > 0) {
+        console.log(`Successfully fetched ${matchesRows.length} recommended matches`);
+        
+        // Convert ProfileRow objects to Profile objects
+        const profiles = matchesRows.map(row => profileRowToProfile(row));
+        
+        setRecommendedMatches(profiles);
       } else {
         console.log("No matches found or matches array is empty");
         setRecommendedMatches([]);

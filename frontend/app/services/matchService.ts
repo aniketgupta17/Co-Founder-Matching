@@ -26,7 +26,7 @@ export async function fetchRecommendedMatches(accessToken: string | null) {
     return responseData.data as ProfileRow[];
   } catch (error) {
     console.error("Failed to fetch recommended matches:", error);
-    // Return empty array instead of undefined so we can still render the UI
+    // Return empty array to avoid null/undefined errors in UI
     return [];
   }
 }
