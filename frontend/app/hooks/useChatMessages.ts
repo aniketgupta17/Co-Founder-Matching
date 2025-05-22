@@ -8,9 +8,9 @@ import {
   ChatMemberRow,
   memberRowToMember,
   InsertMessage,
-  MessageStatus,
 } from "../types/chatMessages";
 import { useProfile } from "./useProfile";
+import { useChats } from "./useChats";
 
 export const useChatMessages = (supabase: SupabaseClient, chatId: number) => {
   const { profile } = useProfile();
@@ -100,15 +100,20 @@ export const useChatMessages = (supabase: SupabaseClient, chatId: number) => {
   }, [chatId, supabase, members]);
 
   const updateLastMessage = async (messageId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("chats")
-        .update({ last_message_id: messageId })
-        .eq("id", chatId);
+    const { data, error } = await supabase
+      .from("chats")
+      .update({ last_message_id: messageId })
+      .eq("id", chatId)
+      .select();
 
-      if (error) throw error;
-    } catch (error) {
-      console.log("Error updating chat last message", error);
+    if (error) {
+      console.error("Supabase error updating last chat message:", error);
+      return;
+    }
+
+    if (!data) {
+      console.error("No data returned for last chat message update");
+      return;
     }
   };
 

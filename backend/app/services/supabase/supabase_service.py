@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 from app.core.config import Config, get_config
 
 from supabase import create_client, AuthError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from pydantic import TypeAdapter
 
@@ -44,19 +44,45 @@ class CreateMessage(BaseModel):
     timestamp: datetime
 
 
+class CreateChat(BaseModel):
+    created_at: str
+    user_ids: List[str]
+    name: Optional[str] = None
+
+    def dump_insert_chat(self) -> dict:
+        return {
+            "created_at": self.created_at,
+            "name": self.name,
+            "is_group": len(self.user_ids) > 2,
+        }
+
+    def dump_insert_members(self, chat_id: int) -> List[dict]:
+        if not self.user_ids and len(self.user_ids) > 1:
+            raise ValueError("Must have at least 2 users")
+
+        return [
+            {"created_at": self.created_at, "user_id": user_id, "chat_id": chat_id}
+            for user_id in self.user_ids
+        ]
+
+
 class ClientMessage(BaseModel):
-    id: int
+    id: str = Field(alias="message_id")
     text: str
-    timestamp: datetime
+    timestamp: datetime = Field(alias="sent_at")
     sender_id: str
     sender_name: Optional[str] = None
     sender_avatar: Optional[str] = None
+
+    class Config:
+        allow_population_by_field_name = True
 
     def serialize_for_client(self) -> dict:
         return {
             "id": self.id,
             "text": self.text,
             "timestamp": str(self.timestamp),
+            "senderId": self.sender_id,
             "senderName": self.sender_name,
             "senderAvatar": self.sender_avatar,
         }
@@ -65,10 +91,17 @@ class ClientMessage(BaseModel):
 class SupabaseService:
     """Service for interacting with Supabase."""
 
+
+class SupabaseService:
+    """Service for interacting with Supabase."""
+
     def __init__(self, config: Config):
         self.url = config.SUPABASE_URL
         self.key = config.SUPABASE_KEY
-        self.client = create_client(supabase_url=self.url, supabase_key=self.key)
+        self.client = create_client(
+            supabase_url=self.url,
+            supabase_key=self.key,
+        )
 
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         try:
@@ -182,7 +215,7 @@ class SupabaseService:
 
     def create_chat_message(
         self, user_id: str, chat_id: int, message: CreateMessage
-    ) -> bool:
+    ) -> dict:
         try:
             if not self.user_has_chat_access(user_id=user_id, chat_id=chat_id):
                 raise AuthError("user does not have access to this chat")
@@ -192,13 +225,15 @@ class SupabaseService:
                 {
                     "_chat_id": chat_id,
                     "_user_id": user_id,
-                    "_sent_at": message.timestamp,
+                    "_sent_at": message.timestamp.isoformat(),
                     "_content": message.text,
                 },
             ).execute()
 
             if response.data:
-                return response.data
+                message = response.data[0]
+                client_message = ClientMessage.model_validate(message)
+                return client_message.serialize_for_client()
 
             return False
 
@@ -206,6 +241,74 @@ class SupabaseService:
             logging.error("Failed to create message", exc_info=True)
 
             return False
+
+    def check_chat_exists(self, member_ids: list[str]) -> int:
+        """
+        Check if a group chat exists with exactly these members
+        Returns chat_id if found, None otherwise
+        """
+        # First find chats that have all requested members
+        chat_ids = self.client.rpc(
+            "find_chat_by_exact_members", {"_user_ids": member_ids}
+        ).execute()
+
+        if chat_ids.data:
+            return chat_ids.data[0]["chat_id"]
+
+        return None
+
+    def create_chat(self, create_chat: CreateChat):
+        try:
+            # Return existing chat if exists
+            existing_chat_id = self.check_chat_exists(create_chat.user_ids)
+            if existing_chat_id:
+                existing_chat_response = (
+                    self.client.table("chats")
+                    .select("*")
+                    .eq("id", existing_chat_id)
+                    .execute()
+                )
+
+                if not existing_chat_response.data:
+                    raise Exception("Failed to fetch existing chat")
+
+                return existing_chat_response.data[0]
+
+            # Insert new chat
+            insert_chat = create_chat.dump_insert_chat()
+            chat_response = self.client.from_("chats").insert([insert_chat]).execute()
+            chat_row = chat_response.data[0]
+
+            # Raise exception if no data returned
+            if not chat_response.data:
+                raise Exception("Failed to create chat")
+
+            # Insert chat members
+            chat_id = chat_row["id"]
+            member_inserts = create_chat.dump_insert_members(chat_id=chat_id)
+            logging.error(f"Inserting members: {member_inserts}")
+            self.client.from_("chat_members").insert(member_inserts).execute()
+
+            return chat_row
+
+        except Exception:
+            logging.error("Error occured", exc_info=True)
+            return None
+
+    def create_private_chat(self, create_chat: CreateChat):
+        try:
+            create_chat = create_chat.model_dump()
+            response = (
+                self.client.from_("chats").insert([create_chat]).select("id").execute()
+            )
+
+            if response.data:
+                return response.data[0]["id"]
+
+            return None
+
+        except Exception:
+            return None
 
     # # User methods
     # def get_users(self):

@@ -11,11 +11,14 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     # Initialize extensions
+
     CORS(
         app,
         supports_credentials=True,
+        resources={
+            r"/*": {"origins": ["http://localhost:19006", "http://localhost:3000"]}
+        },
         expose_headers=["Authorization"],
-        resources={r"/*": {"origins": "*"}},
     )
     db.init_app(app)
 

@@ -72,8 +72,7 @@ const ChatScreen: React.FC<ChatStackScreenProps<"MessagesList">> = ({
   const [groupDescription, setGroupDescription] = useState("");
   const [selectedContacts, setSelectedContacts] = useState<number[]>([]);
   const [showQRCodeModal, setShowQRCodeModal] = useState(false);
-  const { supabase } = useSupabase();
-  const { chats, readChat } = useChats(supabase);
+  const { chats, readChat } = useChats();
   const [qrGroup, setQrGroup] = useState<{
     name: string;
     participants: number;

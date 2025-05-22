@@ -12,6 +12,7 @@ export interface Match {
   bio: string | null;
   skills: string[];
   interests: string[];
+  userId: string;
 }
 
 export const matchRowToMatch = (matchRow: EnrichedMatchRow): Match => {
@@ -19,13 +20,18 @@ export const matchRowToMatch = (matchRow: EnrichedMatchRow): Match => {
     throw Error("No match row ID");
   }
 
+  if (!matchRow.matched_user_id) {
+    throw Error("No match user ID");
+  }
+
   return {
     id: matchRow.id,
     name: matchRow.name || "Unknown",
-    role: "Not Implemented",
+    role: matchRow.industry,
     image: matchRow.image || null,
     bio: matchRow.bio || null,
     skills: (matchRow.skills as string[]) || [],
     interests: (matchRow.interests as string[]) || [],
+    userId: matchRow.matched_user_id,
   };
 };

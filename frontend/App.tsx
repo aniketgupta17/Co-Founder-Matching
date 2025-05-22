@@ -5,6 +5,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import RootNavigator from "./app/navigation/RootNavigator";
 import { AuthProvider, useAuth, useSupabase } from "./app/hooks/supabase";
 import { ProfileProvider } from "./app/hooks/useProfile";
+import { ChatProvider } from "./app/hooks/useChats";
+import { EventProvider } from "./app/hooks/useEvents";
 
 // Wrapper component that uses the auth hook
 function AppContent() {
@@ -25,7 +27,11 @@ function AppContent() {
     <SafeAreaProvider>
       <StatusBar style="auto" />
       <ProfileProvider supabase={supabase}>
-        <RootNavigator />
+        <ChatProvider supabase={supabase}>
+          <EventProvider supabase={supabase}>
+            <RootNavigator />
+          </EventProvider>
+        </ChatProvider>
       </ProfileProvider>
     </SafeAreaProvider>
   );

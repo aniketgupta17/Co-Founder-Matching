@@ -1,1 +1,1 @@
-from .supabase_service import get_supabase_service, ChatMessage
+from .supabase_service import get_supabase_service, CreateMessage, CreateChat

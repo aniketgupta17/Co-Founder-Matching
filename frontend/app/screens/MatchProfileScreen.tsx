@@ -21,18 +21,8 @@ import { useApi } from "../hooks/useAPI";
 import { createChat } from "../services/chatService";
 import { useProfile } from "../hooks/useProfile";
 import { create } from "axios";
-
+import { Match } from "../types/matches";
 // Define the types for our route params
-interface Match {
-  id: number;
-  memberId: string;
-  name: string;
-  role: string;
-  image: string;
-  bio: string;
-  skills: string[];
-  interests: string[];
-}
 
 type MatchProfileStackParamList = {
   MatchProfile: {
@@ -57,7 +47,6 @@ const MatchProfileScreen: React.FC<Props> = ({ route, navigation }) => {
   const [meetingNote, setMeetingNote] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const { supabase } = useSupabase();
-  const { createPrivateChat } = useChats(supabase);
   const {
     loading,
     data,
@@ -73,7 +62,7 @@ const MatchProfileScreen: React.FC<Props> = ({ route, navigation }) => {
   // Function to navigate to chat with this specific match
   const handleMessagePress = async () => {
     console.info("Creating new private chat");
-    const userIds = [profile.id, "080d0fda-47ef-4348-a17e-523579d45b95"];
+    const userIds = [profile.id, match.userId];
     console.info("User IDS:", userIds);
     const chat = await submitCreateChat(userIds);
 
@@ -136,7 +125,10 @@ const MatchProfileScreen: React.FC<Props> = ({ route, navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Header Section */}
         <View style={styles.profileHeader}>
-          <Image source={{ uri: match.image }} style={styles.profileImage} />
+          <Image
+            source={{ uri: match.image || "" }}
+            style={styles.profileImage}
+          />
           <Text style={styles.profileName}>{match.name}</Text>
           <Text style={styles.profileRole}>{match.role}</Text>
 

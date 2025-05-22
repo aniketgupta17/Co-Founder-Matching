@@ -14,7 +14,7 @@ export const useMatches = (supabase: SupabaseClient) => {
   const fetchMatches = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from("matches")
+        .from("enriched_matches")
         .select("*")
         .order("created_at");
 
@@ -28,6 +28,7 @@ export const useMatches = (supabase: SupabaseClient) => {
         return;
       }
 
+      console.log("Match Data:", data);
       const newMatches = data.map((row: EnrichedMatchRow) => {
         return matchRowToMatch(row);
       });

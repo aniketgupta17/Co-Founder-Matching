@@ -17,19 +17,11 @@ import {
   MainTabParamList,
   EventsStackParamList,
 } from "../navigation/TabNavigator";
-import { useMockApi } from "../hooks/useMockApi";
 import { Ionicons } from "@expo/vector-icons";
+import { useEvents } from "../hooks/useEvents";
+import { Event } from "../types/events";
 
 // Define the AppEvent data type
-export interface Event {
-  id: number;
-  title: string;
-  type?: string;
-  date: string;
-  location: string;
-  description: string;
-  tags: string[];
-}
 
 interface EventsData {
   message: string;
@@ -43,11 +35,7 @@ type EventsScreenNavigationProp = CompositeNavigationProp<
 >;
 
 const EventsScreen: React.FC = () => {
-  const { data, loading, error } = useMockApi("events") as {
-    data: EventsData | null;
-    loading: boolean;
-    error: string | null;
-  };
+  const { events, loading, error } = useEvents();
 
   const navigation = useNavigation<EventsScreenNavigationProp>(); // Use the combined navigation type
 
@@ -120,7 +108,7 @@ const EventsScreen: React.FC = () => {
 
         {/* Events List */}
         <View style={styles.eventsList}>
-          {data?.events?.map((event: Event) => (
+          {events?.map((event: Event) => (
             <TouchableOpacity
               key={event.id}
               style={styles.eventCard}

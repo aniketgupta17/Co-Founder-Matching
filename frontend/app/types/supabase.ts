@@ -141,6 +141,125 @@ export type Database = {
           },
         ]
       }
+      conversation_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string | null
+          user_id_1: string
+          user_id_2: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string | null
+          user_id_1: string
+          user_id_2: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string | null
+          user_id_1?: string
+          user_id_2?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_id_1_fkey"
+            columns: ["user_id_1"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "conversations_user_id_1_fkey"
+            columns: ["user_id_1"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user_id_2_fkey"
+            columns: ["user_id_2"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "conversations_user_id_2_fkey"
+            columns: ["user_id_2"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       education_list: {
         Row: {
           degree: string | null
@@ -159,6 +278,39 @@ export type Database = {
           graduation_year?: string | null
           id?: number
           institution?: string | null
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string
+          date: string
+          description: string
+          id: number
+          location: string
+          tags: string[]
+          title: string
+          type: string | null
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description: string
+          id?: number
+          location: string
+          tags: string[]
+          title: string
+          type?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string
+          id?: number
+          location?: string
+          tags?: string[]
+          title?: string
+          type?: string | null
         }
         Relationships: []
       }
@@ -232,6 +384,9 @@ export type Database = {
           explanation: string | null
           id: string
           matched_user_id: string
+          rejected_at: string | null
+          rejection_reason: string | null
+          related_match_id: string | null
           status: string | null
           updated_at: string | null
           user_id: string
@@ -242,6 +397,9 @@ export type Database = {
           explanation?: string | null
           id?: string
           matched_user_id: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          related_match_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id: string
@@ -252,6 +410,9 @@ export type Database = {
           explanation?: string | null
           id?: string
           matched_user_id?: string
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          related_match_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string
@@ -311,6 +472,27 @@ export type Database = {
           },
         ]
       }
+      migrations: {
+        Row: {
+          applied_at: string
+          description: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          applied_at?: string
+          description?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          applied_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           availability: string | null
@@ -322,12 +504,14 @@ export type Database = {
           id: string
           industry: string | null
           interests: Json | null
+          is_complete: boolean | null
           location: string | null
           name: string | null
           seeking_skills: Json | null
           skills: Json | null
           startup_stage: string | null
           time_commitment: string | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
@@ -340,12 +524,14 @@ export type Database = {
           id: string
           industry?: string | null
           interests?: Json | null
+          is_complete?: boolean | null
           location?: string | null
           name?: string | null
           seeking_skills?: Json | null
           skills?: Json | null
           startup_stage?: string | null
           time_commitment?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
@@ -358,12 +544,14 @@ export type Database = {
           id?: string
           industry?: string | null
           interests?: Json | null
+          is_complete?: boolean | null
           location?: string | null
           name?: string | null
           seeking_skills?: Json | null
           skills?: Json | null
           startup_stage?: string | null
           time_commitment?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -869,13 +1057,29 @@ export type Database = {
           explanation: string | null
           id: string | null
           image: string | null
+          industry: string | null
           interests: Json | null
           matched_user_id: string | null
           name: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
+          related_match_id: string | null
           skills: Json | null
           status: string | null
           updated_at: string | null
           user_id: string | null
+        }
+        Relationships: []
+      }
+      unified_messages: {
+        Row: {
+          content: string | null
+          conversation_id: string | null
+          created_at: string | null
+          id: string | null
+          is_read: boolean | null
+          receiver_id: string | null
+          sender_id: string | null
         }
         Relationships: []
       }
@@ -965,6 +1169,18 @@ export type Database = {
         Args: { _chat_id: number }
         Returns: boolean
       }
+      insert_message: {
+        Args: {
+          p_id: string
+          p_conversation_id: string
+          p_sender_id: string
+          p_receiver_id: string
+          p_content: string
+          p_is_read: boolean
+          p_created_at: string
+        }
+        Returns: string
+      }
       insert_message_with_join: {
         Args: {
           _chat_id: string
@@ -979,6 +1195,10 @@ export type Database = {
           sender_name: string
           sender_avatar_url: string
         }[]
+      }
+      is_chat_member: {
+        Args: { _chat_id: number; _user_id: string }
+        Returns: boolean
       }
       user_has_chat_access: {
         Args: { _chat_id: number; _user_id: string }
