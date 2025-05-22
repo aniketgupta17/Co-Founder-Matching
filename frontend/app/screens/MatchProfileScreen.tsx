@@ -9,6 +9,8 @@ import {
   SafeAreaView,
   Modal,
   TextInput,
+  Switch,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp } from '@react-navigation/native';
@@ -45,6 +47,9 @@ const MatchProfileScreen: React.FC<Props> = ({ route, navigation }) => {
   const [meetingDate, setMeetingDate] = useState(new Date());
   const [meetingNote, setMeetingNote] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isOnlineMeeting, setIsOnlineMeeting] = useState(true);
+  const [meetingLocation, setMeetingLocation] = useState('');
+  const [meetingLink, setMeetingLink] = useState('');
 
   // Function to navigate to chat with this specific match
   const handleMessagePress = () => {
@@ -75,16 +80,52 @@ const MatchProfileScreen: React.FC<Props> = ({ route, navigation }) => {
   // Function to handle date changes
   const onDateChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || meetingDate;
-    setShowDatePicker(false);
+    setShowDatePicker(Platform.OS === 'ios');
     setMeetingDate(currentDate);
   };
 
   // Function to schedule the meeting
   const handleScheduleMeeting = () => {
+    // Create a new event object for the calendar
+    const locationStr = isOnlineMeeting 
+      ? `Online Meeting: ${meetingLink || 'Link will be shared later'}`
+      : `In-person: ${meetingLocation || 'Location to be confirmed'}`;
+      
+    const newEvent = {
+      id: Date.now(), // Use timestamp as temporary ID
+      title: `Meeting with ${match.name}`,
+      date: meetingDate.toISOString(),
+      location: locationStr,
+      description: meetingNote || `Scheduled meeting with ${match.name}`,
+      type: 'Meeting',
+      tags: ['Meeting', 'Networking']
+    };
+
     // Here you would save the meeting to your backend
-    // For now, we'll just close the modal and show a success message
+    // For now, we'll just close the modal and show success
     toggleMeetingModal();
-    alert(`Meeting scheduled with ${match.name} on ${meetingDate.toLocaleString()}`);
+
+    // Store the event in local storage
+    const storeMeeting = async () => {
+      try {
+        // In a real app, you would use proper state management like Redux or Context
+        // For this demo, we'll navigate to the calendar with the new event
+        navigation.navigate('Events', {
+          screen: 'EventCalendar',
+          params: { newMeeting: newEvent }
+        });
+
+        // Show success alert after navigation
+        setTimeout(() => {
+          alert(`Meeting scheduled with ${match.name} on ${meetingDate.toLocaleString()}`);
+        }, 500);
+      } catch (error) {
+        console.error('Error saving meeting:', error);
+        alert('There was an error scheduling your meeting. Please try again.');
+      }
+    };
+
+    storeMeeting();
   };
 
   return (
@@ -159,36 +200,6 @@ const MatchProfileScreen: React.FC<Props> = ({ route, navigation }) => {
             ))}
           </View>
         </View>
-
-        {/* Compatibility Section - Mock data */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Compatibility</Text>
-          <View style={styles.compatibilityContainer}>
-            <View style={styles.compatibilityItem}>
-              <Text style={styles.compatibilityLabel}>Skills Match</Text>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '75%' }]} />
-              </View>
-              <Text style={styles.compatibilityValue}>75%</Text>
-            </View>
-            
-            <View style={styles.compatibilityItem}>
-              <Text style={styles.compatibilityLabel}>Interest Overlap</Text>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '60%' }]} />
-              </View>
-              <Text style={styles.compatibilityValue}>60%</Text>
-            </View>
-            
-            <View style={styles.compatibilityItem}>
-              <Text style={styles.compatibilityLabel}>Overall Match</Text>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '82%' }]} />
-              </View>
-              <Text style={styles.compatibilityValue}>82%</Text>
-            </View>
-          </View>
-        </View>
       </ScrollView>
 
       {/* Meeting Scheduling Modal */}
@@ -209,6 +220,8 @@ const MatchProfileScreen: React.FC<Props> = ({ route, navigation }) => {
             
             <Text style={styles.inputLabel}>Meeting with {match.name}</Text>
             
+            {/* Date Time Picker */}
+            <Text style={styles.inputLabel}>Date and Time</Text>
             <TouchableOpacity 
               style={styles.datePickerButton}
               onPress={() => setShowDatePicker(true)}
@@ -223,9 +236,56 @@ const MatchProfileScreen: React.FC<Props> = ({ route, navigation }) => {
               <DateTimePicker
                 value={meetingDate}
                 mode="datetime"
-                display="default"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={onDateChange}
+                style={styles.datePicker}
+                textColor="#000000"
               />
+            )}
+            
+            {/* Meeting Type Selection */}
+            <View style={styles.meetingTypeContainer}>
+              <Text style={styles.inputLabel}>Meeting Type</Text>
+              <View style={styles.meetingTypeToggle}>
+                <Text style={isOnlineMeeting ? styles.meetingTypeText : styles.meetingTypeTextActive}>
+                  In-person
+                </Text>
+                <Switch
+                  value={isOnlineMeeting}
+                  onValueChange={setIsOnlineMeeting}
+                  trackColor={{ false: '#E5E5E5', true: '#4B2E83' }}
+                  thumbColor={isOnlineMeeting ? '#FFFFFF' : '#FFFFFF'}
+                  style={styles.meetingTypeSwitch}
+                />
+                <Text style={isOnlineMeeting ? styles.meetingTypeTextActive : styles.meetingTypeText}>
+                  Online
+                </Text>
+              </View>
+            </View>
+            
+            {/* Location Input - show different inputs based on meeting type */}
+            {isOnlineMeeting ? (
+              <>
+                <Text style={styles.inputLabel}>Meeting Link</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Paste meeting link here (Zoom, Google Meet, etc.)"
+                  placeholderTextColor="#999"
+                  value={meetingLink}
+                  onChangeText={setMeetingLink}
+                />
+              </>
+            ) : (
+              <>
+                <Text style={styles.inputLabel}>Meeting Location</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter meeting location"
+                  placeholderTextColor="#999"
+                  value={meetingLocation}
+                  onChangeText={setMeetingLocation}
+                />
+              </>
             )}
             
             <Text style={styles.inputLabel}>Meeting notes</Text>
@@ -364,34 +424,6 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
   },
-  compatibilityContainer: {
-    marginTop: 8,
-  },
-  compatibilityItem: {
-    marginBottom: 12,
-  },
-  compatibilityLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#E5E5E5',
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#4B2E83',
-    borderRadius: 4,
-  },
-  compatibilityValue: {
-    fontSize: 14,
-    color: '#4B2E83',
-    fontWeight: 'bold',
-    textAlign: 'right',
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -405,6 +437,7 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
     maxWidth: 340,
+    maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -436,6 +469,41 @@ const styles = StyleSheet.create({
   datePickerText: {
     fontSize: 16,
     color: '#333',
+  },
+  datePicker: {
+    marginBottom: 16,
+    backgroundColor: 'white',
+    width: '100%',
+  },
+  meetingTypeContainer: {
+    marginBottom: 16,
+  },
+  meetingTypeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  meetingTypeSwitch: {
+    marginHorizontal: 12,
+  },
+  meetingTypeText: {
+    fontSize: 16,
+    color: '#999',
+  },
+  meetingTypeTextActive: {
+    fontSize: 16,
+    color: '#4B2E83',
+    fontWeight: '600',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 16,
   },
   noteInput: {
     borderWidth: 1,

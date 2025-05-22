@@ -1,11 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
-
-// Temporarily using the splash icon until the UQ Ventures logo is added
-const logoImage = require('../../assets/splash-icon.png');
+import { Ionicons } from '@expo/vector-icons';
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -16,8 +14,7 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Image source={logoImage} style={styles.logo} resizeMode="contain" />
+      <View style={styles.headerContainer}>
         <Text style={styles.appTitle}>UQ VENTURES</Text>
         <Text style={styles.appSubtitle}>Co-Founder Matching</Text>
       </View>
@@ -33,6 +30,7 @@ export default function WelcomeScreen() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={handleGetStarted}>
           <Text style={styles.buttonText}>Get Started</Text>
+          <Ionicons name="arrow-forward" size={20} color="#4B2E83" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -46,23 +44,18 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'space-between',
   },
-  logoContainer: {
+  headerContainer: {
     alignItems: 'center',
-    marginTop: 40,
-  },
-  logo: {
-    width: 80,
-    height: 80,
+    marginTop: 60,
   },
   appTitle: {
     color: 'white',
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginTop: 10,
   },
   appSubtitle: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     marginTop: 5,
   },
   contentContainer: {
@@ -72,32 +65,35 @@ const styles = StyleSheet.create({
   },
   title: {
     color: 'white',
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
   },
   description: {
     color: 'white',
     fontSize: 18,
     textAlign: 'center',
     paddingHorizontal: 20,
-    lineHeight: 24,
+    lineHeight: 28,
   },
   buttonContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 60,
   },
   button: {
+    flexDirection: 'row',
     backgroundColor: 'white',
-    paddingVertical: 15,
-    paddingHorizontal: 60,
+    paddingVertical: 16,
+    paddingHorizontal: 30,
     borderRadius: 30,
-    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
     color: '#4B2E83',
     fontSize: 18,
     fontWeight: 'bold',
+    marginRight: 10,
   },
 });

@@ -55,7 +55,7 @@ interface ProfileCardProps {
   profile: ProfileData;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
-  onBookmark: (profileId: number) => void;
+  onBookmark?: (profileId: number) => void;
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipeRight, onBookmark }) => {
@@ -68,18 +68,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
     extrapolate: 'clamp'
   });
 
-  const likeOpacity = position.x.interpolate({
-    inputRange: [0, SCREEN_WIDTH / 4],
-    outputRange: [0, 1],
-    extrapolate: 'clamp'
-  });
-
-  const nopeOpacity = position.x.interpolate({
-    inputRange: [-SCREEN_WIDTH / 4, 0],
-    outputRange: [1, 0],
-    extrapolate: 'clamp'
-  });
-
   const cardStyle = {
     transform: [
       { translateX: position.x },
@@ -87,9 +75,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
     ]
   };
 
-  // This is a simplified version that doesn't use panResponder for swiping
-  // Instead, we'll rely on the action buttons for swiping actions
-  
   // Function to handle manual like button press
   const handleLike = () => {
     Animated.timing(position, {
@@ -113,7 +98,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
   };
 
   const handleBookmark = () => {
-    onBookmark(profile.id);
+    onBookmark && onBookmark(profile.id);
   };
 
   // Reset position when profile changes
@@ -126,15 +111,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
 
   return (
     <View style={styles.card}>
-      {/* Like and Nope overlays */}
-      <Animated.View style={[styles.likeOverlay, { opacity: likeOpacity }]}>
-        <Text style={styles.likeText}>LIKE</Text>
-      </Animated.View>
-      
-      <Animated.View style={[styles.nopeOverlay, { opacity: nopeOpacity }]}>
-        <Text style={styles.nopeText}>NOPE</Text>
-      </Animated.View>
-
       <Animated.View style={[styles.cardContent, cardStyle]}>
         <ScrollView 
           showsVerticalScrollIndicator={true}
@@ -278,15 +254,88 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
           <Text style={styles.rejectButtonText}>✕</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.bookmarkButton} onPress={handleBookmark}>
-          <Text style={styles.bookmarkButtonText}>🔖</Text>
-        </TouchableOpacity>
-        
         <TouchableOpacity style={styles.likeButton} onPress={handleLike}>
           <Text style={styles.likeButtonText}>✓</Text>
         </TouchableOpacity>
       </View>
     </View>
+  );
+};
+
+// Add a PanResponder component to handle swipe gestures
+const SwipeableCard: React.FC<ProfileCardProps> = (props) => {
+  const { profile, onSwipeLeft, onSwipeRight } = props;
+  const position = useRef(new Animated.ValueXY()).current;
+  const [isScrolling, setIsScrolling] = useState(false);
+  
+  // Create interpolated values for rotation and opacity
+  const rotate = position.x.interpolate({
+    inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
+    outputRange: ['-10deg', '0deg', '10deg'],
+    extrapolate: 'clamp'
+  });
+  
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => !isScrolling,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        const { dx, dy } = gestureState;
+        return !isScrolling && (Math.abs(dx) > Math.abs(dy) * 2);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        position.setValue({ x: gestureState.dx, y: 0 });
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx > SWIPE_THRESHOLD) {
+          // Swiped right - like
+          Animated.spring(position, {
+            toValue: { x: SCREEN_WIDTH + 100, y: 0 },
+            useNativeDriver: true
+          }).start(() => {
+            onSwipeRight();
+          });
+        } else if (gestureState.dx < -SWIPE_THRESHOLD) {
+          // Swiped left - dislike
+          Animated.spring(position, {
+            toValue: { x: -SCREEN_WIDTH - 100, y: 0 },
+            useNativeDriver: true
+          }).start(() => {
+            onSwipeLeft();
+          });
+        } else {
+          // Return to center
+          Animated.spring(position, {
+            toValue: { x: 0, y: 0 },
+            friction: 4,
+            useNativeDriver: true
+          }).start();
+        }
+      }
+    })
+  ).current;
+
+  // Reset position when profile changes
+  useEffect(() => {
+    position.setValue({ x: 0, y: 0 });
+  }, [profile.id]);
+
+  return (
+    <Animated.View
+      style={[styles.card, { 
+        transform: [
+          { translateX: position.x },
+          { rotate: isScrolling ? '0deg' : rotate }
+        ]
+      }]}
+      {...panResponder.panHandlers}
+    >
+      <ProfileCard 
+        profile={profile}
+        onSwipeLeft={onSwipeLeft}
+        onSwipeRight={onSwipeRight}
+        onBookmark={() => {}}
+      />
+    </Animated.View>
   );
 };
 
@@ -380,39 +429,15 @@ const SwipeableHomeScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Discover</Text>
-        
-        {/* Search and filter */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <Text style={styles.searchPlaceholder}>🔍 Search</Text>
-          </View>
-          <TouchableOpacity style={styles.filterButton}>
-            <Text style={styles.filterIcon}>≡</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Filter tabs */}
-        <View style={styles.filterTabs}>
-          <TouchableOpacity style={[styles.filterTab, styles.activeFilterTab]}>
-            <Text style={[styles.filterTabText, styles.activeFilterTabText]}>For You</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterTab}>
-            <Text style={styles.filterTabText}>Nearby</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterTab}>
-            <Text style={styles.filterTabText}>New</Text>
-          </TouchableOpacity>
-        </View>
       </View>
       
       <View style={styles.cardContainer}>
         {/* Only render the current profile card */}
         {currentIndex < profiles.length && (
-          <ProfileCard 
+          <SwipeableCard
             profile={profiles[currentIndex]}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
-            onBookmark={() => handleBookmark(profiles[currentIndex].id)}
           />
         )}
       </View>
@@ -436,59 +461,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#4B2E83',
     marginBottom: 16,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  searchBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 12,
-    marginRight: 10,
-  },
-  searchPlaceholder: {
-    color: '#999',
-    fontSize: 16,
-  },
-  filterButton: {
-    backgroundColor: '#4B2E83',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterIcon: {
-    color: 'white',
-    fontSize: 20,
-  },
-  filterTabs: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    borderRadius: 25,
-    padding: 4,
-  },
-  filterTab: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 20,
-  },
-  activeFilterTab: {
-    backgroundColor: '#4B2E83',
-  },
-  filterTabText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  activeFilterTabText: {
-    color: 'white',
-    fontWeight: 'bold',
   },
   cardContainer: {
     flex: 1,
@@ -715,26 +687,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#FF6B6B',
   },
-  bookmarkButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#FFD700',
-  },
-  bookmarkButtonText: {
-    fontSize: 20,
-    color: '#FFD700',
-  },
   likeButton: {
     width: 50,
     height: 50,
@@ -753,36 +705,6 @@ const styles = StyleSheet.create({
   likeButtonText: {
     fontSize: 24,
     color: '#4CD964',
-  },
-  likeOverlay: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 1000,
-    transform: [{ rotate: '20deg' }],
-  },
-  likeText: {
-    borderWidth: 4,
-    borderColor: '#4CD964',
-    color: '#4CD964',
-    fontSize: 32,
-    fontWeight: 'bold',
-    padding: 10,
-  },
-  nopeOverlay: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1000,
-    transform: [{ rotate: '-20deg' }],
-  },
-  nopeText: {
-    borderWidth: 4,
-    borderColor: '#FF6B6B',
-    color: '#FF6B6B',
-    fontSize: 32,
-    fontWeight: 'bold',
-    padding: 10,
   },
   loadingContainer: {
     flex: 1,

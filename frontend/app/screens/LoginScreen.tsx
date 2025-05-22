@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Image,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
@@ -18,9 +17,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/supabase';
-
-// Temporarily using the splash icon until the UQ Ventures logo is added
-const logoImage = require('../../assets/splash-icon.png');
 
 export default function LoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -114,9 +110,8 @@ export default function LoginScreen() {
         style={styles.keyboardAvoidView}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {/* Logo and App Name */}
-          <View style={styles.logoContainer}>
-            <Image source={logoImage} style={styles.logo} resizeMode="contain" />
+          {/* Header */}
+          <View style={styles.headerContainer}>
             <Text style={styles.appTitle}>UQ VENTURES</Text>
             <Text style={styles.appSubtitle}>Co-Founder Matching</Text>
           </View>
@@ -206,14 +201,10 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'space-between',
   },
-  logoContainer: {
+  headerContainer: {
     alignItems: 'center',
     marginTop: 40,
     marginBottom: 30,
-  },
-  logo: {
-    width: 80,
-    height: 80,
   },
   appTitle: {
     color: '#4B2E83',

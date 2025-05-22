@@ -11,9 +11,13 @@ import {
   SafeAreaView,
   Image,
   Modal,
+  ActionSheetIOS,
+  Alert,
 } from 'react-native';
 import { ChatStackScreenProps } from '../navigation/TabNavigator';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 
 interface Message {
   id: number;
@@ -22,6 +26,9 @@ interface Message {
   senderId: number;
   senderName?: string;
   senderAvatar?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'document';
+  fileName?: string;
 }
 
 const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navigation }) => {
@@ -29,6 +36,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   
   // Mock group participants
@@ -76,6 +84,106 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
     
     setMessages(mockMessages);
   }, [isGroup]);
+
+  // Functions for handling attachments
+  const handleAttachmentPress = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Take Photo', 'Choose from Library', 'Share Document'],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            takePhoto();
+          } else if (buttonIndex === 2) {
+            pickImage();
+          } else if (buttonIndex === 3) {
+            pickDocument();
+          }
+        }
+      );
+    } else {
+      // For Android and other platforms
+      setShowAttachmentOptions(true);
+    }
+  };
+
+  const takePhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission Required", "You need to grant camera permissions to take photos");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsEditing: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      sendMediaMessage(result.assets[0].uri, 'image');
+    }
+  };
+
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission Required", "You need to grant photo library permissions to select images");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsEditing: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      sendMediaMessage(result.assets[0].uri, 'image');
+    }
+  };
+
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled === false && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        sendMediaMessage(asset.uri, 'document', asset.name);
+      }
+    } catch (error) {
+      console.error('Error picking document:', error);
+      Alert.alert('Error', 'Failed to pick document');
+    }
+  };
+
+  const sendMediaMessage = (uri: string, type: 'image' | 'document', fileName?: string) => {
+    const newMessage: Message = {
+      id: messages.length + 1,
+      text: type === 'image' ? 'Sent an image' : `Sent a document: ${fileName || 'file'}`,
+      timestamp: new Date().toISOString(),
+      senderId: 4, // Current user
+      senderName: isGroup ? 'You' : undefined,
+      senderAvatar: isGroup ? 'https://randomuser.me/api/portraits/men/75.jpg' : undefined,
+      mediaUrl: uri,
+      mediaType: type,
+      fileName: fileName
+    };
+    
+    setMessages([...messages, newMessage]);
+    
+    // Scroll to bottom when new message is added
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
 
   const sendMessage = () => {
     if (message.trim()) {
@@ -149,12 +257,36 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
               <Text style={styles.messageSender}>{item.senderName}</Text>
             )}
             
+            {/* Display media attachment if present */}
+            {item.mediaUrl && item.mediaType === 'image' && (
+              <Image 
+                source={{ uri: item.mediaUrl }} 
+                style={styles.messageImage}
+                resizeMode="cover"
+              />
+            )}
+            
+            {/* Display document attachment if present */}
+            {item.mediaUrl && item.mediaType === 'document' && (
+              <TouchableOpacity style={styles.documentContainer}>
+                <Ionicons name="document-text" size={24} color={isCurrentUser ? "white" : "#4B2E83"} />
+                <Text style={[
+                  styles.documentName,
+                  isCurrentUser ? styles.userMessageText : styles.otherMessageText
+                ]}>
+                  {item.fileName || "Document"}
+                </Text>
+              </TouchableOpacity>
+            )}
+            
+            {/* Show message text */}
             <Text style={[
               styles.messageText, 
               isCurrentUser ? styles.userMessageText : styles.otherMessageText
             ]}>
               {item.text}
             </Text>
+            
             <Text style={[
               styles.timestamp,
               isCurrentUser ? styles.userTimestamp : styles.otherTimestamp
@@ -206,8 +338,8 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
               <Ionicons name="information-circle-outline" size={24} color="#4B2E83" />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity>
-              <Ionicons name="call-outline" size={22} color="#4B2E83" />
+            <TouchableOpacity onPress={() => setShowGroupInfo(true)}>
+              <Ionicons name="information-circle-outline" size={24} color="#4B2E83" />
             </TouchableOpacity>
           )}
         </View>
@@ -226,7 +358,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.inputContainer}
       >
-        <TouchableOpacity style={styles.attachButton}>
+        <TouchableOpacity style={styles.attachButton} onPress={handleAttachmentPress}>
           <Ionicons name="add-circle-outline" size={24} color="#4B2E83" />
         </TouchableOpacity>
         
@@ -324,6 +456,62 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+      
+      {/* Attachment Options Modal for Android */}
+      <Modal
+        visible={showAttachmentOptions}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAttachmentOptions(false)}
+      >
+        <TouchableOpacity 
+          style={styles.attachmentModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowAttachmentOptions(false)}
+        >
+          <View style={styles.attachmentModalContent}>
+            <TouchableOpacity 
+              style={styles.attachmentOption}
+              onPress={() => {
+                setShowAttachmentOptions(false);
+                takePhoto();
+              }}
+            >
+              <Ionicons name="camera" size={24} color="#4B2E83" />
+              <Text style={styles.attachmentOptionText}>Take Photo</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.attachmentOption}
+              onPress={() => {
+                setShowAttachmentOptions(false);
+                pickImage();
+              }}
+            >
+              <Ionicons name="image" size={24} color="#4B2E83" />
+              <Text style={styles.attachmentOptionText}>Choose from Library</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.attachmentOption}
+              onPress={() => {
+                setShowAttachmentOptions(false);
+                pickDocument();
+              }}
+            >
+              <Ionicons name="document" size={24} color="#4B2E83" />
+              <Text style={styles.attachmentOptionText}>Share Document</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.attachmentOption, styles.cancelOption]}
+              onPress={() => setShowAttachmentOptions(false)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -539,13 +727,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   groupName: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
   groupParticipantsCount: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#666',
   },
   groupActions: {
@@ -578,19 +766,18 @@ const styles = StyleSheet.create({
   participantItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    marginBottom: 16,
   },
   participantAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginRight: 12,
+    marginRight: 16,
   },
   participantName: {
     fontSize: 16,
-    color: '#333',
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
   youLabel: {
     marginLeft: 8,
@@ -609,7 +796,60 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 8,
-  }
+  },
+  messageImage: {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  documentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  documentName: {
+    marginLeft: 8,
+    fontSize: 14,
+    flex: 1,
+  },
+  attachmentModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  attachmentModalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  attachmentOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  attachmentOptionText: {
+    marginLeft: 16,
+    fontSize: 16,
+    color: '#333',
+  },
+  cancelOption: {
+    borderBottomWidth: 0,
+    marginTop: 8,
+    justifyContent: 'center',
+  },
+  cancelText: {
+    color: '#FF6B6B',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
 });
 
 export default ChatDetailScreen; 

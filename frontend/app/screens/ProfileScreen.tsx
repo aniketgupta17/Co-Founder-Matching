@@ -91,7 +91,10 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Profile</Text>
           <View style={styles.headerButtons}>
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => navigation.navigate('EditProfile', { profile: data.profile })}
+            >
               <Text style={styles.editButtonText}>Edit</Text>
             </TouchableOpacity>
             
@@ -106,7 +109,7 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
 
         {/* Profile Info */}
         <View style={styles.profileInfo}>
-          <View style={styles.imageContainer}>
+          <View style={styles.profileImageContainer}>
             <Image 
               source={{ uri: profile.image || 'https://randomuser.me/api/portraits/men/75.jpg' }} 
               style={styles.profileImage}
@@ -119,9 +122,15 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
               </View>
             )}
           </View>
-          <Text style={styles.name}>{profile.name}</Text>
-          <Text style={styles.role}>{profile.role}</Text>
-          <Text style={styles.bio}>{profile.bio}</Text>
+          <View style={styles.profileDetails}>
+            <Text style={styles.name}>{profile.name}</Text>
+            <Text style={styles.role}>{profile.role}</Text>
+          </View>
+        </View>
+
+        {/* Bio */}
+        <View style={styles.section}>
+          <Text style={styles.bioText}>{profile.bio}</Text>
         </View>
 
         {/* Skills */}
@@ -253,19 +262,26 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   profileInfo: {
+    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  imageContainer: {
+  profileImageContainer: {
     position: 'relative',
-    width: 120,
-    height: 120,
-    marginBottom: 16,
+    marginRight: 16,
   },
   profileImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 60,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   imageLoadingContainer: {
     position: 'absolute',
@@ -276,10 +292,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 60,
+    borderRadius: 40,
+  },
+  profileDetails: {
+    flex: 1,
   },
   name: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
@@ -287,22 +306,31 @@ const styles = StyleSheet.create({
   role: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 12,
-  },
-  bio: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
   },
   section: {
     marginBottom: 24,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  bioText: {
+    fontSize: 16,
+    color: '#333',
+    lineHeight: 24,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#4B2E83',
-    marginBottom: 12,
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+    paddingBottom: 8,
   },
   skillsContainer: {
     flexDirection: 'row',
@@ -338,10 +366,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   experienceItem: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
+    borderLeftWidth: 2,
+    borderLeftColor: '#4B2E83',
+    paddingLeft: 12,
   },
   companyName: {
     fontSize: 16,
@@ -359,10 +387,10 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   educationItem: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
+    borderLeftWidth: 2,
+    borderLeftColor: '#4B2E83',
+    paddingLeft: 12,
   },
   institutionName: {
     fontSize: 16,
