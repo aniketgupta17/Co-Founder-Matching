@@ -32,29 +32,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   const refreshSession = async () => {
-    // If using mock auth, create a fake session
+    // If using mock auth, start with no session to show the welcome screen
     if (USE_MOCK_AUTH) {
-      console.log("Using mock authentication");
-      const mockUser = {
-        id: "mock-user-id",
-        email: "mock@example.com",
-        app_metadata: {},
-        user_metadata: {},
-        aud: "authenticated",
-        created_at: new Date().toISOString(),
-      } as User;
-      
-      const mockSession = {
-        access_token: "mock-token",
-        refresh_token: "mock-refresh-token",
-        expires_in: 3600,
-        expires_at: new Date().getTime() + 3600000,
-        token_type: "bearer",
-        user: mockUser,
-      } as Session;
-      
-      setSession(mockSession);
-      setUser(mockUser);
+      console.log("Using mock authentication - no initial session");
+      // Start with no session so welcome/login screens will appear
+      setSession(null);
+      setUser(null);
       return;
     }
 
@@ -103,7 +86,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Use mock auth if enabled
     if (USE_MOCK_AUTH) {
       console.log("Mock sign in with:", credentials.email);
-      await refreshSession();
+      // Create a mock session when user signs in
+      const mockUser = {
+        id: "mock-user-id",
+        email: credentials.email,
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      } as User;
+      
+      const mockSession = {
+        access_token: "mock-token",
+        refresh_token: "mock-refresh-token",
+        expires_in: 3600,
+        expires_at: new Date().getTime() + 3600000,
+        token_type: "bearer",
+        user: mockUser,
+      } as Session;
+      
+      setSession(mockSession);
+      setUser(mockUser);
       setLoading(false);
       return;
     }
@@ -126,7 +129,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Use mock auth if enabled
     if (USE_MOCK_AUTH) {
       console.log("Mock sign up with:", credentials.email);
-      await refreshSession();
+      // Create a mock session when user signs up
+      const mockUser = {
+        id: "mock-user-id",
+        email: credentials.email,
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      } as User;
+      
+      const mockSession = {
+        access_token: "mock-token",
+        refresh_token: "mock-refresh-token",
+        expires_in: 3600,
+        expires_at: new Date().getTime() + 3600000,
+        token_type: "bearer",
+        user: mockUser,
+      } as Session;
+      
+      setSession(mockSession);
+      setUser(mockUser);
       setLoading(false);
       return;
     }

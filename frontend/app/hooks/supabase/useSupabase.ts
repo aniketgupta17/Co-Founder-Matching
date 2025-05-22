@@ -5,8 +5,12 @@ import Constants from "expo-constants";
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || "";
 const supabaseApiKey = Constants.expoConfig?.extra?.supabaseKey || "";
 
-// For development testing - use a flag to bypass real authentication
-const USE_MOCK_AUTH = false; // Set to false when you have proper Supabase credentials
+// Enable mock auth since we're running in offline mode without proper credentials
+const USE_MOCK_AUTH = true; // Enable mock auth to avoid authentication issues
+
+// Log configuration details during initialization
+console.log("Expo Config:", Constants.expoConfig?.extra);
+console.log("Mock Auth Enabled:", USE_MOCK_AUTH);
 
 let supabaseInstance: SupabaseClient | null = null;
 
@@ -16,7 +20,11 @@ export const getSupabaseClient = (): SupabaseClient => {
     console.log("Supabase URL:", supabaseUrl ? "Configured" : "Missing");
     console.log("Supabase Key:", supabaseApiKey ? "Configured" : "Missing");
     
-    supabaseInstance = createClient(supabaseUrl, supabaseApiKey);
+    // Use dummy values if credentials are missing
+    const url = supabaseUrl || "https://example.supabase.co";
+    const key = supabaseApiKey || "dummy-key-for-offline-mode";
+    
+    supabaseInstance = createClient(url, key);
   }
 
   return supabaseInstance;
