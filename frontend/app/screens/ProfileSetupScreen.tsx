@@ -53,12 +53,25 @@ export default function ProfileSetupScreen() {
       // Set profile ID from existing user
       setProfileFormData(prevData => ({
         ...prevData,
-        id: user.id
+        id: user.id,
+        email: user.email || "",
       }));
       // Move directly to profile step
       setCurrentStep("profile");
     }
   }, [session, user]);
+
+  // Make sure profile ID is set when user signs up
+  useEffect(() => {
+    if (user && profileFormData.id === "00000000-0000-0000-0000-000000000000") {
+      console.log("Updating profile form data with user ID:", user.id);
+      setProfileFormData(prevData => ({
+        ...prevData,
+        id: user.id,
+        email: user.email || "",
+      }));
+    }
+  }, [user]);
 
   const updateProfile = async (id: string, profileUpdate: ProfileRowUpdate) => {
     try {
@@ -178,53 +191,56 @@ export default function ProfileSetupScreen() {
 
   // Handle sign up
   const handleSignUp = async (): Promise<boolean> => {
-    console.log("Attempting signup...");
+    if (!passwordsMatch()) {
+      Alert.alert("Error", "Passwords do not match");
+      return false;
+    }
+
     setIsLoading(true);
 
     try {
+      console.log("Attempting signup...");
+      // Call Supabase sign up
       await signUp({
         email: credentials.email,
         password: credentials.password,
       });
 
+      // If we get here, signup was successful (signUp throws on error)
       console.log("User in component:", user);
-
-      // Get user ID from session
-      if (user) {
-        console.log(session);
-        updateProfileData("id", user.id);
-      } else {
-        // For development, we'll use a mock ID
-        console.log("Using mock session for frontend development");
-        updateProfileData("id", "00000000-0000-0000-0000-000000000000");
-      }
-
+      
+      // The useEffect will handle setting the profile ID when user is available
       setIsLoading(false);
       return true;
     } catch (error: any) {
-      console.error("Error during sign up:", error);
-
+      console.error("Signup error:", error);
+      
       // For offline development: allow proceeding despite network errors
       if (error.toString().includes("Network request failed")) {
-        console.log(
-          "Network error detected - proceeding anyway for development"
-        );
+        console.log("Network error detected - proceeding anyway for development");
         Alert.alert(
           "Development Mode",
-          "Network error detected, but proceeding in development mode",
-          [{ text: "OK", onPress: () => {} }]
+          "Network error detected, but proceeding to onboarding in development mode",
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                // Set a mock ID for development
+                setProfileFormData((prevData) => ({
+                  ...prevData,
+                  id: "00000000-0000-0000-0000-000000000000",
+                  email: credentials.email,
+                  is_complete: false,
+                }));
+                setIsLoading(false);
+              },
+            },
+          ]
         );
-
-        // Set a mock user ID
-        updateProfileData(
-          "id",
-          "00000000-0000-0000-0000-000000000000"
-        );
-        setIsLoading(false);
         return true;
       }
-
-      Alert.alert("Error", "Failed to create account. Please try again.");
+      
+      Alert.alert("Error", `Failed to create account: ${error.message}`);
       setIsLoading(false);
       return false;
     }
