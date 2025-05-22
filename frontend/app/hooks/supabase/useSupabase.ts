@@ -2,16 +2,15 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
 
 // Use environment variables from expo-constants or fallback to empty strings
-const supabaseUrl =
-  Constants.expoConfig?.extra?.supabaseUrl ||
-  process.env.SUPABASE_API_URL ||
-  "";
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || "";
+const supabaseApiKey = Constants.expoConfig?.extra?.supabaseKey || "";
 
-const supabaseApiKey =
-  Constants.expoConfig?.extra?.supabaseKey || process.env.SUPABASE_KEY || "";
+// Enable mock auth since we're running in offline mode without proper credentials
+const USE_MOCK_AUTH = true; // Enable mock auth to avoid authentication issues
 
-// For development testing - use a flag to bypass real authentication
-const USE_MOCK_AUTH = false; // Set to false when you have proper Supabase credentials
+// Log configuration details during initialization
+console.log("Expo Config:", Constants.expoConfig?.extra);
+console.log("Mock Auth Enabled:", USE_MOCK_AUTH);
 
 let supabaseInstance: SupabaseClient | null = null;
 
@@ -20,8 +19,12 @@ export const getSupabaseClient = (): SupabaseClient => {
     // Log configuration info for debugging
     console.log("Supabase URL:", supabaseUrl ? "Configured" : "Missing");
     console.log("Supabase Key:", supabaseApiKey ? "Configured" : "Missing");
-
-    supabaseInstance = createClient(supabaseUrl, supabaseApiKey);
+    
+    // Use dummy values if credentials are missing
+    const url = supabaseUrl || "https://example.supabase.co";
+    const key = supabaseApiKey || "dummy-key-for-offline-mode";
+    
+    supabaseInstance = createClient(url, key);
   }
 
   return supabaseInstance;

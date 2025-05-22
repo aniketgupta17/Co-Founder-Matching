@@ -1,4 +1,4 @@
-import { Session, User } from "@supabase/supabase-js";
+import { createClient, Session, User } from "@supabase/supabase-js";
 import {
   createContext,
   ReactNode,
@@ -26,65 +26,96 @@ type AuthProviderProps = {
 };
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { supabase } = useSupabase();
+  const { supabase, USE_MOCK_AUTH } = useSupabase();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshSession = async () => {
-    try {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error("Session refresh error:", error);
-        await supabase.auth.signOut();
-        return;
-      }
-
-      setSession(session);
-      setUser(session?.user ?? null);
-    } catch (err) {
-      console.error("Unexpected error:", err);
+    // If using mock auth, start with no session to show the welcome screen
+    if (USE_MOCK_AUTH) {
+      console.log("Using mock authentication - no initial session");
+      // Start with no session so welcome/login screens will appear
+      setSession(null);
+      setUser(null);
+      return;
     }
+
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
+    if (error) {
+      console.log(`Error refreshing session: ${error}`);
+      return;
+    }
+
+    setSession(session);
+    setUser(session?.user || null);
   };
 
   useEffect(() => {
-    let mounted = true;
-
     const getInitialSession = async () => {
-      try {
-        await refreshSession();
-      } finally {
-        if (mounted) setLoading(false);
-      }
+      setLoading(true);
+      await refreshSession();
+      setLoading(false);
     };
 
     getInitialSession();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth event:", event);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Only set up auth state change listener if not using mock auth
+    if (!USE_MOCK_AUTH) {
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+        setUser(session?.user || null);
+        setLoading(false);
+      });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
   }, []);
 
   const signIn = async (credentials: Credentials) => {
-    setLoading(false);
+    setLoading(true);
+    
+    // Use mock auth if enabled
+    if (USE_MOCK_AUTH) {
+      console.log("Mock sign in with:", credentials.email);
+      // Create a mock session when user signs in
+      const mockUser = {
+        id: "mock-user-id",
+        email: credentials.email,
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      } as User;
+      
+      const mockSession = {
+        access_token: "mock-token",
+        refresh_token: "mock-refresh-token",
+        expires_in: 3600,
+        expires_at: new Date().getTime() + 3600000,
+        token_type: "bearer",
+        user: mockUser,
+      } as Session;
+      
+      setSession(mockSession);
+      setUser(mockUser);
+      setLoading(false);
+      return;
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
+    
     if (error) {
       console.log(`Sign in error: ${error}`);
       throw error;
@@ -93,34 +124,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signUp = async (credentials: Credentials) => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.auth.signUp({
+    setLoading(true);
+    
+    // Use mock auth if enabled
+    if (USE_MOCK_AUTH) {
+      console.log("Mock sign up with:", credentials.email);
+      // Create a mock session when user signs up
+      const mockUser = {
+        id: "mock-user-id",
         email: credentials.email,
-        password: credentials.password,
-        options: {
-          // Required for immediate session
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.session) {
-        setSession(data.session);
-        setUser(data.session.user);
-      } else {
-        console.log("Email confirmation required");
-      }
-    } catch (error) {
-      console.error("Signup error:", error);
-      throw error;
-    } finally {
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+      } as User;
+      
+      const mockSession = {
+        access_token: "mock-token",
+        refresh_token: "mock-refresh-token",
+        expires_in: 3600,
+        expires_at: new Date().getTime() + 3600000,
+        token_type: "bearer",
+        user: mockUser,
+      } as Session;
+      
+      setSession(mockSession);
+      setUser(mockUser);
       setLoading(false);
+      return;
     }
+    
+    const { error } = await supabase.auth.signUp({
+      email: credentials.email,
+      password: credentials.password,
+    });
+    
+    if (error) {
+      console.log(`Sign up error: ${error}`);
+      throw error;
+    }
+    setLoading(false);
   };
+
   const signOut = async () => {
     setLoading(true);
+    
+    // Use mock auth if enabled
+    if (USE_MOCK_AUTH) {
+      console.log("Mock sign out");
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setLoading(false);

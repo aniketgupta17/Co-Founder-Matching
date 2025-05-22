@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,11 @@ import {
   TouchableOpacity, 
   ScrollView, 
   SafeAreaView,
-  Platform 
+  Platform,
+  Linking,
+  Dimensions,
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EventsStackScreenProps } from '../navigation/TabNavigator';
@@ -14,9 +18,45 @@ import { format, parseISO } from 'date-fns';
 
 type Props = EventsStackScreenProps<'EventDetail'>;
 
+// Basic geocoding function to get coordinates from address
+// In a real app, you would use a geocoding service API
+const geocodeLocation = (locationStr: string) => {
+  // For demo purposes, we'll return fixed coordinates based on some keywords in the location
+  // In a real app, use Google Geocoding API or similar service
+  if (locationStr.toLowerCase().includes('brisbane')) {
+    return { latitude: -27.4698, longitude: 153.0251, name: 'Brisbane' };
+  } else if (locationStr.toLowerCase().includes('sydney')) {
+    return { latitude: -33.8688, longitude: 151.2093, name: 'Sydney' };
+  } else if (locationStr.toLowerCase().includes('melbourne')) {
+    return { latitude: -37.8136, longitude: 144.9631, name: 'Melbourne' };
+  } else if (locationStr.toLowerCase().includes('perth')) {
+    return { latitude: -31.9505, longitude: 115.8605, name: 'Perth' };
+  } else {
+    // Default to UQ St Lucia campus if no known location
+    return { latitude: -27.4975, longitude: 153.0137, name: 'Brisbane' };
+  }
+};
+
+// Function to get a static map image URL
+const getStaticMapUrl = (latitude: number, longitude: number, zoom: number = 14) => {
+  // Use OpenStreetMap static map service
+  return `https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=${zoom}&size=600x400&markers=color:red%7C${latitude},${longitude}&key=AIzaSyDFNBNpGrqiSzn7VRbaVQT5s-IW2FboJl4`;
+};
+
 const EventDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   // Add safety check for route.params
   const { event } = route.params || {};
+  
+  const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0, name: '' });
+  const [imageLoading, setImageLoading] = useState(false);
+
+  useEffect(() => {
+    if (event && event.location) {
+      // Get coordinates from location string
+      const coords = geocodeLocation(event.location);
+      setCoordinates(coords);
+    }
+  }, [event]);
   
   // Safety check to handle missing event data
   if (!event) {
@@ -51,6 +91,21 @@ const EventDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const eventDate = event.date ? parseISO(event.date) : new Date();
   const dayOfMonth = format(eventDate, 'd');
   const month = format(eventDate, 'MMM');
+
+  // Handle open in maps
+  const openInMaps = () => {
+    const scheme = Platform.OS === 'ios' ? 'maps:' : 'geo:';
+    const url = Platform.OS === 'ios' 
+      ? `${scheme}?q=${event.location}` 
+      : `${scheme}0,0?q=${event.location}`;
+    
+    Linking.openURL(url).catch(err => {
+      console.error('An error occurred', err);
+    });
+  };
+
+  // Get static map image URL
+  const mapImageUrl = getStaticMapUrl(coordinates.latitude, coordinates.longitude);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -95,9 +150,43 @@ const EventDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           <View style={styles.sectionContent}>
             <Text style={styles.locationText}>{event.location || 'Location not specified'}</Text>
             
-            {/* Map Preview Placeholder */}
-            <View style={styles.mapPreview}>
-              <Text style={styles.mapPreviewText}>Map Preview</Text>
+            {/* Static Map Image */}
+            <View style={styles.mapContainer}>
+              {coordinates.latitude !== 0 && (
+                <>
+                  <View style={styles.staticMapContainer}>
+                    <Image
+                      source={{ uri: mapImageUrl }}
+                      style={styles.staticMapImage}
+                      onLoadStart={() => setImageLoading(true)}
+                      onLoadEnd={() => setImageLoading(false)}
+                    />
+                    {imageLoading && (
+                      <View style={styles.mapLoadingOverlay}>
+                        <ActivityIndicator size="large" color="#4B2E83" />
+                      </View>
+                    )}
+                    
+                    {/* Map Pin */}
+                    <View style={styles.mapPinContainer}>
+                      <Ionicons name="location" size={30} color="#4B2E83" />
+                    </View>
+                    
+                    {/* Location Label */}
+                    <View style={styles.mapLabelContainer}>
+                      <Text style={styles.mapLabelText}>{coordinates.name}</Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity 
+                    style={styles.openMapsButton}
+                    onPress={openInMaps}
+                  >
+                    <Ionicons name="navigate" size={16} color="white" />
+                    <Text style={styles.openMapsText}>Open in Maps</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -106,30 +195,32 @@ const EventDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About This Event</Text>
           <View style={styles.sectionContent}>
-            <Text style={styles.descriptionText}>
-              {event.description || 'No description available'}
-            </Text>
+            <Text style={styles.descriptionText}>{event.description}</Text>
           </View>
         </View>
-
-        {/* Attending Startups Section - with safety checks */}
+        
+        {/* Tags Section */}
         {event.tags && event.tags.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Attending Startups</Text>
-            <View style={styles.tagsContainer}>
-              {event.tags.map((tag, idx) => (
-                <View key={idx} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
+            <Text style={styles.sectionTitle}>Tags</Text>
+            <View style={styles.sectionContent}>
+              <View style={styles.tagsContainer}>
+                {event.tags.map((tag, index) => (
+                  <View key={index} style={styles.tagItem}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           </View>
         )}
-
-        {/* Book Button */}
-        <TouchableOpacity style={styles.bookButton}>
-          <Text style={styles.bookButtonText}>Book via Student Hub</Text>
-        </TouchableOpacity>
+        
+        {/* Register for Event Button */}
+        {event.type !== 'Meeting' && (
+          <TouchableOpacity style={styles.registerButton}>
+            <Text style={styles.registerButtonText}>Register for Event</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -231,15 +322,68 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 16,
   },
-  mapPreview: {
-    height: 150,
-    backgroundColor: '#E0E0E0',
+  mapContainer: {
+    height: 200,
     borderRadius: 8,
+    overflow: 'hidden',
+    marginTop: 16,
+    position: 'relative',
+  },
+  staticMapContainer: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#E5E7EB',
+  },
+  staticMapImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  mapPinContainer: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -30,
+    marginLeft: -15,
+  },
+  mapLabelContainer: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  mapLabelText: {
+    color: '#4B2E83',
+    fontWeight: 'bold',
+  },
+  mapLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(240, 240, 240, 0.7)',
   },
-  mapPreviewText: {
-    color: '#666',
+  openMapsButton: {
+    flexDirection: 'row',
+    backgroundColor: '#4B2E83',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+  },
+  openMapsText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 4,
   },
   descriptionText: {
     fontSize: 16,
@@ -250,7 +394,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  tag: {
+  tagItem: {
     backgroundColor: '#F0F0F0',
     borderRadius: 16,
     paddingVertical: 6,
@@ -262,14 +406,14 @@ const styles = StyleSheet.create({
     color: '#4B2E83',
     fontSize: 14,
   },
-  bookButton: {
+  registerButton: {
     backgroundColor: '#4B2E83',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 16,
   },
-  bookButtonText: {
+  registerButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
