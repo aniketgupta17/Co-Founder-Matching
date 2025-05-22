@@ -179,7 +179,7 @@ export default function ProfileSetupScreen() {
       } else {
         // For development, we'll use a mock ID
         console.log("Using mock session for frontend development");
-        updateProfileData("id", "mock-user-123");
+        updateProfileData("id", "00000000-0000-0000-0000-000000000000");
       }
 
       setIsLoading(false);
@@ -201,7 +201,7 @@ export default function ProfileSetupScreen() {
         // Set a mock user ID
         updateProfileData(
           "id",
-          "mock-user-" + Math.floor(Math.random() * 1000)
+          "00000000-0000-0000-0000-000000000000"
         );
         setIsLoading(false);
         return true;
@@ -248,12 +248,22 @@ export default function ProfileSetupScreen() {
       if (!user) {
         throw Error("Profile creation requires active user session");
       }
-      updateProfile(user.id, profileFormData);
+      
+      // Set is_complete flag to true when finishing the onboarding
+      const completeProfileData = {
+        ...profileFormData,
+        is_complete: true
+      };
+      
       setIsLoading(true);
 
       try {
-        console.log("Updating profile with data:", profileFormData);
-        // await updateProfile(profileFormData.id, profileFormData);
+        console.log("Updating profile with data:", completeProfileData);
+        if (completeProfileData.id) {
+          await updateProfile(completeProfileData.id, completeProfileData);
+        } else {
+          throw new Error("Profile ID is missing");
+        }
 
         navigation.reset({
           index: 0,
