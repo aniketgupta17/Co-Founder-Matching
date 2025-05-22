@@ -10,7 +10,6 @@ import {
   InsertMessage,
 } from "../types/chatMessages";
 import { useProfile } from "./useProfile";
-import { useChats } from "./useChats";
 
 export const useChatMessages = (supabase: SupabaseClient, chatId: number) => {
   const { profile } = useProfile();
@@ -195,10 +194,10 @@ export const useChatMessages = (supabase: SupabaseClient, chatId: number) => {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "messages",
-          filter: `chat_id=eq.${chatId},user_id=neq.${profile.id}`,
+          filter: `chat_id=eq.${chatId}`,
         },
         (payload) => {
           const row = payload.new as MessageRow;

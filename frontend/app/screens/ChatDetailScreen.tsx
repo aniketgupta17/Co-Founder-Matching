@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -13,84 +13,142 @@ import {
   Modal,
   ActionSheetIOS,
   Alert,
-} from 'react-native';
-import { ChatStackScreenProps } from '../navigation/TabNavigator';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
+} from "react-native";
+import { ChatStackScreenProps } from "../navigation/TabNavigator";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
+import { useChatMessages } from "../hooks/useChatMessages";
+import { useSupabase } from "../hooks/supabase";
+import { useApi } from "../hooks/useAPI";
+import { chatWithBot } from "../services/chatService";
+import { useChats } from "../hooks/useChats";
+import { Message } from "types/chatMessages";
+// interface Message {
+//   id: number;
+//   text: string;
+//   timestamp: string;
+//   senderId: number;
+//   senderName?: string;
+//   senderAvatar?: string;
+//   mediaUrl?: string;
+//   mediaType?: "image" | "document";
+//   fileName?: string;
+// }
 
-interface Message {
-  id: number;
-  text: string;
-  timestamp: string;
-  senderId: number;
-  senderName?: string;
-  senderAvatar?: string;
-  mediaUrl?: string;
-  mediaType?: 'image' | 'document';
-  fileName?: string;
-}
-
-const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navigation }) => {
-  const { chatId, name, avatar, isGroup } = route.params;
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
+const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
+  route,
+  navigation,
+}) => {
+  const { chatId, name, avatar, isGroup, isAi } = route.params;
+  const [message, setMessage] = useState("");
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  
+  const [userId, setUserId] = useState<string | null>("");
+  const { supabase } = useSupabase();
+  const { messages, sendMessage } = useChatMessages(supabase, chatId);
+  const { readChat } = useChats();
+  const { submit: sendAiMessage } = useApi(chatWithBot);
+
+  // Read all chat messages when they change
+  useEffect(() => {
+    if (messages && messages.length > 0 && chatId) {
+      console.info("Reading chat messages");
+      readChat(chatId);
+    }
+  }, [messages, chatId, readChat]);
+
+  useEffect(() => {
+    const getUserId = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUserId(user?.id ?? null);
+    };
+    getUserId();
+  }, [supabase]);
+
+  console.log("ChatID:", chatId);
   // Mock group participants
   const mockParticipants = [
-    { id: 1, name: 'Alex Johnson', avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    { id: 2, name: 'Taylor Wong', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
-    { id: 3, name: 'Sarah Miller', avatar: 'https://randomuser.me/api/portraits/women/67.jpg' },
-    { id: 4, name: 'You', avatar: 'https://randomuser.me/api/portraits/men/75.jpg' },
+    {
+      id: 1,
+      name: "Alex Johnson",
+      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+    },
+    {
+      id: 2,
+      name: "Taylor Wong",
+      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+    },
+    {
+      id: 3,
+      name: "Sarah Miller",
+      avatar: "https://randomuser.me/api/portraits/women/67.jpg",
+    },
+    {
+      id: 4,
+      name: "You",
+      avatar: "https://randomuser.me/api/portraits/men/75.jpg",
+    },
   ];
 
   // Initialize with some mock messages
-  useEffect(() => {
-    const mockMessages = [
-      {
-        id: 1,
-        text: isGroup 
-          ? 'Welcome to the group! Let\'s collaborate!' 
-          : 'Hey! How are you?',
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        senderId: isGroup ? 1 : 2,
-        senderName: isGroup ? 'Alex Johnson' : undefined,
-        senderAvatar: isGroup ? 'https://randomuser.me/api/portraits/men/32.jpg' : undefined
-      },
-      {
-        id: 2,
-        text: isGroup 
-          ? 'Thanks for adding me! I\'m excited to work with everyone.' 
-          : 'I\'m doing great, thanks! How about you?',
-        timestamp: new Date(Date.now() - 1800000).toISOString(),
-        senderId: isGroup ? 3 : 4,
-        senderName: isGroup ? 'Sarah Miller' : undefined,
-        senderAvatar: isGroup ? 'https://randomuser.me/api/portraits/women/67.jpg' : undefined
-      },
-      {
-        id: 3,
-        text: isGroup 
-          ? 'I have some ideas I\'d like to share about our project.' 
-          : 'Just working on our co-founder app. Making good progress!',
-        timestamp: new Date(Date.now() - 600000).toISOString(),
-        senderId: isGroup ? 2 : 2,
-        senderName: isGroup ? 'Taylor Wong' : undefined,
-        senderAvatar: isGroup ? 'https://randomuser.me/api/portraits/women/44.jpg' : undefined
-      }
-    ];
-    
-    setMessages(mockMessages);
-  }, [isGroup]);
+  // useEffect(() => {
+  //   const mockMessages = [
+  //     {
+  //       id: 1,
+  //       text: isGroup
+  //         ? "Welcome to the group! Let's collaborate!"
+  //         : "Hey! How are you?",
+  //       timestamp: new Date(Date.now() - 3600000).toISOString(),
+  //       senderId: isGroup ? 1 : 2,
+  //       senderName: isGroup ? "Alex Johnson" : undefined,
+  //       senderAvatar: isGroup
+  //         ? "https://randomuser.me/api/portraits/men/32.jpg"
+  //         : undefined,
+  //     },
+  //     {
+  //       id: 2,
+  //       text: isGroup
+  //         ? "Thanks for adding me! I'm excited to work with everyone."
+  //         : "I'm doing great, thanks! How about you?",
+  //       timestamp: new Date(Date.now() - 1800000).toISOString(),
+  //       senderId: isGroup ? 3 : 4,
+  //       senderName: isGroup ? "Sarah Miller" : undefined,
+  //       senderAvatar: isGroup
+  //         ? "https://randomuser.me/api/portraits/women/67.jpg"
+  //         : undefined,
+  //     },
+  //     {
+  //       id: 3,
+  //       text: isGroup
+  //         ? "I have some ideas I'd like to share about our project."
+  //         : "Just working on our co-founder app. Making good progress!",
+  //       timestamp: new Date(Date.now() - 600000).toISOString(),
+  //       senderId: isGroup ? 2 : 2,
+  //       senderName: isGroup ? "Taylor Wong" : undefined,
+  //       senderAvatar: isGroup
+  //         ? "https://randomuser.me/api/portraits/women/44.jpg"
+  //         : undefined,
+  //     },
+  //   ];
+
+  //   setMessages(mockMessages);
+  // }, [isGroup]);
 
   // Functions for handling attachments
   const handleAttachmentPress = () => {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ['Cancel', 'Take Photo', 'Choose from Library', 'Share Document'],
+          options: [
+            "Cancel",
+            "Take Photo",
+            "Choose from Library",
+            "Share Document",
+          ],
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
@@ -111,9 +169,12 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
 
   const takePhoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    
+
     if (permissionResult.granted === false) {
-      Alert.alert("Permission Required", "You need to grant camera permissions to take photos");
+      Alert.alert(
+        "Permission Required",
+        "You need to grant camera permissions to take photos"
+      );
       return;
     }
 
@@ -124,15 +185,19 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      sendMediaMessage(result.assets[0].uri, 'image');
+      sendMediaMessage(result.assets[0].uri, "image");
     }
   };
 
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (permissionResult.granted === false) {
-      Alert.alert("Permission Required", "You need to grant photo library permissions to select images");
+      Alert.alert(
+        "Permission Required",
+        "You need to grant photo library permissions to select images"
+      );
       return;
     }
 
@@ -143,61 +208,72 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      sendMediaMessage(result.assets[0].uri, 'image');
+      sendMediaMessage(result.assets[0].uri, "image");
     }
   };
 
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
+        type: "*/*",
         copyToCacheDirectory: true,
       });
 
-      if (result.canceled === false && result.assets && result.assets.length > 0) {
+      if (
+        result.canceled === false &&
+        result.assets &&
+        result.assets.length > 0
+      ) {
         const asset = result.assets[0];
-        sendMediaMessage(asset.uri, 'document', asset.name);
+        sendMediaMessage(asset.uri, "document", asset.name);
       }
     } catch (error) {
-      console.error('Error picking document:', error);
-      Alert.alert('Error', 'Failed to pick document');
+      console.error("Error picking document:", error);
+      Alert.alert("Error", "Failed to pick document");
     }
   };
 
-  const sendMediaMessage = (uri: string, type: 'image' | 'document', fileName?: string) => {
-    const newMessage: Message = {
-      id: messages.length + 1,
-      text: type === 'image' ? 'Sent an image' : `Sent a document: ${fileName || 'file'}`,
-      timestamp: new Date().toISOString(),
-      senderId: 4, // Current user
-      senderName: isGroup ? 'You' : undefined,
-      senderAvatar: isGroup ? 'https://randomuser.me/api/portraits/men/75.jpg' : undefined,
-      mediaUrl: uri,
-      mediaType: type,
-      fileName: fileName
-    };
-    
-    setMessages([...messages, newMessage]);
-    
+  const sendMediaMessage = (
+    uri: string,
+    type: "image" | "document",
+    fileName?: string
+  ) => {
+    // const newMessage: Message = {
+    //   id: messages.length + 1,
+    //   text:
+    //     type === "image"
+    //       ? "Sent an image"
+    //       : `Sent a document: ${fileName || "file"}`,
+    //   timestamp: new Date().toISOString(),
+    //   senderId: 4, // Current user
+    //   senderName: isGroup ? "You" : undefined,
+    //   senderAvatar: isGroup
+    //     ? "https://randomuser.me/api/portraits/men/75.jpg"
+    //     : undefined,
+    //   mediaUrl: uri,
+    //   mediaType: type,
+    //   fileName: fileName,
+    // };
+
+    // setMessages([...messages, newMessage]);
+
     // Scroll to bottom when new message is added
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
   };
 
-  const sendMessage = () => {
+  const handleSendMessage = () => {
     if (message.trim()) {
-      const newMessage: Message = {
-        id: messages.length + 1,
-        text: message.trim(),
-        timestamp: new Date().toISOString(),
-        senderId: 4, // Current user
-        senderName: isGroup ? 'You' : undefined,
-        senderAvatar: isGroup ? 'https://randomuser.me/api/portraits/men/75.jpg' : undefined
-      };
-      setMessages([...messages, newMessage]);
-      setMessage('');
-      
+      console.info("Chat AI:", isAi);
+      sendMessage(message);
+      setMessage("");
+
+      if (isAi === true) {
+        console.info("Sending message to chatbot");
+        sendAiMessage(message, chatId);
+      }
+
       // Scroll to bottom when new message is added
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
@@ -207,7 +283,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   const formatDate = (timestamp: string) => {
@@ -221,13 +297,14 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
     return date1.toDateString() === date2.toDateString();
   };
 
-  const renderMessage = ({ item, index }: { item: Message, index: number }) => {
-    const isCurrentUser = item.senderId === 4;
+  const renderMessage = ({ item, index }: { item: Message; index: number }) => {
+    const isCurrentUser = item.senderId === userId;
     const showSender = isGroup && !isCurrentUser;
-    
+
     // Check if we need to show date header
-    const showDateHeader = index === 0 || !isSameDay(messages[index - 1].timestamp, item.timestamp);
-    
+    const showDateHeader =
+      index === 0 || !isSameDay(messages[index - 1].timestamp, item.timestamp);
+
     return (
       <>
         {showDateHeader && (
@@ -235,62 +312,79 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
             <Text style={styles.dateHeader}>{formatDate(item.timestamp)}</Text>
           </View>
         )}
-        
-        <View style={[
-          styles.messageRow,
-          isCurrentUser ? styles.userMessageRow : styles.otherMessageRow
-        ]}>
+
+        <View
+          style={[
+            styles.messageRow,
+            isCurrentUser ? styles.userMessageRow : styles.otherMessageRow,
+          ]}
+        >
           {/* Avatar for group chats when not current user */}
           {showSender && item.senderAvatar && (
-            <Image source={{ uri: item.senderAvatar }} style={styles.messageSenderAvatar} />
+            <Image
+              source={{ uri: item.senderAvatar }}
+              style={styles.messageSenderAvatar}
+            />
           )}
-          
+
           {/* Extra space when no avatar is shown but in a group chat */}
           {isGroup && isCurrentUser && <View style={styles.messageSpacing} />}
-          
-          <View style={[
-            styles.messageContainer,
-            isCurrentUser ? styles.userMessage : styles.otherMessage
-          ]}>
+
+          <View
+            style={[
+              styles.messageContainer,
+              isCurrentUser ? styles.userMessage : styles.otherMessage,
+            ]}
+          >
             {/* Show sender name in group chats */}
             {showSender && item.senderName && (
               <Text style={styles.messageSender}>{item.senderName}</Text>
             )}
-            
-            {/* Display media attachment if present */}
-            {item.mediaUrl && item.mediaType === 'image' && (
-              <Image 
-                source={{ uri: item.mediaUrl }} 
+            {/* Display media attachment if present
+            {item.mediaUrl && item.mediaType === "image" && (
+              <Image
+                source={{ uri: item.mediaUrl }}
                 style={styles.messageImage}
                 resizeMode="cover"
               />
-            )}
-            
-            {/* Display document attachment if present */}
-            {item.mediaUrl && item.mediaType === 'document' && (
+            )} */}
+            {/* Display document attachment if present
+            {item.mediaUrl && item.mediaType === "document" && (
               <TouchableOpacity style={styles.documentContainer}>
-                <Ionicons name="document-text" size={24} color={isCurrentUser ? "white" : "#4B2E83"} />
-                <Text style={[
-                  styles.documentName,
-                  isCurrentUser ? styles.userMessageText : styles.otherMessageText
-                ]}>
+                <Ionicons
+                  name="document-text"
+                  size={24}
+                  color={isCurrentUser ? "white" : "#4B2E83"}
+                />
+                <Text
+                  style={[
+                    styles.documentName,
+                    isCurrentUser
+                      ? styles.userMessageText
+                      : styles.otherMessageText,
+                  ]}
+                >
                   {item.fileName || "Document"}
                 </Text>
               </TouchableOpacity>
-            )}
-            
+            )} */}
             {/* Show message text */}
-            <Text style={[
-              styles.messageText, 
-              isCurrentUser ? styles.userMessageText : styles.otherMessageText
-            ]}>
+            <Text
+              style={[
+                styles.messageText,
+                isCurrentUser
+                  ? styles.userMessageText
+                  : styles.otherMessageText,
+              ]}
+            >
               {item.text}
             </Text>
-            
-            <Text style={[
-              styles.timestamp,
-              isCurrentUser ? styles.userTimestamp : styles.otherTimestamp
-            ]}>
+            <Text
+              style={[
+                styles.timestamp,
+                isCurrentUser ? styles.userTimestamp : styles.otherTimestamp,
+              ]}
+            >
               {formatTime(item.timestamp)}
             </Text>
           </View>
@@ -308,8 +402,8 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
         >
           <Ionicons name="chevron-back" size={24} color="#4B2E83" />
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.headerTitleContainer}
           onPress={() => isGroup && setShowGroupInfo(true)}
         >
@@ -319,7 +413,11 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
             ) : (
               <View style={styles.initialsContainer}>
                 <Text style={styles.initials}>
-                  {name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                  {name
+                    .split(" ")
+                    .map((n: string) => n[0])
+                    .join("")
+                    .substring(0, 2)}
                 </Text>
               </View>
             )}
@@ -327,19 +425,29 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
           <View>
             <Text style={styles.headerTitle}>{name}</Text>
             {isGroup && (
-              <Text style={styles.headerSubtitle}>{mockParticipants.length} participants</Text>
+              <Text style={styles.headerSubtitle}>
+                {mockParticipants.length} participants
+              </Text>
             )}
           </View>
         </TouchableOpacity>
-        
+
         <View style={styles.headerAction}>
           {isGroup ? (
             <TouchableOpacity onPress={() => setShowGroupInfo(true)}>
-              <Ionicons name="information-circle-outline" size={24} color="#4B2E83" />
+              <Ionicons
+                name="information-circle-outline"
+                size={24}
+                color="#4B2E83"
+              />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity onPress={() => setShowGroupInfo(true)}>
-              <Ionicons name="information-circle-outline" size={24} color="#4B2E83" />
+              <Ionicons
+                name="information-circle-outline"
+                size={24}
+                color="#4B2E83"
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -355,13 +463,16 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
       />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.inputContainer}
       >
-        <TouchableOpacity style={styles.attachButton} onPress={handleAttachmentPress}>
+        <TouchableOpacity
+          style={styles.attachButton}
+          onPress={handleAttachmentPress}
+        >
           <Ionicons name="add-circle-outline" size={24} color="#4B2E83" />
         </TouchableOpacity>
-        
+
         <TextInput
           style={styles.input}
           value={message}
@@ -370,16 +481,19 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
           placeholderTextColor="#999"
           multiline
         />
-        
+
         <TouchableOpacity
-          style={[styles.sendButton, !message.trim() && styles.disabledSendButton]}
-          onPress={sendMessage}
+          style={[
+            styles.sendButton,
+            !message.trim() && styles.disabledSendButton,
+          ]}
+          onPress={() => handleSendMessage()}
           disabled={!message.trim()}
         >
-          <Ionicons 
-            name="send" 
-            size={20} 
-            color={message.trim() ? "white" : "#CCCCCC"} 
+          <Ionicons
+            name="send"
+            size={20}
+            color={message.trim() ? "white" : "#CCCCCC"}
           />
         </TouchableOpacity>
       </KeyboardAvoidingView>
@@ -399,7 +513,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
                 <Ionicons name="close" size={24} color="#4B2E83" />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.groupInfoHeader}>
               <View style={styles.groupAvatarContainer}>
                 {avatar ? (
@@ -407,7 +521,11 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
                 ) : (
                   <View style={styles.groupInitialsContainer}>
                     <Text style={styles.groupInitials}>
-                      {name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                      {name
+                        .split(" ")
+                        .map((n: string) => n[0])
+                        .join("")
+                        .substring(0, 2)}
                     </Text>
                   </View>
                 )}
@@ -417,7 +535,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
                 {mockParticipants.length} participants
               </Text>
             </View>
-            
+
             <View style={styles.groupActions}>
               <TouchableOpacity style={styles.groupAction}>
                 <View style={styles.groupActionIcon}>
@@ -425,31 +543,38 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
                 </View>
                 <Text style={styles.groupActionText}>Group QR Code</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.groupAction}>
                 <View style={styles.groupActionIcon}>
-                  <Ionicons name="person-add-outline" size={24} color="#4B2E83" />
+                  <Ionicons
+                    name="person-add-outline"
+                    size={24}
+                    color="#4B2E83"
+                  />
                 </View>
                 <Text style={styles.groupActionText}>Add Participant</Text>
               </TouchableOpacity>
             </View>
-            
+
             <Text style={styles.participantsLabel}>Participants</Text>
-            
+
             <FlatList
               data={mockParticipants}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
                 <View style={styles.participantItem}>
-                  <Image source={{ uri: item.avatar }} style={styles.participantAvatar} />
+                  <Image
+                    source={{ uri: item.avatar }}
+                    style={styles.participantAvatar}
+                  />
                   <Text style={styles.participantName}>{item.name}</Text>
-                  {item.name === 'You' && (
+                  {item.name === "You" && (
                     <Text style={styles.youLabel}>(You)</Text>
                   )}
                 </View>
               )}
             />
-            
+
             <TouchableOpacity style={styles.leaveButton}>
               <Ionicons name="exit-outline" size={20} color="#FF6B6B" />
               <Text style={styles.leaveButtonText}>Leave Group</Text>
@@ -457,7 +582,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
           </View>
         </View>
       </Modal>
-      
+
       {/* Attachment Options Modal for Android */}
       <Modal
         visible={showAttachmentOptions}
@@ -465,13 +590,13 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
         transparent={true}
         onRequestClose={() => setShowAttachmentOptions(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.attachmentModalOverlay}
           activeOpacity={1}
           onPress={() => setShowAttachmentOptions(false)}
         >
           <View style={styles.attachmentModalContent}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.attachmentOption}
               onPress={() => {
                 setShowAttachmentOptions(false);
@@ -481,8 +606,8 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
               <Ionicons name="camera" size={24} color="#4B2E83" />
               <Text style={styles.attachmentOptionText}>Take Photo</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.attachmentOption}
               onPress={() => {
                 setShowAttachmentOptions(false);
@@ -490,10 +615,12 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
               }}
             >
               <Ionicons name="image" size={24} color="#4B2E83" />
-              <Text style={styles.attachmentOptionText}>Choose from Library</Text>
+              <Text style={styles.attachmentOptionText}>
+                Choose from Library
+              </Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.attachmentOption}
               onPress={() => {
                 setShowAttachmentOptions(false);
@@ -503,8 +630,8 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
               <Ionicons name="document" size={24} color="#4B2E83" />
               <Text style={styles.attachmentOptionText}>Share Document</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[styles.attachmentOption, styles.cancelOption]}
               onPress={() => setShowAttachmentOptions(false)}
             >
@@ -520,23 +647,23 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<'Chat'>> = ({ route, navig
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: "#F8F8F8",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: "#E5E5E5",
   },
   backButton: {
     marginRight: 16,
   },
   headerTitleContainer: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   headerAction: {
     marginLeft: 16,
@@ -553,57 +680,57 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#4B2E83',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#4B2E83",
+    justifyContent: "center",
+    alignItems: "center",
   },
   initials: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   messagesList: {
     padding: 16,
     paddingBottom: 24,
   },
   dateHeaderContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 16,
   },
   dateHeader: {
-    backgroundColor: '#E5E5E5',
+    backgroundColor: "#E5E5E5",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
   messageRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 16,
-    maxWidth: '80%',
+    maxWidth: "80%",
   },
   userMessageRow: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   otherMessageRow: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   messageSenderAvatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
     marginRight: 8,
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: 4,
   },
   messageSpacing: {
@@ -614,95 +741,95 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   userMessage: {
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
     borderBottomRightRadius: 4,
   },
   otherMessage: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderBottomLeftRadius: 4,
   },
   messageSender: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#4B2E83',
+    fontWeight: "bold",
+    color: "#4B2E83",
     marginBottom: 4,
   },
   messageText: {
     fontSize: 16,
   },
   userMessageText: {
-    color: 'white',
+    color: "white",
   },
   otherMessageText: {
-    color: '#333',
+    color: "#333",
   },
   timestamp: {
     fontSize: 12,
     marginTop: 4,
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   userTimestamp: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: "rgba(255, 255, 255, 0.7)",
   },
   otherTimestamp: {
-    color: '#999',
+    color: "#999",
   },
   inputContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 12,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    alignItems: 'center',
+    borderTopColor: "#E5E5E5",
+    alignItems: "center",
   },
   attachButton: {
     marginRight: 8,
   },
   input: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginLeft: 8,
   },
   disabledSendButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 16,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#4B2E83',
+    fontWeight: "bold",
+    color: "#4B2E83",
   },
   groupInfoHeader: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   groupAvatarContainer: {
@@ -717,55 +844,55 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4B2E83',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#4B2E83",
+    justifyContent: "center",
+    alignItems: "center",
   },
   groupInitials: {
-    color: 'white',
+    color: "white",
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   groupName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 4,
   },
   groupParticipantsCount: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   groupActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: 24,
   },
   groupAction: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   groupActionIcon: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 8,
   },
   groupActionText: {
     fontSize: 12,
-    color: '#4B2E83',
+    color: "#4B2E83",
   },
   participantsLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 12,
   },
   participantItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   participantAvatar: {
@@ -776,25 +903,25 @@ const styles = StyleSheet.create({
   },
   participantName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 8,
   },
   youLabel: {
     marginLeft: 8,
     fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
+    color: "#666",
+    fontStyle: "italic",
   },
   leaveButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 24,
   },
   leaveButtonText: {
-    color: '#FF6B6B',
+    color: "#FF6B6B",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 8,
   },
   messageImage: {
@@ -804,9 +931,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   documentContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
@@ -818,38 +945,38 @@ const styles = StyleSheet.create({
   },
   attachmentModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   attachmentModalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
   attachmentOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: "#E5E5E5",
   },
   attachmentOptionText: {
     marginLeft: 16,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   cancelOption: {
     borderBottomWidth: 0,
     marginTop: 8,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   cancelText: {
-    color: '#FF6B6B',
+    color: "#FF6B6B",
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 
-export default ChatDetailScreen; 
+export default ChatDetailScreen;

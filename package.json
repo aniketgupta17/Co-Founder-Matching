@@ -1,4 +1,4 @@
-{
+  {
   "scripts": {
     "front": "cd frontend && npm run start",
     "update-types": "cd frontend && npm run update-types",

@@ -13,7 +13,7 @@ import { ChatMemberRow } from "types/chatMessages";
 
 interface ChatContextType {
   chats: Chat[];
-  readChat: (chatId: number) => Promise<void>;
+  readChat: (chatId: number) => Promise<any[] | undefined>;
   fetchChats: () => Promise<void>;
   createPrivateChat: (otherUserId: string) => Promise<Chat | undefined>;
   addChatMember: (
@@ -47,53 +47,105 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { profile } = useProfile();
 
-  const hasReadChat = async (
-    chatId: number,
-    lastMessageId: string | null,
-    userId: string | null
-  ): Promise<boolean> => {
-    if (!lastMessageId || !profile) {
-      return true;
-    }
-
-    if (userId === profile.id) {
-      return true;
-    }
-
-    const { data, error } = await supabase.rpc("has_user_read_chat", {
-      _chat_id: chatId,
-    });
-
-    if (error) {
-      console.error("Supabase error checking read:", error);
-      return false;
-    }
-    return data;
-  };
-
   const readChat = async (chatId: number) => {
     if (!profile) return;
 
-    const insertChatRead = {
-      chat_id: chatId,
-      read_at: new Date().toISOString(),
-      user_id: profile.id,
-    };
+    // First, get message IDs that have been read by this user
+    const { data: readMessageIds, error: readError } = await supabase
+      .from("message_reads")
+      .select("message_id")
+      .eq("user_id", profile.id);
 
-    const { data, error } = await supabase
-      .from("chat_reads")
-      .insert([insertChatRead])
+    if (readError) {
+      console.error("Failed to fetch read messages:", readError);
+      return;
+    }
+
+    // Extract the message IDs into an array
+    const readIds = readMessageIds?.map((row) => row.message_id) || [];
+
+    // Get messages that haven't been read by this user yet
+    let query = supabase.from("messages").select("id").eq("chat_id", chatId);
+
+    // Only add the not filter if there are read messages
+    if (readIds.length > 0) {
+      query = query.not("id", "in", `(${readIds.join(",")})`);
+    }
+
+    const { data: messageData, error: messageError } = await query;
+
+    if (messageError) {
+      console.error("Failed to fetch unread messages:", messageError);
+      return;
+    }
+
+    // If no unread messages, nothing to do
+    if (!messageData || messageData.length === 0) {
+      return;
+    }
+
+    // Create read records
+    const reads = messageData.map((row) => ({
+      created_at: new Date().toISOString(),
+      message_id: row.id,
+      user_id: profile.id,
+    }));
+
+    const { data: readData, error: insertError } = await supabase
+      .from("message_reads")
+      .insert(reads)
       .select();
 
-    if (!data || error) {
-      console.error(
-        error
-          ? `Supabase error creating chat read: ${error}`
-          : "No create chat read data returned"
-      );
+    if (insertError) {
+      console.error("Failed to mark messages as read:", insertError);
+      return;
     }
+
+    return readData;
   };
 
+  const hasReadChat = async (chatId: number) => {
+    if (!profile) return false;
+
+    // First, get message IDs that have been read by this user
+    const { data: readMessageIds, error: readError } = await supabase
+      .from("message_reads")
+      .select("message_id")
+      .eq("user_id", profile.id);
+
+    if (readError) {
+      console.error("Failed to fetch read messages:", readError);
+      return false;
+    }
+
+    // Extract the message IDs into an array
+    const readIds = readMessageIds?.map((row) => row.message_id) || [];
+
+    // Check if there are any unread messages for this user in this chat
+    let query = supabase
+      .from("messages")
+      .select("id")
+      .eq("chat_id", chatId)
+      .limit(1);
+
+    // Only add the not filter if there are read messages
+    if (readIds.length > 0) {
+      query = query.not("id", "in", `(${readIds.join(",")})`);
+    }
+
+    const { data: unreadMessages, error } = await query;
+
+    if (error) {
+      console.error("Failed to check for unread messages:", error);
+      return false;
+    }
+
+    const read = !unreadMessages || unreadMessages.length === 0;
+    console.info("Chat read:", read);
+
+    // If no unread messages found, chat is fully read
+    return read;
+  };
   const fetchOtherChatMembers = async (chatId: number) => {
     if (!profile) return [];
 
@@ -154,11 +206,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
           chatName = otherMembers[0]?.name || row.chat_name || "Unnamed Chat";
         }
 
-        const hasRead = await hasReadChat(
-          row.id,
-          row.last_message_id,
-          row.user_id
-        );
+        const hasRead = await hasReadChat(row.id);
 
         return {
           id: row.id,
@@ -166,7 +214,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
           timestamp: row.created_at,
           participants: row.participants,
           name: chatName,
-          unread: hasRead,
+          unread: !hasRead,
           isAi: row.is_ai,
         };
       });
