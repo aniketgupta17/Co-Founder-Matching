@@ -417,7 +417,36 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "matches_matched_user_id_fkey"
+            columns: ["matched_user_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "matches_matched_user_id_fkey"
+            columns: ["matched_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "enriched_chats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "matches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -512,7 +541,6 @@ export type Database = {
           startup_stage: string | null
           time_commitment: string | null
           updated_at: string | null
-          user_id: string | null
         }
         Insert: {
           availability?: string | null
@@ -532,7 +560,6 @@ export type Database = {
           startup_stage?: string | null
           time_commitment?: string | null
           updated_at?: string | null
-          user_id?: string | null
         }
         Update: {
           availability?: string | null
@@ -552,24 +579,8 @@ export type Database = {
           startup_stage?: string | null
           time_commitment?: string | null
           updated_at?: string | null
-          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey1"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       projects: {
         Row: {
@@ -1040,36 +1051,7 @@ export type Database = {
             referencedRelation: "messages"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "profiles_id_fkey1"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
-      }
-      enriched_matches: {
-        Row: {
-          bio: string | null
-          compatibility_score: number | null
-          created_at: string | null
-          explanation: string | null
-          id: string | null
-          image: string | null
-          industry: string | null
-          interests: Json | null
-          matched_user_id: string | null
-          name: string | null
-          rejected_at: string | null
-          rejection_reason: string | null
-          related_match_id: string | null
-          skills: Json | null
-          status: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Relationships: []
       }
       unified_messages: {
         Row: {
@@ -1206,6 +1188,20 @@ export type Database = {
       }
     }
     Enums: {
+      interests:
+        | "SaaS"
+        | "HealthTech"
+        | "GreenTech"
+        | "FinTech"
+        | "EdTech"
+        | "AR/VR"
+        | "IoT"
+        | "MedTech"
+        | "BioTech"
+        | "Robotics"
+        | "Chemistry"
+        | "Sustainability"
+        | "Blockchain"
       skills:
         | "Programming"
         | "Design"
@@ -1332,6 +1328,21 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      interests: [
+        "SaaS",
+        "HealthTech",
+        "GreenTech",
+        "FinTech",
+        "EdTech",
+        "AR/VR",
+        "IoT",
+        "MedTech",
+        "BioTech",
+        "Robotics",
+        "Chemistry",
+        "Sustainability",
+        "Blockchain",
+      ],
       skills: [
         "Programming",
         "Design",

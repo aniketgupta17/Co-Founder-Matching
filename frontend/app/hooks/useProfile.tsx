@@ -8,7 +8,7 @@ import {
 } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Profile } from "../types/profile";
-
+import { ProfileRowUpdate } from "../types/profile";
 type ProfileContextType = {
   profile: Profile | null;
   loading: boolean;
@@ -31,6 +31,40 @@ export const ProfileProvider = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const updateProfile = async (profileUpdate: ProfileRowUpdate) => {
+    if (!profile) {
+      console.error("No active profile");
+      return;
+    }
+
+    try {
+      // Update with timestamp
+      const updateWithTimestamp = {
+        ...profileUpdate,
+        updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(updateWithTimestamp)
+        .eq("id", profile.id)
+        .select();
+
+      if (error) {
+        console.error("Supabase error updating profile:", error);
+        return;
+      }
+
+      if (!data) {
+        console.error("No profile update data returned");
+        return;
+      }
+      setProfile(data[0]);
+    } catch (error) {
+      console.error("Uncaught profile update error:", error);
+      return;
+    }
+  };
+
   const fetchProfile = async () => {
     setLoading(true);
     setError(null);
@@ -44,7 +78,7 @@ export const ProfileProvider = ({
       if (userError || !user) {
         throw new Error(userError?.message || "User not found");
       }
-
+      console.log("Fetching profile with ID:", user.id);
       const { data, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -52,6 +86,7 @@ export const ProfileProvider = ({
         .single();
 
       if (profileError) {
+        console.error("Supabase error fetching profile:", profileError);
         throw new Error(profileError.message);
       }
 
@@ -66,15 +101,30 @@ export const ProfileProvider = ({
     }
   };
 
-  // Initial fetch on mount
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (event, _) => {
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+          console.log("Change event occured");
+          fetchProfile();
+          console.log("Change event fetched profile:", profile);
+        }
+        if (event === "SIGNED_OUT") {
+          setProfile(null);
+        }
+      }
+    );
+
+    return () => {
+      subscription?.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   const value = {
     profile,
     loading,
     error,
+    updateProfile,
     refreshProfile: fetchProfile,
   };
 

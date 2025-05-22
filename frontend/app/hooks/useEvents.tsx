@@ -43,6 +43,7 @@ export const EventProvider: React.FC<EventProviderProps> = ({
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
+      console.log("Fetching events");
       const { data, error } = await supabase.from("events").select("*");
 
       if (error) {

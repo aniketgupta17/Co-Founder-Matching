@@ -1,4 +1,4 @@
-import { createClient, Session, User } from "@supabase/supabase-js";
+import { Session, User } from "@supabase/supabase-js";
 import {
   createContext,
   ReactNode,
@@ -32,38 +32,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   const refreshSession = async () => {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
+    try {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
-    if (error) {
-      console.log(`Error refreshing session: ${error}`);
-      return;
+      if (error) {
+        console.error("Session refresh error:", error);
+        await supabase.auth.signOut();
+        return;
+      }
+
+      setSession(session);
+      setUser(session?.user ?? null);
+    } catch (err) {
+      console.error("Unexpected error:", err);
     }
-
-    setSession(session);
-    setUser(session?.user || null);
   };
 
   useEffect(() => {
+    let mounted = true;
+
     const getInitialSession = async () => {
-      setLoading(true);
-      await refreshSession();
-      setLoading(false);
+      try {
+        await refreshSession();
+      } finally {
+        if (mounted) setLoading(false);
+      }
     };
 
     getInitialSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth event:", event);
       setSession(session);
-      setUser(session?.user || null);
+      setUser(session?.user ?? null);
       setLoading(false);
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -82,18 +93,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signUp = async (credentials: Credentials) => {
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: credentials.email,
-      password: credentials.password,
-    });
-    if (error) {
-      console.log(`Sign up error: ${error}`);
-      throw error;
-    }
-    setLoading(false);
-  };
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signUp({
+        email: credentials.email,
+        password: credentials.password,
+        options: {
+          // Required for immediate session
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
+      if (error) throw error;
+
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+      } else {
+        console.log("Email confirmation required");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
   const signOut = async () => {
     setLoading(true);
     const { error } = await supabase.auth.signOut();
