@@ -1,25 +1,27 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
   Image,
   ActivityIndicator,
-  SafeAreaView
-} from 'react-native';
-import { ProfileStackScreenProps } from '../navigation/TabNavigator';
-import { useProfile } from '../hooks/useProfile';
-import { Ionicons } from '@expo/vector-icons';
-import { Profile, profileRowToProfile } from '../types/profile';
+  SafeAreaView,
+} from "react-native";
+import { ProfileStackScreenProps } from "../navigation/TabNavigator";
+import { useProfile } from "../hooks/useProfile";
+import { Ionicons } from "@expo/vector-icons";
+import { Profile, profileRowToProfile } from "../types/profile";
 
-const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigation }) => {
+const ProfileScreen: React.FC<ProfileStackScreenProps<"Profile">> = ({
+  navigation,
+}) => {
   const { profile, loading, error, refreshProfile } = useProfile();
   const [imageLoading, setImageLoading] = useState(false);
 
   const handleSettingsPress = () => {
-    navigation.navigate('Settings');
+    navigation.navigate("Settings");
   };
 
   if (loading) {
@@ -34,10 +36,7 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
-          style={styles.retryButton}
-          onPress={refreshProfile}
-        >
+        <TouchableOpacity style={styles.retryButton} onPress={refreshProfile}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -48,10 +47,7 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Profile data not available</Text>
-        <TouchableOpacity 
-          style={styles.retryButton}
-          onPress={refreshProfile}
-        >
+        <TouchableOpacity style={styles.retryButton} onPress={refreshProfile}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -67,14 +63,16 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Profile</Text>
           <View style={styles.headerButtons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.editButton}
-              onPress={() => navigation.navigate('EditProfile', { profile: userProfile })}
+              onPress={() =>
+                navigation.navigate("EditProfile", { profile: userProfile })
+              }
             >
               <Text style={styles.editButtonText}>Edit</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.settingsButton}
               onPress={handleSettingsPress}
             >
@@ -86,11 +84,13 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
         {/* Profile Info */}
         <View style={styles.profileInfo}>
           <View style={styles.profileImageContainer}>
-            <Image 
-              source={{ uri: userProfile.image || 'https://randomuser.me/api/portraits/men/75.jpg' }} 
+            <Image
+              source={{
+                uri:
+                  userProfile.image ||
+                  "https://randomuser.me/api/portraits/men/75.jpg",
+              }}
               style={styles.profileImage}
-              onLoadStart={() => setImageLoading(true)}
-              onLoadEnd={() => setImageLoading(false)}
             />
             {imageLoading && (
               <View style={styles.imageLoadingContainer}>
@@ -172,86 +172,86 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: "#F8F8F8",
   },
   scrollContent: {
     padding: 16,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
     padding: 20,
   },
   errorText: {
-    color: 'red',
+    color: "red",
     fontSize: 16,
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   retryButton: {
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 30,
   },
   retryButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#4B2E83',
+    fontWeight: "bold",
+    color: "#4B2E83",
   },
   headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   editButton: {
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
     marginRight: 10,
   },
   editButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   settingsButton: {
     padding: 4,
   },
   profileInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 24,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
   profileImageContainer: {
-    position: 'relative',
+    position: "relative",
     marginRight: 16,
   },
   profileImage: {
@@ -260,14 +260,14 @@ const styles = StyleSheet.create({
     borderRadius: 40,
   },
   imageLoadingContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
     borderRadius: 40,
   },
   profileDetails: {
@@ -275,20 +275,20 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 4,
   },
   role: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   section: {
     marginBottom: 24,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -296,24 +296,24 @@ const styles = StyleSheet.create({
   },
   bioText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     lineHeight: 24,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4B2E83',
+    fontWeight: "bold",
+    color: "#4B2E83",
     marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: "#E5E5E5",
     paddingBottom: 8,
   },
   skillsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   skillTag: {
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -321,16 +321,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   skillText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   interestsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   interestTag: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: "#F0F0F0",
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -338,50 +338,50 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   interestText: {
-    color: '#666',
+    color: "#666",
     fontSize: 14,
   },
   experienceItem: {
     marginBottom: 16,
     borderLeftWidth: 2,
-    borderLeftColor: '#4B2E83',
+    borderLeftColor: "#4B2E83",
     paddingLeft: 12,
   },
   companyName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 4,
   },
   jobTitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 4,
   },
   duration: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
   educationItem: {
     marginBottom: 16,
     borderLeftWidth: 2,
-    borderLeftColor: '#4B2E83',
+    borderLeftColor: "#4B2E83",
     paddingLeft: 12,
   },
   institutionName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 4,
   },
   degreeName: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 4,
   },
   year: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
 });
 

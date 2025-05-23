@@ -120,6 +120,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           <View style={styles.profileHeader}>
             <Text style={styles.profileName}>{profile.name}</Text>
             <Text style={styles.profileRole}>{profile.role || ""}</Text>
+            <Text style={styles.locationText}>{profile.bio}</Text>
+
             {profile.location && (
               <View style={styles.locationContainer}>
                 <Text style={styles.locationText}>📍 {profile.location}</Text>
@@ -530,6 +532,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   locationContainer: {
+    marginTop: 8,
     marginBottom: 8,
   },
   locationText: {

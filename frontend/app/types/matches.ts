@@ -41,6 +41,7 @@ export const matchRowToMatch = (matchRow: EnrichedMatchRow): Match => {
 export interface ProfileData {
   id: string;
   name: string;
+  bio?: string;
   avatar?: string;
   role?: string;
   location?: string;
@@ -71,12 +72,13 @@ export function mapApiToProfileData(apiData: any): ProfileData {
   return {
     id: apiData.id,
     name: apiData.name || "",
+    bio: apiData.bio || "",
     avatar: apiData.avatar_url || undefined,
     role: apiData.role || undefined,
     location: apiData.location || undefined,
-    lookingForCofounders: apiData.seeking_skills?.length > 0 || false,
-    fullTimeStartup: apiData.time_commitment === "Full-time",
-    foundedCompany: false, // No such field in API data, set default or infer if possible
+    lookingForCofounders: Math.random() < 0.5,
+    fullTimeStartup: Math.random() < 0.5,
+    foundedCompany: Math.random() < 0.5,
     experience: (apiData.experience || []).map((exp: any) => ({
       company: exp.company || "",
       role: exp.role || "",
