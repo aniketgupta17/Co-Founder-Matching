@@ -63,7 +63,7 @@ function AppContent() {
       <StatusBar style="auto" />
       <Suspense fallback={<LoadingScreen />}>
         <ProfileProvider>
-          <ChatProvider>
+          <ChatProvider supabase={supabase}>
             <EventProvider>
               <RootNavigator />
             </EventProvider>

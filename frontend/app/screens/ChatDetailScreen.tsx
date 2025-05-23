@@ -30,17 +30,6 @@ import { useApi } from "../hooks/useAPI";
 import { chatWithBot } from "../services/chatService";
 import { useChats } from "../hooks/useChats";
 import { Message } from "types/chatMessages";
-// interface Message {
-//   id: number;
-//   text: string;
-//   timestamp: string;
-//   senderId: number;
-//   senderName?: string;
-//   senderAvatar?: string;
-//   mediaUrl?: string;
-//   mediaType?: "image" | "document";
-//   fileName?: string;
-// }
 
 const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
   route,
@@ -91,7 +80,10 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
 
   // Read chat on mount
   useEffect(() => {
-    readChat(chatId);
+    const read = async () => {
+      await readChat(chatId);
+    };
+    read();
     setIsInitialLoad(true);
   }, [chatId]);
 
@@ -103,7 +95,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
         setTimeout(() => {
           scrollToEnd(false);
           setIsInitialLoad(false);
-        }, 200);
+        }, 300);
       } else {
         // For new messages, scroll with animation
         scrollToEnd(true);
@@ -113,6 +105,10 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
 
   // Use memorized messages to avoid re-renders
   const messages = useMemo(() => {
+    const read = async () => {
+      await readChat(chatId);
+    };
+    read();
     return hookMessages;
   }, [hookMessages]);
 

@@ -97,6 +97,25 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           onScrollBeginDrag={() => setIsScrolling(true)}
           onScrollEndDrag={() => setIsScrolling(false)}
         >
+          <View style={styles.profileImageContainer}>
+            {profile.avatar ? (
+              <Image
+                source={{ uri: profile.avatar }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <View style={styles.initialsContainer}>
+                <Text style={styles.initials}>
+                  {profile.name
+                    .split(" ")
+                    .map((n: string) => n[0])
+                    .join("")
+                    .substring(0, 2)}
+                </Text>
+              </View>
+            )}
+          </View>
+
           {/* Basic profile info header */}
           <View style={styles.profileHeader}>
             <Text style={styles.profileName}>{profile.name}</Text>
@@ -738,6 +757,32 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  profileImageContainer: {
+    paddingTop: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    resizeMode: "cover",
+  },
+  initialsContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#4B2E83",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  initials: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 
