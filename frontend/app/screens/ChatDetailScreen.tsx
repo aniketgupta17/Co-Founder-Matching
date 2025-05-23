@@ -490,7 +490,7 @@ const ChatDetailScreen: React.FC<ChatStackScreenProps<"Chat">> = ({
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate("MessagesList")}
         >
           <Ionicons name="chevron-back" size={24} color="#4B2E83" />
         </TouchableOpacity>

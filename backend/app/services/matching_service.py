@@ -157,7 +157,19 @@ class MatchingService:
                 score_val = self._weighted_score(subs)
 
                 if score_val >= 0.5:
-                    match_results.append(other_profile)
+                    education = SupabaseService.get_user_education(other_profile["id"])
+                    experience = SupabaseService.get_user_experience(
+                        other_profile["id"]
+                    )
+
+                    full_profile = {
+                        **other_profile,
+                        "education": education,
+                        "experience": experience,
+                    }
+
+                    match_results.append(full_profile)
+
                     # explanation = self._generate_explanation(
                     #     target_user_profile, other_profile, subs, score_val
                     # )

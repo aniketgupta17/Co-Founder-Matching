@@ -1500,6 +1500,80 @@ class SupabaseService:
             return None
 
     @classmethod
+    def get_user_education(cls, user_id: str):
+        try:
+            client = cls.get_client()
+
+            user_education_response = (
+                client.table("users_education")
+                .select("education_id")
+                .eq("user_id", user_id)
+                .execute()
+            )
+
+            if not user_education_response.data:
+                current_app.logger.error(f"No user education returned")
+                return []
+
+            education_ids = [
+                education["id"] for education in user_education_response.data
+            ]
+
+            education_response = (
+                client.table("education_list")
+                .select("*")
+                .in_("id", education_ids)
+                .execute()
+            )
+
+            if not education_response.data:
+                current_app.logger.error(f"No education returned")
+                return []
+
+            return education_response.data
+
+        except Exception as e:
+            current_app.logger.error(f"Failed to send AI chat message: {str(e)}")
+            return []
+
+    @classmethod
+    def get_user_experience(cls, user_id: str):
+        try:
+            client = cls.get_client()
+
+            user_experience_response = (
+                client.table("users_work_experiences")
+                .select("work_id")
+                .eq("user_id", user_id)
+                .execute()
+            )
+
+            if not user_experience_response.data:
+                current_app.logger.error(f"No user experience returned")
+                return []
+
+            experience_ids = [
+                education["id"] for education in user_experience_response.data
+            ]
+
+            experience_response = (
+                client.table("work_experience_list")
+                .select("*")
+                .in_("id", experience_ids)
+                .execute()
+            )
+
+            if not experience_response.data:
+                current_app.logger.error(f"No experience returned")
+                return []
+
+            return experience_response.data
+
+        except Exception as e:
+            current_app.logger.error(f"Failed to send AI chat message: {str(e)}")
+            return []
+
+    @classmethod
     def send_ai_message(cls, message: str, chat_id: int):
         try:
             client = cls.get_client()
