@@ -1,0 +1,544 @@
+{
+    "best_matches": {
+        "1": [
+            {
+                "match_id": 13,
+                "score": 5.5,
+                "explanation": "Shared interest: Robotics. Your goals align perfectly. You're both at the same startup stage. Overall match score: 5.5."
+            },
+            {
+                "match_id": 19,
+                "score": 5.2,
+                "explanation": "Shared interests: SaaS, Robotics. Your goals partially align. There's partial alignment in your startup stages. Overall match score: 5.2."
+            },
+            {
+                "match_id": 3,
+                "score": 4.5,
+                "explanation": "Your goals align perfectly. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Overall match score: 4.5."
+            },
+            {
+                "match_id": 11,
+                "score": 4.45,
+                "explanation": "Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 4.45."
+            },
+            {
+                "match_id": 17,
+                "score": 4.45,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. MechanicalEngineering+CivilEngineering (1.5)). Your goals partially align. There's partial alignment in your startup stages. Overall match score: 4.45."
+            }
+        ],
+        "2": [
+            {
+                "match_id": 13,
+                "score": 6.8,
+                "explanation": "You share 2 skills: Finance, Flutter. Your goals partially align. There's partial alignment in your startup stages. Overall match score: 6.8."
+            },
+            {
+                "match_id": 18,
+                "score": 5.3,
+                "explanation": "Shared interest: RenewableEnergy. Your goals partially align. You're both at the same startup stage. Your collaboration styles add +1.0 synergy. Overall match score: 5.3."
+            },
+            {
+                "match_id": 4,
+                "score": 4.9,
+                "explanation": "Shared interest: RenewableEnergy. Your goals align perfectly. There's partial alignment in your startup stages. Overall match score: 4.9."
+            },
+            {
+                "match_id": 8,
+                "score": 4.6,
+                "explanation": "You share 1 skill: React. Your goals partially align. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Overall match score: 4.6."
+            },
+            {
+                "match_id": 5,
+                "score": 4.5,
+                "explanation": "Your goals align perfectly. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Overall match score: 4.5."
+            }
+        ],
+        "3": [
+            {
+                "match_id": 18,
+                "score": 7.8,
+                "explanation": "You share 1 skill: Automation. Shared interest: RenewableEnergy. Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +1.0 synergy. Overall match score: 7.8."
+            },
+            {
+                "match_id": 11,
+                "score": 7.45,
+                "explanation": "You share 1 skill: Automation. Your goals align perfectly. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 7.45."
+            },
+            {
+                "match_id": 13,
+                "score": 5.0,
+                "explanation": "Your goals align perfectly. You're both at the same startup stage. You share the same location for a +1.0 synergy. Overall match score: 5.0."
+            },
+            {
+                "match_id": 4,
+                "score": 4.9,
+                "explanation": "Shared interest: RenewableEnergy. Your goals partially align. You're both at the same startup stage. Overall match score: 4.9."
+            },
+            {
+                "match_id": 1,
+                "score": 4.5,
+                "explanation": "Your goals align perfectly. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Overall match score: 4.5."
+            }
+        ],
+        "4": [
+            {
+                "match_id": 18,
+                "score": 6.7,
+                "explanation": "You share 1 skill: Node.js. Shared interest: RenewableEnergy. Your goals partially align. There's partial alignment in your startup stages. Your collaboration styles add +1.0 synergy. Overall match score: 6.7."
+            },
+            {
+                "match_id": 17,
+                "score": 6.25,
+                "explanation": "You share 1 skill: DataScience. Complementary skills total 1.3 synergy points (e.g. DataScience+Python (1.3)). Your goals partially align. There's partial alignment in your startup stages. Your collaboration styles add +0.7 synergy. Overall match score: 6.25."
+            },
+            {
+                "match_id": 5,
+                "score": 5.65,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. DataScience+AI (1.5)). Your goals align perfectly. There's partial alignment in your startup stages. Overall match score: 5.65."
+            },
+            {
+                "match_id": 14,
+                "score": 5.2,
+                "explanation": "Complementary skills total 1.3 synergy points (e.g. DataScience+Python (1.3)). Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.2."
+            },
+            {
+                "match_id": 7,
+                "score": 5.0,
+                "explanation": "You share 1 skill: Node.js. Your goals partially align. There's partial alignment in your startup stages. Your collaboration styles add +0.8 synergy. Overall match score: 5.0."
+            }
+        ],
+        "5": [
+            {
+                "match_id": 17,
+                "score": 7.25,
+                "explanation": "Complementary skills total 2.7 synergy points (e.g. AI+Python (1.2), AI+DataScience (1.5)). Shared interest: UrbanPlanning. Your goals partially align. There's partial alignment in your startup stages. Your collaboration styles add +0.7 synergy. Overall match score: 7.25."
+            },
+            {
+                "match_id": 11,
+                "score": 5.95,
+                "explanation": "Shared interest: UrbanPlanning. Your goals partially align. You're both at the same startup stage. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.95."
+            },
+            {
+                "match_id": 19,
+                "score": 5.95,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. AI+DataScience (1.5)). Shared interest: Robotics. Your goals align perfectly. There's partial alignment in your startup stages. Overall match score: 5.95."
+            },
+            {
+                "match_id": 4,
+                "score": 5.65,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. AI+DataScience (1.5)). Your goals align perfectly. There's partial alignment in your startup stages. Overall match score: 5.65."
+            },
+            {
+                "match_id": 12,
+                "score": 5.35,
+                "explanation": "Shared interest: UrbanPlanning. Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.35."
+            }
+        ],
+        "6": [
+            {
+                "match_id": 12,
+                "score": 5.25,
+                "explanation": "You share 1 skill: CAD. Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.25."
+            },
+            {
+                "match_id": 17,
+                "score": 4.7,
+                "explanation": "Your goals align perfectly. You're both at the same startup stage. Your collaboration styles add +0.7 synergy. Overall match score: 4.7."
+            },
+            {
+                "match_id": 15,
+                "score": 4.55,
+                "explanation": "Shared interest: Aerospace. Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 4.55."
+            },
+            {
+                "match_id": 19,
+                "score": 4.3,
+                "explanation": "Shared interest: Robotics. Your goals partially align. You're both at the same startup stage. Overall match score: 4.3."
+            },
+            {
+                "match_id": 7,
+                "score": 4.2,
+                "explanation": "Your goals align perfectly. There's partial alignment in your startup stages. Your collaboration styles add +0.8 synergy. Overall match score: 4.2."
+            }
+        ],
+        "7": [
+            {
+                "match_id": 16,
+                "score": 7.05,
+                "explanation": "You share 1 skill: Sales. Your goals align perfectly. You're both at the same startup stage. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 7.05."
+            },
+            {
+                "match_id": 19,
+                "score": 5.2,
+                "explanation": "You share 1 skill: Sales. Your goals partially align. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Overall match score: 5.2."
+            },
+            {
+                "match_id": 4,
+                "score": 5.0,
+                "explanation": "You share 1 skill: Node.js. Your goals partially align. There's partial alignment in your startup stages. Your collaboration styles add +0.8 synergy. Overall match score: 5.0."
+            },
+            {
+                "match_id": 18,
+                "score": 4.8,
+                "explanation": "You share 1 skill: Node.js. Your goals align perfectly. There's partial alignment in your startup stages. Overall match score: 4.8."
+            },
+            {
+                "match_id": 17,
+                "score": 4.4,
+                "explanation": "Your goals align perfectly. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Overall match score: 4.4."
+            }
+        ],
+        "8": [
+            {
+                "match_id": 16,
+                "score": 6.0,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. Biology+Medicine (1.5)). Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 6.0."
+            },
+            {
+                "match_id": 9,
+                "score": 5.15,
+                "explanation": "Shared interest: GreenTech. Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 5.15."
+            },
+            {
+                "match_id": 2,
+                "score": 4.6,
+                "explanation": "You share 1 skill: React. Your goals partially align. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Overall match score: 4.6."
+            },
+            {
+                "match_id": 10,
+                "score": 3.6,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. Biology+Medicine (1.5)). Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 3.6."
+            },
+            {
+                "match_id": 3,
+                "score": 3.5,
+                "explanation": "Your goals partially align. You're both at the same startup stage. Your collaboration styles add +0.7 synergy. Overall match score: 3.5."
+            }
+        ],
+        "9": [
+            {
+                "match_id": 17,
+                "score": 7.1,
+                "explanation": "Complementary skills total 2.7 synergy points (e.g. AI+Python (1.2), AI+DataScience (1.5)). Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 7.1."
+            },
+            {
+                "match_id": 16,
+                "score": 6.6,
+                "explanation": "You share 1 skill: LabResearch. Your goals partially align. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 6.6."
+            },
+            {
+                "match_id": 8,
+                "score": 5.15,
+                "explanation": "Shared interest: GreenTech. Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 5.15."
+            },
+            {
+                "match_id": 13,
+                "score": 5.15,
+                "explanation": "You share 1 skill: LabResearch. Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 5.15."
+            },
+            {
+                "match_id": 4,
+                "score": 4.8,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. AI+DataScience (1.5)). Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 4.8."
+            }
+        ],
+        "10": [
+            {
+                "match_id": 15,
+                "score": 5.9,
+                "explanation": "You share 1 skill: Chemistry. Your goals partially align. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Overall match score: 5.9."
+            },
+            {
+                "match_id": 14,
+                "score": 5.3,
+                "explanation": "Your goals align perfectly. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.3."
+            },
+            {
+                "match_id": 20,
+                "score": 4.35,
+                "explanation": "Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 4.35."
+            },
+            {
+                "match_id": 12,
+                "score": 4.1,
+                "explanation": "Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 4.1."
+            },
+            {
+                "match_id": 16,
+                "score": 4.1,
+                "explanation": "You share 1 skill: Medicine. Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Overall match score: 4.1."
+            }
+        ],
+        "11": [
+            {
+                "match_id": 3,
+                "score": 7.45,
+                "explanation": "You share 1 skill: Automation. Your goals align perfectly. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 7.45."
+            },
+            {
+                "match_id": 16,
+                "score": 6.0,
+                "explanation": "Shared interest: UrbanPlanning. Your goals partially align. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 6.0."
+            },
+            {
+                "match_id": 5,
+                "score": 5.95,
+                "explanation": "Shared interest: UrbanPlanning. Your goals partially align. You're both at the same startup stage. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.95."
+            },
+            {
+                "match_id": 18,
+                "score": 5.65,
+                "explanation": "You share 1 skill: Automation. Your goals partially align. You're both at the same startup stage. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 5.65."
+            },
+            {
+                "match_id": 13,
+                "score": 5.45,
+                "explanation": "Your goals align perfectly. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.45."
+            }
+        ],
+        "12": [
+            {
+                "match_id": 16,
+                "score": 5.6,
+                "explanation": "Shared interest: UrbanPlanning. Your goals partially align. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.6."
+            },
+            {
+                "match_id": 5,
+                "score": 5.35,
+                "explanation": "Shared interest: UrbanPlanning. Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.35."
+            },
+            {
+                "match_id": 6,
+                "score": 5.25,
+                "explanation": "You share 1 skill: CAD. Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.25."
+            },
+            {
+                "match_id": 15,
+                "score": 4.5,
+                "explanation": "Your goals partially align. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 4.5."
+            },
+            {
+                "match_id": 4,
+                "score": 4.45,
+                "explanation": "Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 4.45."
+            }
+        ],
+        "13": [
+            {
+                "match_id": 2,
+                "score": 6.8,
+                "explanation": "You share 2 skills: Flutter, Finance. Your goals partially align. There's partial alignment in your startup stages. Overall match score: 6.8."
+            },
+            {
+                "match_id": 16,
+                "score": 6.05,
+                "explanation": "You share 1 skill: LabResearch. Your goals partially align. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 6.05."
+            },
+            {
+                "match_id": 1,
+                "score": 5.5,
+                "explanation": "Shared interest: Robotics. Your goals align perfectly. You're both at the same startup stage. Overall match score: 5.5."
+            },
+            {
+                "match_id": 11,
+                "score": 5.45,
+                "explanation": "Your goals align perfectly. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.45."
+            },
+            {
+                "match_id": 9,
+                "score": 5.15,
+                "explanation": "You share 1 skill: LabResearch. Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 5.15."
+            }
+        ],
+        "14": [
+            {
+                "match_id": 17,
+                "score": 6.4,
+                "explanation": "You share 1 skill: Python. Complementary skills total 1.3 synergy points (e.g. Python+DataScience (1.3)). Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 6.4."
+            },
+            {
+                "match_id": 4,
+                "score": 6.25,
+                "explanation": "Complementary skills total 2.0 synergy points (e.g. Python+DataScience (1.3), Python+Node.js (0.7)). Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 6.25."
+            },
+            {
+                "match_id": 15,
+                "score": 5.7,
+                "explanation": "Your goals partially align. You're both at the same startup stage. You share the same location for a +1.0 synergy. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.7."
+            },
+            {
+                "match_id": 19,
+                "score": 5.6,
+                "explanation": "Complementary skills total 1.3 synergy points (e.g. Python+DataScience (1.3)). Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 5.6."
+            },
+            {
+                "match_id": 10,
+                "score": 5.3,
+                "explanation": "Your goals align perfectly. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.3."
+            }
+        ],
+        "15": [
+            {
+                "match_id": 10,
+                "score": 5.9,
+                "explanation": "You share 1 skill: Chemistry. Your goals partially align. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Overall match score: 5.9."
+            },
+            {
+                "match_id": 14,
+                "score": 5.7,
+                "explanation": "Your goals partially align. You're both at the same startup stage. You share the same location for a +1.0 synergy. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 5.7."
+            },
+            {
+                "match_id": 11,
+                "score": 4.8,
+                "explanation": "Shared interest: IoT. Your goals align perfectly. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 4.8."
+            },
+            {
+                "match_id": 6,
+                "score": 4.55,
+                "explanation": "Shared interest: Aerospace. Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 4.55."
+            },
+            {
+                "match_id": 12,
+                "score": 4.5,
+                "explanation": "Your goals partially align. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 4.5."
+            }
+        ],
+        "16": [
+            {
+                "match_id": 7,
+                "score": 7.05,
+                "explanation": "You share 1 skill: Sales. Your goals align perfectly. You're both at the same startup stage. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 7.05."
+            },
+            {
+                "match_id": 9,
+                "score": 6.6,
+                "explanation": "You share 1 skill: LabResearch. Your goals partially align. You're both at the same startup stage. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 6.6."
+            },
+            {
+                "match_id": 13,
+                "score": 6.05,
+                "explanation": "You share 1 skill: LabResearch. Your goals partially align. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 6.05."
+            },
+            {
+                "match_id": 8,
+                "score": 6.0,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. Medicine+Biology (1.5)). Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 6.0."
+            },
+            {
+                "match_id": 11,
+                "score": 6.0,
+                "explanation": "Shared interest: UrbanPlanning. Your goals partially align. There's partial alignment in your startup stages. You share the same location for a +1.0 synergy. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.8 synergy. Overall match score: 6.0."
+            }
+        ],
+        "17": [
+            {
+                "match_id": 19,
+                "score": 8.25,
+                "explanation": "You share 1 skill: DataScience. Complementary skills total 1.3 synergy points (e.g. Python+DataScience (1.3)). Your goals partially align. You're both at the same startup stage. You share the same location for a +1.0 synergy. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Overall match score: 8.25."
+            },
+            {
+                "match_id": 4,
+                "score": 7.3,
+                "explanation": "You share 1 skill: DataScience. Complementary skills total 2.0 synergy points (e.g. Python+DataScience (1.3), Python+Node.js (0.7)). Your goals partially align. There's partial alignment in your startup stages. Your collaboration styles add +0.7 synergy. Overall match score: 7.3."
+            },
+            {
+                "match_id": 5,
+                "score": 7.25,
+                "explanation": "Complementary skills total 2.7 synergy points (e.g. Python+AI (1.2), DataScience+AI (1.5)). Shared interest: UrbanPlanning. Your goals partially align. There's partial alignment in your startup stages. Your collaboration styles add +0.7 synergy. Overall match score: 7.25."
+            },
+            {
+                "match_id": 9,
+                "score": 7.1,
+                "explanation": "Complementary skills total 2.7 synergy points (e.g. Python+AI (1.2), DataScience+AI (1.5)). Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 7.1."
+            },
+            {
+                "match_id": 14,
+                "score": 6.4,
+                "explanation": "You share 1 skill: Python. Complementary skills total 1.3 synergy points (e.g. DataScience+Python (1.3)). Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 6.4."
+            }
+        ],
+        "18": [
+            {
+                "match_id": 3,
+                "score": 7.8,
+                "explanation": "You share 1 skill: Automation. Shared interest: RenewableEnergy. Your goals partially align. There's partial alignment in your startup stages. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Your collaboration styles add +1.0 synergy. Overall match score: 7.8."
+            },
+            {
+                "match_id": 4,
+                "score": 6.7,
+                "explanation": "You share 1 skill: Node.js. Shared interest: RenewableEnergy. Your goals partially align. There's partial alignment in your startup stages. Your collaboration styles add +1.0 synergy. Overall match score: 6.7."
+            },
+            {
+                "match_id": 11,
+                "score": 5.65,
+                "explanation": "You share 1 skill: Automation. Your goals partially align. You're both at the same startup stage. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 5.65."
+            },
+            {
+                "match_id": 2,
+                "score": 5.3,
+                "explanation": "Shared interest: RenewableEnergy. Your goals partially align. You're both at the same startup stage. Your collaboration styles add +1.0 synergy. Overall match score: 5.3."
+            },
+            {
+                "match_id": 7,
+                "score": 4.8,
+                "explanation": "You share 1 skill: Node.js. Your goals align perfectly. There's partial alignment in your startup stages. Overall match score: 4.8."
+            }
+        ],
+        "19": [
+            {
+                "match_id": 17,
+                "score": 8.25,
+                "explanation": "You share 1 skill: DataScience. Complementary skills total 1.3 synergy points (e.g. DataScience+Python (1.3)). Your goals partially align. You're both at the same startup stage. You share the same location for a +1.0 synergy. Availability synergy contributes +1.0 (similar schedules or 'Student - flexible'). Overall match score: 8.25."
+            },
+            {
+                "match_id": 20,
+                "score": 6.5,
+                "explanation": "Shared interest: Marketplace. Your goals align perfectly. You're both at the same startup stage. You share the same location for a +1.0 synergy. Overall match score: 6.5."
+            },
+            {
+                "match_id": 5,
+                "score": 5.95,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. DataScience+AI (1.5)). Shared interest: Robotics. Your goals align perfectly. There's partial alignment in your startup stages. Overall match score: 5.95."
+            },
+            {
+                "match_id": 14,
+                "score": 5.6,
+                "explanation": "Complementary skills total 1.3 synergy points (e.g. DataScience+Python (1.3)). Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Overall match score: 5.6."
+            },
+            {
+                "match_id": 1,
+                "score": 5.2,
+                "explanation": "Shared interests: SaaS, Robotics. Your goals partially align. There's partial alignment in your startup stages. Overall match score: 5.2."
+            }
+        ],
+        "20": [
+            {
+                "match_id": 19,
+                "score": 6.5,
+                "explanation": "Shared interest: Marketplace. Your goals align perfectly. You're both at the same startup stage. You share the same location for a +1.0 synergy. Overall match score: 6.5."
+            },
+            {
+                "match_id": 17,
+                "score": 6.05,
+                "explanation": "Complementary skills total 1.5 synergy points (e.g. MechanicalEngineering+CivilEngineering (1.5)). Your goals partially align. You're both at the same startup stage. You share the same location for a +1.0 synergy. Overall match score: 6.05."
+            },
+            {
+                "match_id": 4,
+                "score": 5.0,
+                "explanation": "Shared interest: RenewableEnergy. Your goals align perfectly. There's partial alignment in your startup stages. Your collaboration styles add +0.7 synergy. Overall match score: 5.0."
+            },
+            {
+                "match_id": 3,
+                "score": 4.4,
+                "explanation": "Shared interest: RenewableEnergy. Your goals partially align. There's partial alignment in your startup stages. Your collaboration styles add +0.7 synergy. Overall match score: 4.4."
+            },
+            {
+                "match_id": 10,
+                "score": 4.35,
+                "explanation": "Your goals align perfectly. There's partial alignment in your startup stages. Availability synergy contributes +0.5 (similar schedules or 'Student - flexible'). Your collaboration styles add +0.7 synergy. Overall match score: 4.35."
+            }
+        ]
+    }
+}
