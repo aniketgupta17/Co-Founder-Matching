@@ -62,12 +62,15 @@ const MatchProfileScreen: React.FC<Props> = ({ route, navigation }) => {
 
     console.log(chat);
 
-    navigation.navigate("Chat", {
-      chatId: chat.id,
-      name: chat.name,
-      avatar: chat.avatar,
-      isGroup: chat.isGroup,
-      isAi: chat.isAi,
+    navigation.navigate("Messages", {
+      screen: "Chat",
+      params: {
+        chatId: chat.id,
+        name: match.name,
+        avatar: match.avatarUrl ?? "",
+        isGroup: false,
+        isAi: false,
+      },
     });
   };
 

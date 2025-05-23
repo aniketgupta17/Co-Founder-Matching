@@ -111,10 +111,23 @@ const MatchScreen: React.FC = () => {
               style={styles.matchCard}
               onPress={() => handleMatchPress(match)}
             >
-              <Image
-                source={{ uri: match.image || "" }}
-                style={styles.matchImage}
-              />
+              {match.image ? (
+                <Image
+                  source={{ uri: match.image || "" }}
+                  style={styles.matchImage}
+                />
+              ) : (
+                <View style={styles.initialsContainer}>
+                  <Text style={styles.initials}>
+                    {match.name
+                      .split(" ")
+                      .map((n: string) => n[0])
+                      .join("")
+                      .substring(0, 2)}
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.matchInfo}>
                 <Text style={styles.matchName}>{match.name}</Text>
                 <Text style={styles.matchRole}>{match.role}</Text>
@@ -182,6 +195,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8F8F8",
+  },
+  initialsContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#4B2E83",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  initials: {
+    color: "white",
+    fontSize: 30,
+    fontWeight: "bold",
   },
   scrollContent: {
     padding: 16,

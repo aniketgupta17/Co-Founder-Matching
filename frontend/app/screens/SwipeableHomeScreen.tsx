@@ -1,78 +1,55 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  TouchableOpacity, 
-  Dimensions, 
-  Animated, 
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  Animated,
   PanResponder,
   ActivityIndicator,
   SafeAreaView,
-  ScrollView
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { MainTabParamList } from '../navigation/TabNavigator';
-import { useMockApi } from '../hooks/useMockApi';
+  ScrollView,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { MainTabParamList } from "../navigation/TabNavigator";
+import { useApi } from "../hooks/useAPI";
+import { fetchRecommendedMatches } from "../services/matchService";
+import { ProfileData } from "../types/matches";
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const SCREEN_HEIGHT = Dimensions.get('window').height;
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const SCREEN_HEIGHT = Dimensions.get("window").height;
 const SWIPE_THRESHOLD = 120;
-
-interface ProfileData {
-  id: number;
-  name: string;
-  age: number;
-  avatar: string;
-  role: string;
-  location: string;
-  lookingForCofounders: boolean;
-  fullTimeStartup: boolean;
-  foundedCompany: boolean;
-  experience: Array<{
-    company: string;
-    role: string;
-    duration: string;
-    logo?: string;
-  }>;
-  education: Array<{
-    institution: string;
-    degree: string;
-    year: string;
-    logo?: string;
-  }>;
-  skills: string[];
-  interests: string[];
-  currentProject?: {
-    title: string;
-    description: string;
-  };
-}
 
 interface ProfileCardProps {
   profile: ProfileData;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
-  onBookmark?: (profileId: number) => void;
+  onBookmark?: (profileId: string) => void;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipeRight, onBookmark }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({
+  profile,
+  onSwipeLeft,
+  onSwipeRight,
+  onBookmark,
+}) => {
   const position = useRef(new Animated.ValueXY()).current;
   const [isScrolling, setIsScrolling] = useState(false);
-  
+
   const rotate = position.x.interpolate({
     inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-    outputRange: ['-10deg', '0deg', '10deg'],
-    extrapolate: 'clamp'
+    outputRange: ["-10deg", "0deg", "10deg"],
+    extrapolate: "clamp",
   });
 
   const cardStyle = {
     transform: [
       { translateX: position.x },
-      { rotate: isScrolling ? '0deg' : rotate }
-    ]
+      { rotate: isScrolling ? "0deg" : rotate },
+    ],
   };
 
   // Function to handle manual like button press
@@ -80,7 +57,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
     Animated.timing(position, {
       toValue: { x: SCREEN_WIDTH + 100, y: 0 },
       duration: 300,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start(() => {
       onSwipeRight();
     });
@@ -91,7 +68,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
     Animated.timing(position, {
       toValue: { x: -SCREEN_WIDTH - 100, y: 0 },
       duration: 300,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start(() => {
       onSwipeLeft();
     });
@@ -107,12 +84,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
   }, [profile.id]);
 
   // Use either avatar or image depending on what's available
-  const profileImage = profile.avatar || 'https://randomuser.me/api/portraits/men/1.jpg';
+  const profileImage =
+    profile.avatar || "https://randomuser.me/api/portraits/men/1.jpg";
 
   return (
     <View style={styles.card}>
       <Animated.View style={[styles.cardContent, cardStyle]}>
-        <ScrollView 
+        <ScrollView
           showsVerticalScrollIndicator={true}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -121,8 +99,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
         >
           {/* Basic profile info header */}
           <View style={styles.profileHeader}>
-            <Text style={styles.profileName}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</Text>
-            <Text style={styles.profileRole}>{profile.role || ''}</Text>
+            <Text style={styles.profileName}>{profile.name}</Text>
+            <Text style={styles.profileRole}>{profile.role || ""}</Text>
             {profile.location && (
               <View style={styles.locationContainer}>
                 <Text style={styles.locationText}>📍 {profile.location}</Text>
@@ -135,19 +113,25 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
             {profile.lookingForCofounders && (
               <View style={styles.statusItem}>
                 <Text style={styles.statusEmoji}>🔍</Text>
-                <Text style={styles.statusText}>Looking for cofounder to join existing idea</Text>
+                <Text style={styles.statusText}>
+                  Looking for cofounder to join existing idea
+                </Text>
               </View>
             )}
             {profile.fullTimeStartup && (
               <View style={styles.statusItem}>
                 <Text style={styles.statusEmoji}>⏱</Text>
-                <Text style={styles.statusText}>Already full-time on a startup</Text>
+                <Text style={styles.statusText}>
+                  Already full-time on a startup
+                </Text>
               </View>
             )}
             {profile.foundedCompany && (
               <View style={styles.statusItem}>
                 <Text style={styles.statusEmoji}>🚀</Text>
-                <Text style={styles.statusText}>Founded/cofounded a company</Text>
+                <Text style={styles.statusText}>
+                  Founded/cofounded a company
+                </Text>
               </View>
             )}
           </View>
@@ -156,15 +140,22 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
           {profile.experience && profile.experience.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Experiences</Text>
-              
+
               {profile.experience.map((exp, index) => (
                 <View key={index} style={styles.experienceItem}>
                   <View style={styles.companyLogoContainer}>
                     {exp.logo ? (
-                      <Image source={{ uri: exp.logo }} style={styles.companyLogo} />
+                      <Image
+                        source={{ uri: exp.logo }}
+                        style={styles.companyLogo}
+                      />
                     ) : (
-                      <View style={[styles.companyLogo, styles.placeholderLogo]}>
-                        <Text style={styles.placeholderText}>{exp.company.charAt(0).toLowerCase()}</Text>
+                      <View
+                        style={[styles.companyLogo, styles.placeholderLogo]}
+                      >
+                        <Text style={styles.placeholderText}>
+                          {exp.company.charAt(0).toLowerCase()}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -175,7 +166,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
                   </View>
                 </View>
               ))}
-              
+
               {profile.experience.length > 3 && (
                 <TouchableOpacity style={styles.seeAllButton}>
                   <Text style={styles.seeAllText}>See all experiences</Text>
@@ -238,11 +229,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
           {profile.currentProject && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Current Project</Text>
-              <Text style={styles.projectTitle}>{profile.currentProject.title}</Text>
-              <Text style={styles.projectDescription}>{profile.currentProject.description}</Text>
+              <Text style={styles.projectTitle}>
+                {profile.currentProject.title}
+              </Text>
+              <Text style={styles.projectDescription}>
+                {profile.currentProject.description}
+              </Text>
             </View>
           )}
-          
+
           {/* Add extra padding at bottom to ensure content is visible above buttons */}
           <View style={{ height: 120 }} />
         </ScrollView>
@@ -253,7 +248,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile, onSwipeLeft, onSwipe
         <TouchableOpacity style={styles.rejectButton} onPress={handleReject}>
           <Text style={styles.rejectButtonText}>✕</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.likeButton} onPress={handleLike}>
           <Text style={styles.likeButtonText}>✓</Text>
         </TouchableOpacity>
@@ -267,20 +262,20 @@ const SwipeableCard: React.FC<ProfileCardProps> = (props) => {
   const { profile, onSwipeLeft, onSwipeRight } = props;
   const position = useRef(new Animated.ValueXY()).current;
   const [isScrolling, setIsScrolling] = useState(false);
-  
+
   // Create interpolated values for rotation and opacity
   const rotate = position.x.interpolate({
     inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-    outputRange: ['-10deg', '0deg', '10deg'],
-    extrapolate: 'clamp'
+    outputRange: ["-10deg", "0deg", "10deg"],
+    extrapolate: "clamp",
   });
-  
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !isScrolling,
       onMoveShouldSetPanResponder: (_, gestureState) => {
         const { dx, dy } = gestureState;
-        return !isScrolling && (Math.abs(dx) > Math.abs(dy) * 2);
+        return !isScrolling && Math.abs(dx) > Math.abs(dy) * 2;
       },
       onPanResponderMove: (_, gestureState) => {
         position.setValue({ x: gestureState.dx, y: 0 });
@@ -290,7 +285,7 @@ const SwipeableCard: React.FC<ProfileCardProps> = (props) => {
           // Swiped right - like
           Animated.spring(position, {
             toValue: { x: SCREEN_WIDTH + 100, y: 0 },
-            useNativeDriver: true
+            useNativeDriver: true,
           }).start(() => {
             onSwipeRight();
           });
@@ -298,7 +293,7 @@ const SwipeableCard: React.FC<ProfileCardProps> = (props) => {
           // Swiped left - dislike
           Animated.spring(position, {
             toValue: { x: -SCREEN_WIDTH - 100, y: 0 },
-            useNativeDriver: true
+            useNativeDriver: true,
           }).start(() => {
             onSwipeLeft();
           });
@@ -307,10 +302,10 @@ const SwipeableCard: React.FC<ProfileCardProps> = (props) => {
           Animated.spring(position, {
             toValue: { x: 0, y: 0 },
             friction: 4,
-            useNativeDriver: true
+            useNativeDriver: true,
           }).start();
         }
-      }
+      },
     })
   ).current;
 
@@ -321,15 +316,18 @@ const SwipeableCard: React.FC<ProfileCardProps> = (props) => {
 
   return (
     <Animated.View
-      style={[styles.card, { 
-        transform: [
-          { translateX: position.x },
-          { rotate: isScrolling ? '0deg' : rotate }
-        ]
-      }]}
+      style={[
+        styles.card,
+        {
+          transform: [
+            { translateX: position.x },
+            { rotate: isScrolling ? "0deg" : rotate },
+          ],
+        },
+      ]}
       {...panResponder.panHandlers}
     >
-      <ProfileCard 
+      <ProfileCard
         profile={profile}
         onSwipeLeft={onSwipeLeft}
         onSwipeRight={onSwipeRight}
@@ -340,39 +338,47 @@ const SwipeableCard: React.FC<ProfileCardProps> = (props) => {
 };
 
 const SwipeableHomeScreen: React.FC = () => {
-  const { data, loading: apiLoading, error: apiError } = useMockApi('discoverProfiles');
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [bookmarkedProfiles, setBookmarkedProfiles] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
-  
-  // Update profiles when API data is loaded
+  const { submit: fetchRecommended } = useApi(fetchRecommendedMatches);
+  const [errors, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    if (data && data.profiles) {
-      setProfiles(data.profiles);
-    }
-  }, [data]);
+    const fetch = async () => {
+      const profileData = await fetchRecommended();
+      if (!profileData) {
+        console.error("Failed to fetch profiles");
+        return;
+      }
+      setProfiles(profileData);
+    };
+    fetch();
+  }, [fetchRecommended]);
 
   const handleSwipeLeft = () => {
     // Handle reject action
-    console.log('Rejected profile:', profiles[currentIndex]?.name);
-    setCurrentIndex(prevIndex => prevIndex + 1);
+    console.log("Rejected profile:", profiles[currentIndex]?.name);
+    setCurrentIndex((prevIndex) => prevIndex + 1);
   };
 
   const handleSwipeRight = () => {
     // Handle like action
-    console.log('Liked profile:', profiles[currentIndex]?.name);
-    setCurrentIndex(prevIndex => prevIndex + 1);
+    console.log("Liked profile:", profiles[currentIndex]?.name);
+    setCurrentIndex((prevIndex) => prevIndex + 1);
   };
 
   const handleBookmark = (profileId: number) => {
     if (bookmarkedProfiles.includes(profileId)) {
-      setBookmarkedProfiles(bookmarkedProfiles.filter(id => id !== profileId));
-      console.log('Unbookmarked profile:', profileId);
+      setBookmarkedProfiles(
+        bookmarkedProfiles.filter((id) => id !== profileId)
+      );
+      console.log("Unbookmarked profile:", profileId);
     } else {
       setBookmarkedProfiles([...bookmarkedProfiles, profileId]);
-      console.log('Bookmarked profile:', profileId);
+      console.log("Bookmarked profile:", profileId);
     }
   };
 
@@ -381,7 +387,7 @@ const SwipeableHomeScreen: React.FC = () => {
     // In a real app, you would fetch new profiles here
   };
 
-  if (apiLoading || loading) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4B2E83" />
@@ -389,13 +395,13 @@ const SwipeableHomeScreen: React.FC = () => {
     );
   }
 
-  if (apiError) {
+  if (errors) {
     return (
       <View style={styles.emptyStateContainer}>
-        <Text style={styles.emptyStateText}>Error loading profiles: {apiError}</Text>
-        <TouchableOpacity 
+        <Text style={styles.emptyStateText}>Error loading profiles</Text>
+        <TouchableOpacity
           style={styles.resetButton}
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigation.navigate("Home")}
         >
           <Text style={styles.resetButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -415,10 +421,7 @@ const SwipeableHomeScreen: React.FC = () => {
     return (
       <View style={styles.emptyStateContainer}>
         <Text style={styles.emptyStateText}>No more profiles</Text>
-        <TouchableOpacity 
-          style={styles.resetButton}
-          onPress={resetProfiles}
-        >
+        <TouchableOpacity style={styles.resetButton} onPress={resetProfiles}>
           <Text style={styles.resetButtonText}>Start Over</Text>
         </TouchableOpacity>
       </View>
@@ -430,7 +433,7 @@ const SwipeableHomeScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Discover</Text>
       </View>
-      
+
       <View style={styles.cardContainer}>
         {/* Only render the current profile card */}
         {currentIndex < profiles.length && (
@@ -448,63 +451,63 @@ const SwipeableHomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: "#F8F8F8",
   },
   header: {
     padding: 16,
     paddingBottom: 8,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: "#F8F8F8",
     zIndex: 10,
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#4B2E83',
+    fontWeight: "bold",
+    color: "#4B2E83",
     marginBottom: 16,
   },
   cardContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 10,
   },
   card: {
     width: SCREEN_WIDTH - 20,
-    height: '95%',
+    height: "95%",
     borderRadius: 20,
-    backgroundColor: 'white',
-    shadowColor: '#000',
+    backgroundColor: "white",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
   cardContent: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   scrollView: {
     flex: 1,
-    width: '100%',
+    width: "100%",
   },
   scrollContent: {
     flexGrow: 1,
   },
   profileHeader: {
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   profileName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 4,
   },
   profileRole: {
     fontSize: 18,
-    color: '#666',
+    color: "#666",
     marginBottom: 8,
   },
   locationContainer: {
@@ -512,15 +515,15 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   statusContainer: {
     padding: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   statusItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   statusEmoji: {
@@ -529,21 +532,21 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   section: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: "#E5E5E5",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4B2E83',
+    fontWeight: "bold",
+    color: "#4B2E83",
     marginBottom: 12,
   },
   experienceItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 12,
   },
   companyLogoContainer: {
@@ -553,48 +556,48 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#F0F0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F0F0F0",
+    justifyContent: "center",
+    alignItems: "center",
   },
   placeholderLogo: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   placeholderText: {
     fontSize: 16,
-    color: '#999',
+    color: "#999",
   },
   experienceDetails: {
     flex: 1,
   },
   roleText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   companyText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   durationText: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
   seeAllButton: {
-    alignSelf: 'center',
+    alignSelf: "center",
     marginTop: 8,
   },
   seeAllText: {
-    color: '#4B2E83',
+    color: "#4B2E83",
     fontSize: 14,
   },
   interestsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   interestTag: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: "#F0F0F0",
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -603,11 +606,11 @@ const styles = StyleSheet.create({
   },
   interestText: {
     fontSize: 12,
-    color: '#4B2E83',
+    color: "#4B2E83",
   },
   educationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   eduLogo: {
@@ -615,27 +618,27 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 6,
     marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   eduDetails: {
     flex: 1,
   },
   eduName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   eduDegree: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   skillsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   skillTag: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: "#F0F0F0",
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -644,97 +647,97 @@ const styles = StyleSheet.create({
   },
   skillText: {
     fontSize: 12,
-    color: '#4B2E83',
+    color: "#4B2E83",
   },
   projectTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 4,
   },
   projectDescription: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     lineHeight: 20,
   },
   actionButtons: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 100,
   },
   rejectButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#FF6B6B',
+    borderColor: "#FF6B6B",
   },
   rejectButtonText: {
     fontSize: 24,
-    color: '#FF6B6B',
+    color: "#FF6B6B",
   },
   likeButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#4CD964',
+    borderColor: "#4CD964",
   },
   likeButtonText: {
     fontSize: 24,
-    color: '#4CD964',
+    color: "#4CD964",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
   },
   emptyStateContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
     padding: 20,
   },
   emptyStateText: {
     fontSize: 18,
-    color: '#666',
+    color: "#666",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   resetButton: {
-    backgroundColor: '#4B2E83',
+    backgroundColor: "#4B2E83",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 30,
   },
   resetButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 
