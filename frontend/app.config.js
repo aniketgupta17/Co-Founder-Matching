@@ -43,8 +43,8 @@ export default {
     extra: {
       // Add environment variables here with fallback values for development
       supabaseUrl: process.env.SUPABASE_API_URL || "https://bivbvzynoxlcfbvdkfol.supabase.co",
-      supabaseKey: process.env.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mockkey",
-      useMockAuth: true, // Enable mock authentication for development
+      supabaseKey: process.env.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpdmJ2enlub3hsY2ZidmRrZm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzMTkyOTIsImV4cCI6MjA1Njg5NTI5Mn0.uQlMZADFk90joJ1Hui4WdNGPkjDcYCCOIn9hqfrVXCI",
+      useMockAuth: false, // Disable mock authentication to use real Supabase auth
       eas: appJson.extra?.eas || {
         projectId: "your-project-id" // Replace with your EAS project ID if using EAS Build
       }

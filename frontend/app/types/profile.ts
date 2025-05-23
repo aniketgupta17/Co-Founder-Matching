@@ -1,6 +1,9 @@
-import { Database, Constants } from "./supabase";
+import { Database, Constants, Json } from "./supabase";
 
-export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"] & {
+  experience?: Json;
+  education?: Json;
+};
 export type RawProfileRowUpdate =
   Database["public"]["Tables"]["profiles"]["Update"];
 
@@ -15,6 +18,16 @@ export type ProfileRowUpdate = Omit<
   skills: string[];
   seeking_skills: string[];
   interests: string[];
+  education?: Array<{
+    institution: string;
+    degree: string;
+    year: string;
+  }>;
+  experience?: Array<{
+    company: string;
+    role: string;
+    duration: string;
+  }>;
 };
 
 export const fallbackSkills = [
@@ -84,9 +97,9 @@ export const fallbackInterests = [
 export interface Profile {
   id: string;
   name: string | null;
-  role: string;
+  role: string | null;
   image: string | null;
-  bio: string;
+  bio: string | null;
   skills: string[];
   interests: string[];
   experience: Array<{
@@ -101,16 +114,38 @@ export interface Profile {
   }>;
 }
 
+/**
+ * Safely parse a JSON field from the database
+ */
+function safeJsonParse(json: Json | null | undefined, defaultValue: any[] = []): any[] {
+  if (!json) return defaultValue;
+  
+  if (Array.isArray(json)) {
+    return json;
+  }
+  
+  try {
+    if (typeof json === 'string') {
+      const parsed = JSON.parse(json);
+      return Array.isArray(parsed) ? parsed : defaultValue;
+    }
+    return defaultValue;
+  } catch (e) {
+    console.error('Error parsing JSON:', e);
+    return defaultValue;
+  }
+}
+
 export const profileRowToProfile = (profileRow: ProfileRow): Profile => {
   return {
     id: profileRow.id,
-    name: profileRow.name,
-    role: "Entrepreneur",
+    name: profileRow.name || 'Anonymous User',
+    role: profileRow.role || 'Entrepreneur',
     image: profileRow.avatar_url,
-    bio: profileRow.bio || "Bio",
-    skills: (profileRow.skills as string[]) || ["Machine Learning", "Business"],
-    interests: (profileRow.skills as string[]) || ["AI"],
-    experience: [],
-    education: [],
+    bio: profileRow.bio || 'No bio provided',
+    skills: safeJsonParse(profileRow.skills, []),
+    interests: safeJsonParse(profileRow.interests, []),
+    experience: safeJsonParse(profileRow.experience, []),
+    education: safeJsonParse(profileRow.education, [])
   };
 };

@@ -62,9 +62,9 @@ function AppContent() {
     <SafeAreaProvider>
       <StatusBar style="auto" />
       <Suspense fallback={<LoadingScreen />}>
-        <ProfileProvider supabase={supabase}>
-          <ChatProvider supabase={supabase}>
-            <EventProvider supabase={supabase}>
+        <ProfileProvider>
+          <ChatProvider>
+            <EventProvider>
               <RootNavigator />
             </EventProvider>
           </ChatProvider>

@@ -88,7 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log("Mock sign in with:", credentials.email);
       // Create a mock session when user signs in
       const mockUser = {
-        id: "mock-user-id",
+        id: "d9fc8430-e363-4f9b-a26f-31928e0e6bb9",
         email: credentials.email,
         app_metadata: {},
         user_metadata: {},
@@ -131,7 +131,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log("Mock sign up with:", credentials.email);
       // Create a mock session when user signs up
       const mockUser = {
-        id: "mock-user-id",
+        id: "d9fc8430-e363-4f9b-a26f-31928e0e6bb9",
         email: credentials.email,
         app_metadata: {},
         user_metadata: {},

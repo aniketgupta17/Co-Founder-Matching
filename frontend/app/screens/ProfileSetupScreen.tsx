@@ -26,6 +26,8 @@ type ProfileSetupStep =
   | "signup"
   | "profile"
   | "skills"
+  | "education"
+  | "experience"
   | "coFounderPreferences";
 
 export default function ProfileSetupScreen() {
@@ -107,6 +109,19 @@ export default function ProfileSetupScreen() {
     interests: [],
   });
 
+  // Add initial state for education and experience
+  const [educationForm, setEducationForm] = useState({
+    institution: '',
+    degree: '',
+    year: '',
+  });
+
+  const [experienceForm, setExperienceForm] = useState({
+    company: '',
+    role: '',
+    duration: '',
+  });
+
   // Function to check password match
   const passwordsMatch = () => {
     return credentials.password === confirmPassword;
@@ -125,7 +140,13 @@ export default function ProfileSetupScreen() {
       case "profile":
         return profileFormData.name !== "" && profileFormData.bio !== "";
       case "skills":
-        return !!profileFormData.skills;
+        return profileFormData.skills && profileFormData.skills.length > 0;
+      case "education":
+        return educationForm.institution !== "" && educationForm.degree !== "" || 
+               (profileFormData.education && profileFormData.education.length > 0);
+      case "experience":
+        return experienceForm.company !== "" && experienceForm.role !== "" || 
+               (profileFormData.experience && profileFormData.experience.length > 0);
       case "coFounderPreferences":
         return true; // This can be optional
       default:
@@ -182,21 +203,33 @@ export default function ProfileSetupScreen() {
     setIsLoading(true);
 
     try {
-      await signUp({
+      // Try to sign up with provided credentials
+      const signUpResult = await signUp({
         email: credentials.email,
         password: credentials.password,
       });
 
-      console.log("User in component:", user);
-
-      // Get user ID from session
+      // If we have a user from the session, use their ID
       if (user) {
-        console.log(session);
+        console.log("User authenticated with ID:", user.id);
         updateProfileData("id", user.id);
+        
+        // Also update the email field to ensure consistency
+        updateProfileData("email", user.email);
       } else {
-        // For development, we'll use a mock ID
-        console.log("Using mock session for frontend development");
-        updateProfileData("id", "00000000-0000-0000-0000-000000000000");
+        console.log("User authenticated successfully but no user ID available yet");
+        console.log("Will retry fetching the user during profile creation");
+        
+        // For development purposes, we'll check again before creating the profile
+        const { data: userData } = await supabase.auth.getSession();
+        
+        if (userData && userData.session && userData.session.user) {
+          console.log("Retrieved user ID from session:", userData.session.user.id);
+          updateProfileData("id", userData.session.user.id);
+          updateProfileData("email", userData.session.user.email);
+        } else {
+          throw new Error("Could not authenticate user");
+        }
       }
 
       setIsLoading(false);
@@ -215,7 +248,7 @@ export default function ProfileSetupScreen() {
           [{ text: "OK", onPress: () => {} }]
         );
 
-        // Set a mock user ID
+        // Set a mock user ID - DO NOT USE IN PRODUCTION
         updateProfileData(
           "id",
           "00000000-0000-0000-0000-000000000000"
@@ -257,7 +290,21 @@ export default function ProfileSetupScreen() {
       console.log("Moving from profile to skills step");
       setCurrentStep("skills");
     } else if (currentStep === "skills") {
-      console.log("Moving from skills to preferences step");
+      console.log("Moving from skills to education step");
+      setCurrentStep("education");
+    } else if (currentStep === "education") {
+      // Add the education to the profile form data
+      if (educationForm.institution && educationForm.degree) {
+        updateProfileData("education", [...profileFormData.education || [], educationForm]);
+      }
+      console.log("Moving from education to experience step");
+      setCurrentStep("experience");
+    } else if (currentStep === "experience") {
+      // Add the experience to the profile form data
+      if (experienceForm.company && experienceForm.role) {
+        updateProfileData("experience", [...profileFormData.experience || [], experienceForm]);
+      }
+      console.log("Moving from experience to preferences step");
       setCurrentStep("coFounderPreferences");
     } else {
       // Final step - save profile and proceed to main app
@@ -327,8 +374,12 @@ export default function ProfileSetupScreen() {
       setCurrentStep("signup");
     } else if (currentStep === "skills") {
       setCurrentStep("profile");
-    } else if (currentStep === "coFounderPreferences") {
+    } else if (currentStep === "education") {
       setCurrentStep("skills");
+    } else if (currentStep === "experience") {
+      setCurrentStep("education");
+    } else if (currentStep === "coFounderPreferences") {
+      setCurrentStep("experience");
     }
   };
 
@@ -581,6 +632,145 @@ export default function ProfileSetupScreen() {
     </View>
   );
 
+  // Add renderEducation function to create education form
+  const renderEducation = () => (
+    <View style={styles.formContainer}>
+      <Text style={styles.sectionTitle}>Education</Text>
+      <Text style={styles.sectionSubtitle}>Add your educational background</Text>
+
+      <View style={styles.inputContainer}>
+        <Ionicons
+          name="school-outline"
+          size={20}
+          color="#666"
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Institution"
+          placeholderTextColor="#999"
+          value={educationForm.institution}
+          onChangeText={(text) => setEducationForm({...educationForm, institution: text})}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Ionicons
+          name="document-text-outline"
+          size={20}
+          color="#666"
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Degree/Certificate"
+          placeholderTextColor="#999"
+          value={educationForm.degree}
+          onChangeText={(text) => setEducationForm({...educationForm, degree: text})}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Ionicons
+          name="calendar-outline"
+          size={20}
+          color="#666"
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Year (e.g., 2022)"
+          placeholderTextColor="#999"
+          keyboardType="number-pad"
+          value={educationForm.year}
+          onChangeText={(text) => setEducationForm({...educationForm, year: text})}
+        />
+      </View>
+
+      {profileFormData.education && profileFormData.education.length > 0 && (
+        <View style={styles.addedItemsContainer}>
+          <Text style={styles.addedItemsTitle}>Added Education:</Text>
+          {profileFormData.education.map((edu, index) => (
+            <View key={index} style={styles.addedItem}>
+              <Text style={styles.addedItemInstitution}>{edu.institution}</Text>
+              <Text style={styles.addedItemDegree}>{edu.degree}</Text>
+              <Text style={styles.addedItemYear}>{edu.year}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
+  // Add renderExperience function to create experience form
+  const renderExperience = () => (
+    <View style={styles.formContainer}>
+      <Text style={styles.sectionTitle}>Work Experience</Text>
+      <Text style={styles.sectionSubtitle}>Add your professional experience</Text>
+
+      <View style={styles.inputContainer}>
+        <Ionicons
+          name="business-outline"
+          size={20}
+          color="#666"
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Company"
+          placeholderTextColor="#999"
+          value={experienceForm.company}
+          onChangeText={(text) => setExperienceForm({...experienceForm, company: text})}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Ionicons
+          name="briefcase-outline"
+          size={20}
+          color="#666"
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Role/Position"
+          placeholderTextColor="#999"
+          value={experienceForm.role}
+          onChangeText={(text) => setExperienceForm({...experienceForm, role: text})}
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Ionicons
+          name="time-outline"
+          size={20}
+          color="#666"
+          style={styles.inputIcon}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Duration (e.g., 2020-2022)"
+          placeholderTextColor="#999"
+          value={experienceForm.duration}
+          onChangeText={(text) => setExperienceForm({...experienceForm, duration: text})}
+        />
+      </View>
+
+      {profileFormData.experience && profileFormData.experience.length > 0 && (
+        <View style={styles.addedItemsContainer}>
+          <Text style={styles.addedItemsTitle}>Added Experience:</Text>
+          {profileFormData.experience.map((exp, index) => (
+            <View key={index} style={styles.addedItem}>
+              <Text style={styles.addedItemInstitution}>{exp.company}</Text>
+              <Text style={styles.addedItemDegree}>{exp.role}</Text>
+              <Text style={styles.addedItemYear}>{exp.duration}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
   // Get step title
   const getStepTitle = () => {
     switch (currentStep) {
@@ -590,6 +780,10 @@ export default function ProfileSetupScreen() {
         return "Your Profile";
       case "skills":
         return "Your Skills";
+      case "education":
+        return "Education";
+      case "experience":
+        return "Experience";
       case "coFounderPreferences":
         return "Co-Founder Preferences";
     }
@@ -623,6 +817,8 @@ export default function ProfileSetupScreen() {
                   ? styles.activeStep
                   : currentStep === "profile" ||
                     currentStep === "skills" ||
+                    currentStep === "education" ||
+                    currentStep === "experience" ||
                     currentStep === "coFounderPreferences"
                   ? styles.completedStep
                   : styles.inactiveStep,
@@ -635,6 +831,8 @@ export default function ProfileSetupScreen() {
                 currentStep === "profile"
                   ? styles.activeStep
                   : currentStep === "skills" ||
+                    currentStep === "education" ||
+                    currentStep === "experience" ||
                     currentStep === "coFounderPreferences"
                   ? styles.completedStep
                   : styles.inactiveStep,
@@ -645,6 +843,31 @@ export default function ProfileSetupScreen() {
               style={[
                 styles.progressStep,
                 currentStep === "skills"
+                  ? styles.activeStep
+                  : currentStep === "education" ||
+                    currentStep === "experience" ||
+                    currentStep === "coFounderPreferences"
+                  ? styles.completedStep
+                  : styles.inactiveStep,
+              ]}
+            />
+            <View style={styles.progressLine} />
+            <View
+              style={[
+                styles.progressStep,
+                currentStep === "education"
+                  ? styles.activeStep
+                  : currentStep === "experience" ||
+                    currentStep === "coFounderPreferences"
+                  ? styles.completedStep
+                  : styles.inactiveStep,
+              ]}
+            />
+            <View style={styles.progressLine} />
+            <View
+              style={[
+                styles.progressStep,
+                currentStep === "experience"
                   ? styles.activeStep
                   : currentStep === "coFounderPreferences"
                   ? styles.completedStep
@@ -666,6 +889,8 @@ export default function ProfileSetupScreen() {
           {currentStep === "signup" && renderSignUp()}
           {currentStep === "profile" && renderProfile()}
           {currentStep === "skills" && renderSkills()}
+          {currentStep === "education" && renderEducation()}
+          {currentStep === "experience" && renderExperience()}
           {currentStep === "coFounderPreferences" && renderPreferences()}
 
           {/* Navigation buttons */}
@@ -886,5 +1111,40 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  addedItemsContainer: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    padding: 16,
+    marginTop: 16,
+  },
+  addedItemsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4B2E83',
+    marginBottom: 12,
+  },
+  addedItem: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: '#4B2E83',
+  },
+  addedItemInstitution: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  addedItemDegree: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  addedItemYear: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 2,
   },
 });

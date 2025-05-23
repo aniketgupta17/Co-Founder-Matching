@@ -6,7 +6,8 @@ import {
   useState,
 } from "react";
 import { Event, EventRow, eventRowToEvent } from "../types/events";
-import { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { useSupabase } from "./supabase/useSupabase";
 
 interface EventContextType {
   events: Event[];
@@ -28,13 +29,12 @@ export const useEventContext = () => {
 
 interface EventProviderProps {
   children: React.ReactNode;
-  supabase: SupabaseClient;
 }
 
 export const EventProvider: React.FC<EventProviderProps> = ({
-  children,
-  supabase,
+  children
 }) => {
+  const { supabase } = useSupabase();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<Event[]>([]);

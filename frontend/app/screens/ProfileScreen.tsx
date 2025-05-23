@@ -10,36 +10,12 @@ import {
   SafeAreaView
 } from 'react-native';
 import { ProfileStackScreenProps } from '../navigation/TabNavigator';
-import { useMockApi } from '../hooks/useMockApi';
+import { useProfile } from '../hooks/useProfile';
 import { Ionicons } from '@expo/vector-icons';
-
-interface Profile {
-  id: number;
-  name: string;
-  role: string;
-  image: string;
-  bio: string;
-  skills: string[];
-  interests: string[];
-  experience: Array<{
-    company: string;
-    role: string;
-    duration: string;
-  }>;
-  education: Array<{
-    institution: string;
-    degree: string;
-    year: string;
-  }>;
-}
-
-interface ProfileData {
-  message: string;
-  profile: Profile;
-}
+import { Profile, profileRowToProfile } from '../types/profile';
 
 const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigation }) => {
-  const { data, loading, error } = useMockApi('profile') as { data: ProfileData | null; loading: boolean; error: string | null };
+  const { profile, loading, error, refreshProfile } = useProfile();
   const [imageLoading, setImageLoading] = useState(false);
 
   const handleSettingsPress = () => {
@@ -60,7 +36,7 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={() => navigation.replace('Profile')}
+          onPress={refreshProfile}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -68,13 +44,13 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
     );
   }
 
-  if (!data || !data.profile) {
+  if (!profile) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Profile data not available</Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={() => navigation.replace('Profile')}
+          onPress={refreshProfile}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -82,7 +58,7 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
     );
   }
 
-  const { profile } = data;
+  const userProfile = profileRowToProfile(profile);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -93,7 +69,7 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
           <View style={styles.headerButtons}>
             <TouchableOpacity 
               style={styles.editButton}
-              onPress={() => navigation.navigate('EditProfile', { profile: data.profile })}
+              onPress={() => navigation.navigate('EditProfile', { profile: userProfile })}
             >
               <Text style={styles.editButtonText}>Edit</Text>
             </TouchableOpacity>
@@ -111,7 +87,7 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
         <View style={styles.profileInfo}>
           <View style={styles.profileImageContainer}>
             <Image 
-              source={{ uri: profile.image || 'https://randomuser.me/api/portraits/men/75.jpg' }} 
+              source={{ uri: userProfile.image || 'https://randomuser.me/api/portraits/men/75.jpg' }} 
               style={styles.profileImage}
               onLoadStart={() => setImageLoading(true)}
               onLoadEnd={() => setImageLoading(false)}
@@ -123,22 +99,22 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
             )}
           </View>
           <View style={styles.profileDetails}>
-            <Text style={styles.name}>{profile.name}</Text>
-            <Text style={styles.role}>{profile.role}</Text>
+            <Text style={styles.name}>{userProfile.name}</Text>
+            <Text style={styles.role}>{userProfile.role}</Text>
           </View>
         </View>
 
         {/* Bio */}
         <View style={styles.section}>
-          <Text style={styles.bioText}>{profile.bio}</Text>
+          <Text style={styles.bioText}>{userProfile.bio}</Text>
         </View>
 
         {/* Skills */}
-        {profile.skills && profile.skills.length > 0 && (
+        {userProfile.skills && userProfile.skills.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Skills</Text>
             <View style={styles.skillsContainer}>
-              {profile.skills.map((skill, index) => (
+              {userProfile.skills.map((skill, index) => (
                 <View key={index} style={styles.skillTag}>
                   <Text style={styles.skillText}>{skill}</Text>
                 </View>
@@ -148,11 +124,11 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
         )}
 
         {/* Interests */}
-        {profile.interests && profile.interests.length > 0 && (
+        {userProfile.interests && userProfile.interests.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Interests</Text>
             <View style={styles.interestsContainer}>
-              {profile.interests.map((interest, index) => (
+              {userProfile.interests.map((interest, index) => (
                 <View key={index} style={styles.interestTag}>
                   <Text style={styles.interestText}>{interest}</Text>
                 </View>
@@ -162,10 +138,10 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
         )}
 
         {/* Experience */}
-        {profile.experience && profile.experience.length > 0 && (
+        {userProfile.experience && userProfile.experience.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Experience</Text>
-            {profile.experience.map((exp, index) => (
+            {userProfile.experience.map((exp, index) => (
               <View key={index} style={styles.experienceItem}>
                 <Text style={styles.companyName}>{exp.company}</Text>
                 <Text style={styles.jobTitle}>{exp.role}</Text>
@@ -176,10 +152,10 @@ const ProfileScreen: React.FC<ProfileStackScreenProps<'Profile'>> = ({ navigatio
         )}
 
         {/* Education */}
-        {profile.education && profile.education.length > 0 && (
+        {userProfile.education && userProfile.education.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Education</Text>
-            {profile.education.map((edu, index) => (
+            {userProfile.education.map((edu, index) => (
               <View key={index} style={styles.educationItem}>
                 <Text style={styles.institutionName}>{edu.institution}</Text>
                 <Text style={styles.degreeName}>{edu.degree}</Text>

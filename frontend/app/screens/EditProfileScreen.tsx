@@ -16,22 +16,43 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ProfileStackScreenProps } from '../navigation/TabNavigator';
 import * as ImagePicker from 'expo-image-picker';
+import { useProfile } from '../hooks/useProfile';
+import { useAuth } from '../hooks/supabase/useAuth';
+import { updateProfile } from '../services/profileService';
+import { Profile } from '../types/profile';
 
 const EditProfileScreen: React.FC<ProfileStackScreenProps<'EditProfile'>> = ({ route, navigation }) => {
-  const { profile } = route.params;
+  const { profile: uiProfile } = route.params;
+  const { refreshProfile } = useProfile();
+  const { user } = useAuth();
   
   const [formData, setFormData] = useState({
-    name: profile.name || '',
-    role: profile.role || '',
-    bio: profile.bio || '',
-    skills: profile.skills || [],
-    interests: profile.interests || [],
-    image: profile.image || '',
+    name: uiProfile.name || '',
+    role: uiProfile.role || '',
+    bio: uiProfile.bio || '',
+    skills: uiProfile.skills || [],
+    interests: uiProfile.interests || [],
+    image: uiProfile.image || '',
+    experience: uiProfile.experience || [],
+    education: uiProfile.education || [],
   });
 
   const [newSkill, setNewSkill] = useState('');
   const [newInterest, setNewInterest] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // New state for education and experience form inputs
+  const [newEducation, setNewEducation] = useState({
+    institution: '',
+    degree: '',
+    year: '',
+  });
+  
+  const [newExperience, setNewExperience] = useState({
+    company: '',
+    role: '',
+    duration: '',
+  });
 
   const handleChange = (field: string, value: string) => {
     setFormData({
@@ -73,6 +94,56 @@ const EditProfileScreen: React.FC<ProfileStackScreenProps<'EditProfile'>> = ({ r
       interests: formData.interests.filter((i: string) => i !== interest),
     });
   };
+  
+  // Add education entry
+  const handleAddEducation = () => {
+    if (newEducation.institution.trim() && newEducation.degree.trim()) {
+      setFormData({
+        ...formData,
+        education: [...formData.education, { ...newEducation }],
+      });
+      setNewEducation({
+        institution: '',
+        degree: '',
+        year: '',
+      });
+    } else {
+      Alert.alert('Error', 'Institution and Degree are required');
+    }
+  };
+  
+  // Remove education entry
+  const handleRemoveEducation = (index: number) => {
+    setFormData({
+      ...formData,
+      education: formData.education.filter((_: any, i: number) => i !== index),
+    });
+  };
+  
+  // Add experience entry
+  const handleAddExperience = () => {
+    if (newExperience.company.trim() && newExperience.role.trim()) {
+      setFormData({
+        ...formData,
+        experience: [...formData.experience, { ...newExperience }],
+      });
+      setNewExperience({
+        company: '',
+        role: '',
+        duration: '',
+      });
+    } else {
+      Alert.alert('Error', 'Company and Role are required');
+    }
+  };
+  
+  // Remove experience entry
+  const handleRemoveExperience = (index: number) => {
+    setFormData({
+      ...formData,
+      experience: formData.experience.filter((_: any, i: number) => i !== index),
+    });
+  };
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -97,27 +168,57 @@ const EditProfileScreen: React.FC<ProfileStackScreenProps<'EditProfile'>> = ({ r
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate form
     if (!formData.name.trim()) {
       Alert.alert('Error', 'Name is required');
       return;
     }
 
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to update your profile');
+      return;
+    }
+
     setLoading(true);
 
-    // Simulate API call with timeout
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Prepare data for Supabase update
+      const profileUpdate = {
+        name: formData.name,
+        role: formData.role,
+        bio: formData.bio,
+        skills: formData.skills,
+        interests: formData.interests,
+        avatar_url: formData.image,
+        updated_at: new Date().toISOString(),
+        experience: formData.experience,
+        education: formData.education,
+      };
+
+      // Update the profile in Supabase
+      const { success, error } = await updateProfile(user.id, profileUpdate);
+
+      if (!success) {
+        throw new Error(error ? String(error) : 'Failed to update profile');
+      }
+
+      // Refresh the profile data
+      await refreshProfile();
+
       Alert.alert(
         'Success',
         'Profile updated successfully',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
-    }, 1000);
-
-    // In a real app, you would update the profile in the database
-    // const { data, error } = await updateProfile(userId, formData);
+    } catch (err) {
+      Alert.alert(
+        'Error',
+        err instanceof Error ? err.message : 'Failed to update profile'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -229,6 +330,122 @@ const EditProfileScreen: React.FC<ProfileStackScreenProps<'EditProfile'>> = ({ r
             </View>
           </View>
 
+          {/* Experience */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Experience</Text>
+            
+            <Text style={styles.inputLabel}>Company</Text>
+            <TextInput
+              style={styles.input}
+              value={newExperience.company}
+              onChangeText={(text) => setNewExperience({...newExperience, company: text})}
+              placeholder="Company name"
+            />
+            
+            <Text style={styles.inputLabel}>Role</Text>
+            <TextInput
+              style={styles.input}
+              value={newExperience.role}
+              onChangeText={(text) => setNewExperience({...newExperience, role: text})}
+              placeholder="Your role"
+            />
+            
+            <Text style={styles.inputLabel}>Duration</Text>
+            <TextInput
+              style={styles.input}
+              value={newExperience.duration}
+              onChangeText={(text) => setNewExperience({...newExperience, duration: text})}
+              placeholder="e.g. 2020 - 2022"
+            />
+            
+            <TouchableOpacity
+              style={styles.addItemButton}
+              onPress={handleAddExperience}
+            >
+              <Text style={styles.addItemButtonText}>Add Experience</Text>
+            </TouchableOpacity>
+            
+            {formData.experience.length > 0 ? (
+              <View style={styles.itemsContainer}>
+                {formData.experience.map((exp: {company: string, role: string, duration: string}, index: number) => (
+                  <View key={index} style={styles.itemCard}>
+                    <View style={styles.itemContent}>
+                      <Text style={styles.itemTitle}>{exp.company}</Text>
+                      <Text style={styles.itemSubtitle}>{exp.role}</Text>
+                      <Text style={styles.itemDetails}>{exp.duration}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.removeItemButton}
+                      onPress={() => handleRemoveExperience(index)}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#FF4D4D" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.emptyText}>No experience added yet</Text>
+            )}
+          </View>
+          
+          {/* Education */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Education</Text>
+            
+            <Text style={styles.inputLabel}>Institution</Text>
+            <TextInput
+              style={styles.input}
+              value={newEducation.institution}
+              onChangeText={(text) => setNewEducation({...newEducation, institution: text})}
+              placeholder="School or university name"
+            />
+            
+            <Text style={styles.inputLabel}>Degree</Text>
+            <TextInput
+              style={styles.input}
+              value={newEducation.degree}
+              onChangeText={(text) => setNewEducation({...newEducation, degree: text})}
+              placeholder="Degree or certificate"
+            />
+            
+            <Text style={styles.inputLabel}>Year</Text>
+            <TextInput
+              style={styles.input}
+              value={newEducation.year}
+              onChangeText={(text) => setNewEducation({...newEducation, year: text})}
+              placeholder="e.g. 2022"
+            />
+            
+            <TouchableOpacity
+              style={styles.addItemButton}
+              onPress={handleAddEducation}
+            >
+              <Text style={styles.addItemButtonText}>Add Education</Text>
+            </TouchableOpacity>
+            
+            {formData.education.length > 0 ? (
+              <View style={styles.itemsContainer}>
+                {formData.education.map((edu: {institution: string, degree: string, year: string}, index: number) => (
+                  <View key={index} style={styles.itemCard}>
+                    <View style={styles.itemContent}>
+                      <Text style={styles.itemTitle}>{edu.institution}</Text>
+                      <Text style={styles.itemSubtitle}>{edu.degree}</Text>
+                      <Text style={styles.itemDetails}>{edu.year}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.removeItemButton}
+                      onPress={() => handleRemoveEducation(index)}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#FF4D4D" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.emptyText}>No education added yet</Text>
+            )}
+          </View>
+
           {/* Interests */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Interests</Text>
@@ -249,13 +466,13 @@ const EditProfileScreen: React.FC<ProfileStackScreenProps<'EditProfile'>> = ({ r
 
             <View style={styles.tagsContainer}>
               {formData.interests.map((interest: string, index: number) => (
-                <View key={index} style={[styles.tagItem, styles.interestTag]}>
-                  <Text style={styles.interestTagText}>{interest}</Text>
+                <View key={index} style={styles.tagItem}>
+                  <Text style={styles.tagText}>{interest}</Text>
                   <TouchableOpacity
                     style={styles.removeTagButton}
                     onPress={() => handleRemoveInterest(interest)}
                   >
-                    <Ionicons name="close-circle" size={18} color="#666" />
+                    <Ionicons name="close-circle" size={18} color="white" />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -400,16 +617,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginRight: 4,
   },
-  interestTag: {
-    backgroundColor: '#F0F0F0',
-  },
-  interestTagText: {
-    color: '#666',
-    fontSize: 14,
-    marginRight: 4,
-  },
   removeTagButton: {
     padding: 2,
+  },
+  addItemButton: {
+    backgroundColor: '#4B2E83',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addItemButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  itemsContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  itemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4B2E83',
+    marginRight: 8,
+  },
+  itemSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  itemDetails: {
+    fontSize: 14,
+    color: '#666',
+  },
+  removeItemButton: {
+    padding: 4,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 

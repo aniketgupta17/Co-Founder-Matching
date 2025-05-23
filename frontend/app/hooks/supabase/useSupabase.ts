@@ -5,8 +5,8 @@ import Constants from "expo-constants";
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || "";
 const supabaseApiKey = Constants.expoConfig?.extra?.supabaseKey || "";
 
-// Enable mock auth since we're running in offline mode without proper credentials
-const USE_MOCK_AUTH = true; // Enable mock auth to avoid authentication issues
+// Get mock auth setting from app.config.js
+const USE_MOCK_AUTH = Constants.expoConfig?.extra?.useMockAuth || false;
 
 // Log configuration details during initialization
 console.log("Expo Config:", Constants.expoConfig?.extra);
